@@ -351,7 +351,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                         <div class="space-y-4">
                             @if($whatsappUrl)
                                 <button wire:click="initiateBooking('whatsapp')" class="w-full bg-green-600 text-white font-bold uppercase tracking-widest py-4 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 group transform hover:-translate-y-1">
-                                    <i class="material-icons">chat</i> Book via WhatsApp
+                                    <i class="material-icons">chat</i> Inquire via WhatsApp
                                 </button>
                             @endif
 

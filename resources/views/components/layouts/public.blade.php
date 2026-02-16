@@ -15,7 +15,7 @@
     <nav class="fixed top-0 w-full z-50 px-4 sm:px-6 md:px-8 py-4 md:py-5 flex items-center justify-between transition-all {{ $isHome ? 'bg-transparent' : 'bg-white/90 backdrop-blur border-b border-secondary/5' }}" @if($isHome) style="text-shadow: 0 1px 4px rgba(0,0,0,0.5);" @endif>
         <a href="{{ route('home') }}" class="flex items-center gap-2" wire:navigate title="{{ $siteName }}">
             @if($logoImage)
-                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-14 w-auto object-contain" />
+                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-10 sm:h-14 w-auto object-contain" />
             @else
                 <span class="text-2xl font-extrabold tracking-tighter {{ $isHome ? 'text-white' : 'text-secondary' }} uppercase">{{ $siteName }}</span>
             @endif
@@ -57,7 +57,7 @@
             <div class="col-span-1">
                 <div class="flex items-center gap-2 mb-6">
                     @if($logoImage)
-                        <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-14 w-auto object-contain" />
+                        <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-10 sm:h-14 w-auto object-contain" />
                     @else
                         <span class="text-2xl font-extrabold tracking-tighter text-secondary uppercase">{{ $siteName }}</span>
                     @endif
