@@ -111,6 +111,23 @@ class SettingSeeder extends Seeder
                 'es' => 'Únase a nuestro círculo íntimo para recibir actualizaciones exclusivas y conocimientos de viajes privados.',
             ],
 
+            // About Page Specifics
+            'about_hero_label' => [
+                'en' => 'Our Story',
+                'id' => 'Cerita Kami',
+                'es' => 'Nuestra historia',
+            ],
+            'about_hero_subtitle' => [
+                'en' => 'The journey behind our legacy and the passion that drives us.',
+                'id' => 'Perjalanan di balik warisan kami dan semangat yang menggerakkan kami.',
+                'es' => 'El viaje tras nuestro legado y la pasión que nos impulsa.',
+            ],
+            'about_who_we_are_label' => [
+                'en' => 'Who We Are',
+                'id' => 'Siapa Kami',
+                'es' => 'Quiénes somos',
+            ],
+
             // Templates
             'whatsapp_template' => [
                 'en' => 'Hello, my name is {name}. I would like to book {destination} for {person} pax on {date}. I am from {city}, {country}. Email: {email}, Phone: {phone}.',

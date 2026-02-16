@@ -35,9 +35,9 @@ new class extends Component {
 
     public array $about_title = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_content = ['en' => '', 'id' => '', 'es' => ''];
-    public array $about_label = ['en' => '', 'id' => '', 'es' => ''];
-    public array $about_stat_number = ['en' => '', 'id' => '', 'es' => ''];
-    public array $about_stat_text = ['en' => '', 'id' => '', 'es' => ''];
+    public array $about_hero_label = ['en' => '', 'id' => '', 'es' => ''];
+    public array $about_hero_subtitle = ['en' => '', 'id' => '', 'es' => ''];
+    public array $about_who_we_are_label = ['en' => '', 'id' => '', 'es' => ''];
     public $about_image;
     public ?string $existing_about_image = null;
 
@@ -87,6 +87,9 @@ new class extends Component {
         $this->about_label = $this->decodeSetting($settings, 'about_label', ['en' => 'Since 2008']);
         $this->about_stat_number = $this->decodeSetting($settings, 'about_stat_number', ['en' => '15+']);
         $this->about_stat_text = $this->decodeSetting($settings, 'about_stat_text', ['en' => 'Years of Crafting Bespoke Experiences']);
+        $this->about_hero_label = $this->decodeSetting($settings, 'about_hero_label', ['en' => 'Our Story']);
+        $this->about_hero_subtitle = $this->decodeSetting($settings, 'about_hero_subtitle', ['en' => 'The journey behind our legacy and the passion that drives us.']);
+        $this->about_who_we_are_label = $this->decodeSetting($settings, 'about_who_we_are_label', ['en' => 'Who We Are']);
         $this->existing_about_image = $settings['about_image'] ?? null;
 
         $this->experience_tiers_title = $this->decodeSetting($settings, 'experience_tiers_title', ['en' => 'How We Travel']);
@@ -180,7 +183,9 @@ new class extends Component {
             'about_label.en' => 'nullable|string',
             'about_stat_number.en' => 'nullable|string',
             'about_stat_text.en' => 'nullable|string',
-            'about_image' => 'nullable|image|max:5120',
+            'about_hero_label.en' => 'nullable|string',
+            'about_hero_subtitle.en' => 'nullable|string',
+            'about_who_we_are_label.en' => 'nullable|string',
 
             'experience_tiers_title.en' => 'nullable|string',
             'experience_tiers_label.en' => 'nullable|string',
@@ -195,6 +200,7 @@ new class extends Component {
             'footer_text', 'whatsapp_template', 'email_subject_template', 'email_template',
             'hero_title', 'hero_subtitle', 'hero_cta_text', 'hero_label',
             'about_title', 'about_content', 'about_label', 'about_stat_number', 'about_stat_text',
+            'about_hero_label', 'about_hero_subtitle', 'about_who_we_are_label',
             'experience_tiers_title', 'experience_tiers_label', 'experience_tiers_points',
             'cta_title', 'cta_subtitle'
         ];
@@ -315,9 +321,14 @@ new class extends Component {
         <section class="space-y-4">
             <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">About Section</h3>
             <div class="grid grid-cols-1 gap-6">
-                <flux:input label="{{ __('About Label') }} ({{ strtoupper($activeTab) }})" wire:model="about_label.{{ $activeTab }}" />
-                <flux:textarea label="{{ __('About Title') }} ({{ strtoupper($activeTab) }})" wire:model="about_title.{{ $activeTab }}" rows="2" />
-                <flux:textarea label="{{ __('About Content') }} ({{ strtoupper($activeTab) }})" wire:model="about_content.{{ $activeTab }}" rows="5" />
+                <flux:input label="{{ __('Hero Title') }} ({{ strtoupper($activeTab) }})" wire:model="about_title.{{ $activeTab }}" rows="1" />
+                <flux:input label="{{ __('Hero Label') }} ({{ strtoupper($activeTab) }})" wire:model="about_hero_label.{{ $activeTab }}" />
+                <flux:textarea label="{{ __('Hero Subtitle') }} ({{ strtoupper($activeTab) }})" wire:model="about_hero_subtitle.{{ $activeTab }}" rows="2" />
+                
+                <flux:separator />
+
+                <flux:input label="{{ __('Main Section Label') }} ({{ strtoupper($activeTab) }})" wire:model="about_who_we_are_label.{{ $activeTab }}" />
+                <flux:textarea label="{{ __('Main Section Content') }} ({{ strtoupper($activeTab) }})" wire:model="about_content.{{ $activeTab }}" rows="5" />
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <flux:input label="{{ __('About Stat Number') }} ({{ strtoupper($activeTab) }})" wire:model="about_stat_number.{{ $activeTab }}" />
                     <flux:input label="{{ __('About Stat Text') }} ({{ strtoupper($activeTab) }})" wire:model="about_stat_text.{{ $activeTab }}" />
@@ -333,6 +344,7 @@ new class extends Component {
                     <flux:description>Recommended: 800×600px.</flux:description>
                     <flux:error name="about_image" />
                 </flux:field>
+
             </div>
         </section>
 
@@ -369,7 +381,7 @@ new class extends Component {
 
         <!-- CTA Settings -->
         <section class="space-y-4">
-            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">CTA Section</h3>
+            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Home CTA Section</h3>
             <div class="grid grid-cols-1 gap-6">
                 <flux:input label="{{ __('CTA Title') }} ({{ strtoupper($activeTab) }})" wire:model="cta_title.{{ $activeTab }}" />
                 <flux:textarea label="{{ __('CTA Subtitle') }} ({{ strtoupper($activeTab) }})" wire:model="cta_subtitle.{{ $activeTab }}" rows="2" />
