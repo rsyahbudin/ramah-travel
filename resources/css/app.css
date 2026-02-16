@@ -10,7 +10,7 @@
 
 @theme {
     --font-sans:
-        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif,
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
 
@@ -30,9 +30,29 @@
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
 
+    --color-primary: #e47b3f;
+    --color-secondary: #003f5c;
+    --color-bg-light: #f8f7f6;
     --color-travel-blue: #003f5c;
-    --color-travel-orange: #d97e4a;
+    --color-travel-orange: #e47b3f;
     --color-travel-green: #2d8659;
+}
+
+.hero-overlay {
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.4) 0%,
+        rgba(0, 0, 0, 0.2) 50%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 @layer theme {

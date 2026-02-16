@@ -15,6 +15,8 @@ new class extends Component {
     public string $title = '';
     public string $slug = '';
     public string $location = '';
+    public string $duration = '';
+    public string $theme = '';
     public string $price = '';
     public ?string $price_max = '';
     public string $description = '';
@@ -34,6 +36,8 @@ new class extends Component {
             $this->title = $destination->title;
             $this->slug = $destination->slug;
             $this->location = $destination->location;
+            $this->duration = $destination->duration ?? '';
+            $this->theme = $destination->theme ?? '';
             $this->price = (string) $destination->price;
             $this->price_max = $destination->price_max ? (string) $destination->price_max : '';
             $this->description = $destination->description;
@@ -80,6 +84,8 @@ new class extends Component {
             'title' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:destinations,slug,' . ($this->destination?->id ?? 'NULL'),
             'location' => 'required|string|max:255',
+            'duration' => 'nullable|string|max:255',
+            'theme' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'price_max' => 'nullable|numeric|gt:price',
             'description' => 'required|string',
@@ -137,6 +143,11 @@ new class extends Component {
         </div>
         
         <flux:input label="{{ __('Location') }}" wire:model="location" icon="map-pin" />
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <flux:input label="{{ __('Duration (e.g. 5 Days 4 Nights)') }}" wire:model="duration" icon="clock" />
+            <flux:input label="{{ __('Theme (e.g. Adventure, Romance)') }}" wire:model="theme" icon="tag" />
+        </div>
 
         <flux:textarea label="{{ __('Description') }}" wire:model="description" rows="5" />
         
