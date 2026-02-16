@@ -20,6 +20,9 @@ new class extends Component {
     public string $social_twitter = '';
     public string $social_youtube = '';
     public string $social_tiktok = '';
+    public string $whatsapp_template = '';
+    public string $email_subject_template = '';
+    public string $email_template = '';
 
     public function mount(): void
     {
@@ -36,6 +39,10 @@ new class extends Component {
         $this->social_twitter = $settings['social_twitter'] ?? '';
         $this->social_youtube = $settings['social_youtube'] ?? '';
         $this->social_tiktok = $settings['social_tiktok'] ?? '';
+        
+        $this->whatsapp_template = $settings['whatsapp_template'] ?? "Hello, I would like to book a trip to {title}. Is it available?";
+        $this->email_subject_template = $settings['email_subject_template'] ?? "Booking Inquiry: {title}";
+        $this->email_template = $settings['email_template'] ?? "I would like to inquire about a trip to {title} ({url}).";
     }
 
     public function save(): void
@@ -51,6 +58,9 @@ new class extends Component {
             'social_twitter' => 'nullable|url|max:255',
             'social_youtube' => 'nullable|url|max:255',
             'social_tiktok' => 'nullable|url|max:255',
+            'whatsapp_template' => 'nullable|string',
+            'email_subject_template' => 'nullable|string',
+            'email_template' => 'nullable|string',
         ]);
 
         $textSettings = collect($validated)->except('logo_image')->toArray();
@@ -108,6 +118,19 @@ new class extends Component {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <flux:input label="{{ __('WhatsApp Number') }}" description="Format: 628123456789" wire:model="whatsapp_number" placeholder="628123456789" />
                 <flux:input label="{{ __('Admin Email') }}" wire:model="admin_email" type="email" />
+            </div>
+        </section>
+
+        <flux:separator />
+
+        <!-- Chat Templates -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Chat Templates</h3>
+            <p class="text-sm text-zinc-500">Available placeholders: <code>{title}</code>, <code>{url}</code>, <code>{price}</code>, <code>{location}</code>, <code>{duration}</code>.</p>
+            <div class="grid grid-cols-1 gap-6">
+                <flux:textarea label="{{ __('WhatsApp Main Template') }}" wire:model="whatsapp_template" rows="3" />
+                <flux:input label="{{ __('Email Subject Template') }}" wire:model="email_subject_template" />
+                <flux:textarea label="{{ __('Email Body Template') }}" wire:model="email_template" rows="3" />
             </div>
         </section>
 

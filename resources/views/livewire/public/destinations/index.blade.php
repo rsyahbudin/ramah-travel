@@ -4,6 +4,7 @@ use App\Models\Destination;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\Storage;
 
 new #[Layout('components.layouts.public')] class extends Component {
     use WithPagination;
@@ -19,49 +20,113 @@ new #[Layout('components.layouts.public')] class extends Component {
 };
 ?>
 
-<div>
-    <div class="bg-zinc-100 dark:bg-zinc-800 py-12">
-        <div class="container mx-auto px-4 md:px-6">
-            <h1 class="text-4xl font-bold text-center text-travel-blue dark:text-white mb-2">Destinations</h1>
-            <p class="text-center text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto">Find your next adventure among our carefully selected destinations.</p>
+<div class="bg-bg-light">
+    {{-- Hero Header --}}
+    <section class="relative h-[50vh] min-h-[350px] bg-secondary overflow-hidden flex items-center justify-center">
+        <div class="absolute inset-0 hero-overlay"></div>
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2280%22%20height%3D%2280%22%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2240%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.03)%22/%3E%3C/svg%3E')]"></div>
+        <div class="relative z-10 text-center px-4 max-w-4xl">
+            <div class="flex items-center justify-center gap-4 mb-6">
+                <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
+                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">Curated Selection</span>
+                <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
+            </div>
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
+                Our Destinations
+            </h1>
+            <p class="text-white/70 text-base sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                Discover handpicked journeys crafted for the world's most discerning travelers.
+            </p>
         </div>
-    </div>
+    </section>
 
-    <div class="container mx-auto px-4 md:px-6 py-12">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+    {{-- Destinations Grid --}}
+    <section class="py-16 md:py-24 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
             @foreach($destinations as $destination)
-                <div class="group bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 border border-zinc-100 dark:border-zinc-700 flex flex-col h-full">
-                    <div class="relative h-64 overflow-hidden shrink-0">
-                        @if($destination->image_path)
-                            <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="w-full h-full object-cover transform group-hover:scale-110 transition duration-500">
-                        @else
-                            <div class="w-full h-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
-                                <flux:icon.photo class="size-12 text-zinc-400" />
+                <div class="group cursor-pointer">
+                    <a href="{{ route('destinations.show', $destination) }}" wire:navigate class="block">
+                        <div class="relative h-[320px] sm:h-[380px] overflow-hidden rounded-xl mb-5">
+                            @if($destination->image_path)
+                                <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                            @else
+                                <div class="w-full h-full bg-secondary/10 flex items-center justify-center">
+                                    <i class="material-icons text-secondary/20" style="font-size: 80px;">photo</i>
+                                </div>
+                            @endif
+                            <div class="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-8">
+                                <span class="bg-white text-secondary px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest">View Details</span>
+                            </div>
+                            @if($destination->price_range)
+                                <div class="absolute top-4 right-4 bg-white/95 backdrop-blur px-4 py-1.5 rounded-full text-sm font-bold text-primary shadow-sm">
+                                    {{ $destination->price_range }}
+                                </div>
+                            @endif
+                        </div>
+                    </a>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-start gap-2">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl font-extrabold text-secondary mb-1 group-hover:text-primary transition-colors">{{ $destination->title }}</h3>
+                                <p class="text-secondary/50 font-medium uppercase tracking-widest text-xs flex items-center gap-1">
+                                    <i class="material-icons" style="font-size: 14px;">location_on</i>
+                                    {{ $destination->location }}
+                                </p>
+                            </div>
+                        </div>
+
+                        @if($destination->duration || $destination->theme)
+                            <div class="flex flex-wrap items-center gap-2 mt-1">
+                                @if($destination->duration)
+                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-secondary/60 bg-secondary/5 px-2.5 py-1 rounded-full">
+                                        <i class="material-icons" style="font-size: 14px;">schedule</i>
+                                        {{ $destination->duration }}
+                                    </span>
+                                @endif
+                                @if($destination->theme)
+                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                                        <i class="material-icons" style="font-size: 14px;">style</i>
+                                        {{ $destination->theme }}
+                                    </span>
+                                @endif
+                                @if($destination->person)
+                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-travel-green bg-travel-green/10 px-2.5 py-1 rounded-full">
+                                        <i class="material-icons" style="font-size: 14px;">group</i>
+                                        {{ $destination->person }} Pax
+                                    </span>
+                                @endif
                             </div>
                         @endif
-                        <div class="absolute top-4 right-4 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-3 py-1 rounded-full text-sm font-bold text-travel-blue dark:text-travel-orange shadow-sm">
-                            {{ $destination->price_range }}
-                        </div>
-                    </div>
-                    <div class="p-8 flex flex-col flex-1">
-                        <div class="flex items-center gap-2 text-sm text-travel-green font-medium mb-3">
-                            <flux:icon.map-pin class="size-4" />
-                            <span>{{ $destination->location }}</span>
-                        </div>
-                        <h3 class="text-2xl font-bold mb-3 group-hover:text-travel-orange transition text-zinc-900 dark:text-zinc-100">{{ $destination->title }}</h3>
-                        <p class="text-zinc-500 dark:text-zinc-400 mb-6 line-clamp-3">
-                            {{ $destination->description }}
-                        </p>
-                        <div class="mt-auto">
-                            <a href="{{ route('destinations.show', $destination) }}" wire:navigate class="w-full block text-center bg-zinc-100 hover:bg-travel-orange hover:text-white dark:bg-zinc-800 dark:hover:bg-travel-orange dark:hover:text-white text-zinc-900 dark:text-zinc-100 font-bold py-3 rounded-xl transition">
-                                View Details
-                            </a>
-                        </div>
+
+                        @if(!empty($destination->highlights))
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                @foreach(array_slice($destination->highlights, 0, 3) as $highlight)
+                                    <span class="text-xs font-medium text-secondary/70 border border-secondary/10 px-2 py-0.5 rounded-full">{{ $highlight }}</span>
+                                @endforeach
+                                @if(count($destination->highlights) > 3)
+                                    <span class="text-xs font-medium text-secondary/40">+{{ count($destination->highlights) - 3 }} more</span>
+                                @endif
+                            </div>
+                        @endif
+
+                        <p class="text-secondary/60 font-light text-sm line-clamp-2 mt-1">{{ $destination->description }}</p>
                     </div>
                 </div>
             @endforeach
         </div>
 
         {{ $destinations->links() }}
-    </div>
+    </section>
+
+    {{-- CTA Section --}}
+    <section class="relative py-16 md:py-24 overflow-hidden bg-secondary">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2280%22%20height%3D%2280%22%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2240%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.03)%22/%3E%3C/svg%3E')]"></div>
+        <div class="relative z-10 px-4 sm:px-6 md:px-8 max-w-4xl mx-auto text-center">
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">Can't Find What You're Looking For?</h2>
+            <p class="text-white/60 text-base sm:text-lg mb-8 font-light">We craft bespoke journeys tailored to your every desire. Let us design your dream trip.</p>
+            <a href="{{ route('about') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform inline-block">
+                Get In Touch
+            </a>
+        </div>
+    </section>
 </div>

@@ -85,7 +85,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     </section>
 
     {{-- Our Story Section --}}
-    <section class="py-16 md:py-24 lg:py-32 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto bg-white">
+    <section class="py-16 md:py-24 lg:py-32 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
         <div class="grid lg:grid-cols-2 gap-10 md:gap-16 lg:gap-20 items-center">
             <div class="relative">
                 <div class="absolute -top-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
@@ -152,70 +152,49 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">Curated Selection</span>
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-secondary tracking-tight">Destinations Spotlight</h2>
             </div>
-            <a href="{{ route('destinations.index') }}" wire:navigate class="text-secondary/60 hover:text-primary transition-colors font-medium flex items-center gap-2 text-sm">
+            <a href="{{ route('destinations.index') }}" wire:navigate class="text-secondary/60 hover:text-primary transition-colors font-medium flex items-center gap-2 text-sm max-sm:hidden">
                 View All <i class="material-icons text-sm">arrow_forward</i>
             </a>
         </div>
-        <div class="px-4 sm:px-6 md:px-8 overflow-x-auto pb-8 md:pb-10 flex gap-5 md:gap-8 scroll-smooth no-scrollbar">
-            @foreach($featuredDestinations as $destination)
-                <div class="min-w-[280px] sm:min-w-[320px] md:min-w-[380px] group cursor-pointer shrink-0">
-                    <a href="{{ route('destinations.show', $destination) }}" wire:navigate>
-                        <div class="relative h-[380px] sm:h-[440px] md:h-[500px] overflow-hidden rounded-xl mb-4 sm:mb-6">
+        
+        <div class="px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                @foreach($featuredDestinations as $destination)
+                   <div class="group relative aspect-[3/4] overflow-hidden rounded-2xl cursor-pointer">
+                        <a href="{{ route('destinations.show', $destination) }}" wire:navigate class="block w-full h-full">
                             @if($destination->image_path)
-                                <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                             @else
-                                <div class="w-full h-full bg-zinc-200 flex items-center justify-center">
-                                    <i class="material-icons text-zinc-300" style="font-size: 80px;">photo</i>
+                                <div class="absolute inset-0 bg-secondary flex items-center justify-center">
+                                    <i class="material-icons text-white/20" style="font-size: 80px;">photo</i>
                                 </div>
                             @endif
-                            <div class="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-8">
-                                <span class="bg-white text-secondary px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold text-xs uppercase tracking-widest">View Details</span>
+                            <div class="absolute inset-0 bg-linear-to-t from-secondary/90 via-secondary/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+                            
+                            <div class="absolute inset-x-0 bottom-0 p-6 sm:p-8 flex flex-col justify-end h-full pointer-events-none">
+                                <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                    <div class="flex items-center gap-2 text-primary uppercase tracking-[0.2em] text-[10px] font-bold mb-3 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
+                                        <i class="material-icons text-xs">location_on</i> {{ $destination->location }}
+                                    </div>
+                                    <h3 class="text-2xl sm:text-3xl font-extrabold text-white mb-3 leading-tight">{{ $destination->title }}</h3>
+                                    <div class="flex items-center gap-4 text-white/70 text-sm font-medium">
+                                        @if($destination->duration)
+                                            <span class="flex items-center gap-1"><i class="material-icons text-xs">schedule</i> {{ $destination->duration }}</span>
+                                        @endif
+                                        <span class="px-3 py-1 bg-white/10 backdrop-blur rounded-full text-white text-xs font-bold border border-white/10">{{ $destination->price_range }}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-start gap-2">
-                            <div>
-                                <h3 class="text-xl sm:text-2xl font-extrabold text-secondary mb-1">{{ $destination->title }}</h3>
-                                <p class="text-secondary/50 font-medium uppercase tracking-widest text-xs">{{ $destination->location }}</p>
-                            </div>
-                            @if($destination->price_range)
-                                <span class="text-primary font-bold text-sm sm:text-base whitespace-nowrap">{{ $destination->price_range }}</span>
-                            @endif
-                        </div>
-
-                        {{-- Duration & Theme --}}
-                        @if($destination->duration || $destination->theme)
-                            <div class="flex flex-wrap items-center gap-2 mt-1">
-                                @if($destination->duration)
-                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-secondary/60 bg-secondary/5 px-2.5 py-1 rounded-full">
-                                        <i class="material-icons" style="font-size: 14px;">schedule</i>
-                                        {{ $destination->duration }}
-                                    </span>
-                                @endif
-                                @if($destination->theme)
-                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                                        <i class="material-icons" style="font-size: 14px;">style</i>
-                                        {{ $destination->theme }}
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
-
-                        {{-- Highlights --}}
-                        @if(!empty($destination->highlights))
-                            <div class="flex flex-wrap gap-1.5 mt-1">
-                                @foreach(array_slice($destination->highlights, 0, 3) as $highlight)
-                                    <span class="text-xs font-medium text-secondary/70 border border-secondary/10 px-2 py-0.5 rounded-full">{{ $highlight }}</span>
-                                @endforeach
-                                @if(count($destination->highlights) > 3)
-                                    <span class="text-xs font-medium text-secondary/40">+{{ count($destination->highlights) - 3 }} more</span>
-                                @endif
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            @endforeach
+                        </a>
+                   </div>
+                @endforeach
+            </div>
+            
+            <div class="mt-12 sm:hidden text-center">
+                <a href="{{ route('destinations.index') }}" wire:navigate class="inline-flex items-center gap-2 text-secondary font-bold uppercase tracking-widest text-xs border border-secondary/20 px-8 py-4 rounded-xl hover:bg-secondary hover:text-white transition-colors">
+                    View All Destinations <i class="material-icons text-sm">arrow_forward</i>
+                </a>
+            </div>
         </div>
     </section>
 
@@ -238,6 +217,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                 </a>
             </div>
         </div>
+        
     </section>
+    
 </div>
 

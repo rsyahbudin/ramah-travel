@@ -11,101 +11,178 @@ new #[Layout('components.layouts.public')] class extends Component {
     public string $whatsappUrl = '';
     public string $emailUrl = '';
 
+    public array $benefits = [];
+
     public function mount(Destination $destination): void
     {
         $this->destination = $destination;
 
-        $whatsappNumber = Setting::where('key', 'whatsapp_number')->value('value');
-        $adminEmail = Setting::where('key', 'admin_email')->value('value');
+        $settings = Setting::whereIn('key', [
+            'whatsapp_number', 
+            'admin_email', 
+            'experience_tiers_points', 
+            'whatsapp_template', 
+            'email_subject_template',
+            'email_template'
+        ])->pluck('value', 'key');
+        
+        $whatsappNumber = $settings['whatsapp_number'] ?? null;
+        $adminEmail = $settings['admin_email'] ?? null;
 
-        $message = "Hello, I would like to book a trip to " . $destination->title;
+        // Templates
+        $waTemplate = $settings['whatsapp_template'] ?? "Hello, I would like to book a trip to {title}. Is it available?";
+        $subjectTemplate = $settings['email_subject_template'] ?? "Booking Inquiry: {title}";
+        $emailTemplate = $settings['email_template'] ?? "I would like to inquire about a trip to {title} ({url}).";
+
+        $placeholders = [
+            '{title}' => $destination->title,
+            '{url}' => route('destinations.show', $destination),
+            '{price}' => $destination->price_range,
+            '{location}' => $destination->location,
+            '{duration}' => $destination->duration ?? '',
+        ];
+
+        foreach ($placeholders as $key => $value) {
+            $waTemplate = str_replace($key, $value, $waTemplate);
+            $subjectTemplate = str_replace($key, $value, $subjectTemplate);
+            $emailTemplate = str_replace($key, $value, $emailTemplate);
+        }
 
         if ($whatsappNumber) {
-            $this->whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($message);
+            $this->whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($waTemplate);
         }
 
         if ($adminEmail) {
-            $this->emailUrl = "mailto:{$adminEmail}?subject=Booking Inquiry: {$destination->title}&body=" . rawurlencode($message);
+            $this->emailUrl = "mailto:{$adminEmail}?subject=" . rawurlencode($subjectTemplate) . "&body=" . rawurlencode($emailTemplate);
+        }
+
+        $this->benefits = json_decode($settings['experience_tiers_points'] ?? '[]', true);
+        
+        if (empty($this->benefits)) {
+             $this->benefits = [
+                ['icon' => 'diamond', 'title' => 'Elite Concierge'],
+                ['icon' => 'map', 'title' => 'Bespoke Itineraries'],
+                ['icon' => 'verified_user', 'title' => 'Insider Access'],
+             ];
         }
     }
 };
 ?>
 
-<div>
-    <div class="relative h-[60vh] bg-zinc-900 overflow-hidden">
+<div class="bg-bg-light">
+    {{-- Hero Section --}}
+    <div class="relative h-[60vh] min-h-[400px] overflow-hidden">
         @if($destination->image_path)
-            <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="absolute inset-0 w-full h-full object-cover opacity-60">
+            <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="absolute inset-0 w-full h-full object-cover">
         @else
-            <div class="absolute inset-0 bg-linear-to-br from-travel-blue to-travel-green opacity-60"></div>
+            <div class="absolute inset-0 bg-secondary"></div>
         @endif
-        <div class="absolute inset-0 bg-linear-to-t from-zinc-900 via-transparent to-transparent"></div>
+        <div class="absolute inset-0 hero-overlay"></div>
+        <div class="absolute inset-0 bg-linear-to-t from-secondary/90 via-transparent to-transparent"></div>
 
-        <div class="container mx-auto px-4 md:px-6 relative z-10 h-full flex flex-col justify-end pb-20">
-            <div class="flex items-center gap-2 text-travel-orange font-bold mb-4">
-                <flux:icon.map-pin class="size-6" />
-                <span class="text-xl">{{ $destination->location }}</span>
+        <div class="container mx-auto px-4 md:px-6 relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20">
+            <div class="flex items-center gap-2 text-primary font-bold uppercase tracking-[0.2em] text-xs sm:text-sm mb-4">
+                <i class="material-icons text-base">location_on</i>
+                {{ $destination->location }}
             </div>
-            <h1 class="text-5xl md:text-7xl font-bold text-white mb-6">{{ $destination->title }}</h1>
-            <div class="flex flex-wrap items-center gap-6 text-white">
-                <div class="text-3xl font-bold">
-                    {{ $destination->price_range }} <span class="text-lg font-normal text-zinc-300">/ person</span>
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight leading-tight">
+                {{ $destination->title }}
+            </h1>
+            <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-white">
+                <div class="text-2xl sm:text-3xl font-extrabold text-primary">
+                    {{ $destination->price_range }} <span class="text-base sm:text-lg font-normal text-white/50">/ person</span>
                 </div>
-                @if($destination->person)
-                    <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                        <flux:icon.users class="size-5" />
-                        <span class="font-semibold">{{ $destination->person }} Pax</span>
-                    </div>
-                @endif
-                @if($destination->duration)
-                    <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                        <flux:icon.clock class="size-5" />
-                        <span class="font-semibold">{{ $destination->duration }}</span>
-                    </div>
-                @endif
+                
+                <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
+                
+                <div class="flex flex-wrap gap-3">
+                    @if($destination->person)
+                        <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/10">
+                            <i class="material-icons text-sm">group</i>
+                            <span class="font-bold text-sm">{{ $destination->person }} Pax</span>
+                        </div>
+                    @endif
+                    @if($destination->duration)
+                        <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/10">
+                            <i class="material-icons text-sm">schedule</i>
+                            <span class="font-bold text-sm">{{ $destination->duration }}</span>
+                        </div>
+                    @endif
+                    @if($destination->theme)
+                        <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/10">
+                            <i class="material-icons text-sm">style</i>
+                            <span class="font-bold text-sm">{{ $destination->theme }}</span>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="container mx-auto px-4 md:px-6 py-20">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div class="lg:col-span-2 space-y-12">
+    <div class="container mx-auto px-4 md:px-6 py-12 md:py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-20">
+            {{-- Main Content --}}
+            <div class="lg:col-span-2 space-y-12 md:space-y-16">
+                
+                <!-- Trip Info (Visual Guide) - MOVED TO TOP -->
+                @if(!empty($destination->trip_info))
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @foreach($destination->trip_info as $info)
+                            <div class="p-4 rounded-xl bg-secondary/5 text-center hover:bg-secondary/10 transition-colors">
+                                 <p class="text-[10px] sm:text-xs uppercase tracking-widest text-secondary/60 mb-1.5">{{ $info['key'] ?? '' }}</p>
+                                 <p class="font-bold text-secondary text-base sm:text-lg leading-tight">{{ $info['value'] ?? '' }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
                 <!-- Description -->
                 <div>
-                    <h2 class="text-3xl font-bold text-travel-blue dark:text-white mb-6">About this Destination</h2>
-                    <div class="prose dark:prose-invert max-w-none text-lg text-zinc-600 dark:text-zinc-300">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
+                        <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">Overview</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-secondary mb-6 leading-tight">About this Journey</h2>
+                    <div class="prose prose-lg max-w-none text-secondary/70 font-light leading-relaxed">
                         {!! nl2br(e($destination->description)) !!}
                     </div>
                 </div>
 
-                <!-- Highlights -->
+                <!-- Highlights - SIMPLIFIED -->
                 @if(!empty($destination->highlights))
                     <div>
-                        <h2 class="text-3xl font-bold text-travel-blue dark:text-white mb-6">Highlights</h2>
-                        <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">Highlights</h2>
+                        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                             @foreach($destination->highlights as $highlight)
-                                <li class="flex items-start gap-3 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700">
-                                    <div class="bg-travel-orange/10 p-2 rounded-full text-travel-orange shrink-0">
-                                        <flux:icon.star class="size-5" />
-                                    </div>
-                                    <span class="font-medium text-zinc-700 dark:text-zinc-200 mt-1">{{ $highlight }}</span>
+                                <li class="flex items-start gap-3">
+                                    <i class="material-icons text-primary text-xl mt-0.5 shrink-0">check_circle</i>
+                                    <span class="font-medium text-secondary/80 text-lg">{{ $highlight }}</span>
                                 </li>
                             @endforeach
                         </ul>
                     </div>
                 @endif
 
-                <!-- Itinerary -->
+                <!-- Itinerary - CLEAN TIMELINE LAYOUT -->
                 @if(!empty($destination->itinerary))
                     <div>
-                        <h2 class="text-3xl font-bold text-travel-blue dark:text-white mb-6">Itinerary</h2>
-                        <div class="space-y-4">
+                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-8">Itinerary</h2>
+                         <div class="relative border-l border-secondary/20 ml-3 md:ml-4 my-8 md:my-10 space-y-0">
                             @foreach($destination->itinerary as $index => $day)
-                                <div class="flex gap-4 items-start">
-                                    <div class="shrink-0 w-20 h-20 bg-travel-blue text-white rounded-2xl flex flex-col items-center justify-center">
-                                        <span class="text-xs uppercase tracking-widest opacity-70">{{ $day['day'] ?? '' }}</span>
+                                <div class="relative pl-8 md:pl-10 py-6 group first:pt-0 last:pb-0">
+                                    <!-- Dot -->
+                                    <span class="absolute -left-[5px] top-8 first:top-2 w-2.5 h-2.5 rounded-full bg-secondary group-hover:bg-primary group-hover:scale-150 transition-all duration-300 ring-4 ring-bg-light"></span>
+                                    
+                                    <!-- Day Badge -->
+                                    <div class="mb-3">
+                                        <span class="inline-block px-3 py-1 text-xs font-bold uppercase tracking-widest text-secondary/60 bg-secondary/5 rounded-md group-hover:text-primary group-hover:bg-primary/5 transition-colors">
+                                            {{ $day['day'] ?? "Day " . ($index + 1) }}
+                                        </span>
                                     </div>
-                                    <div class="flex-1 bg-zinc-50 dark:bg-zinc-800 p-5 rounded-xl border border-zinc-100 dark:border-zinc-700">
-                                        <p class="text-zinc-700 dark:text-zinc-200">{{ $day['activity'] ?? '' }}</p>
+                                    
+                                    <!-- Activity Content -->
+                                    <div class="prose prose-zinc max-w-none text-secondary/70 leading-relaxed group-hover:text-secondary/90 transition-colors">
+                                        {{ $day['activity'] ?? '' }}
                                     </div>
                                 </div>
                             @endforeach
@@ -115,71 +192,55 @@ new #[Layout('components.layouts.public')] class extends Component {
 
                 <!-- Includes / Excludes -->
                 @if(!empty($destination->includes) || !empty($destination->excludes))
-                    <div>
-                        <h2 class="text-3xl font-bold text-travel-blue dark:text-white mb-6">What's Included</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            @if(!empty($destination->includes))
-                                <div>
-                                    <h3 class="text-lg font-bold text-travel-green mb-4 flex items-center gap-2">
-                                        <flux:icon.check-circle class="size-6" /> Includes
-                                    </h3>
-                                    <ul class="space-y-3">
-                                        @foreach($destination->includes as $item)
-                                            <li class="flex items-start gap-3 text-zinc-700 dark:text-zinc-300">
-                                                <flux:icon.check class="size-5 text-travel-green shrink-0 mt-0.5" />
-                                                <span>{{ $item }}</span>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-                            @if(!empty($destination->excludes))
-                                <div>
-                                    <h3 class="text-lg font-bold text-red-500 mb-4 flex items-center gap-2">
-                                        <flux:icon.x-circle class="size-6" /> Excludes
-                                    </h3>
-                                    <ul class="space-y-3">
-                                        @foreach($destination->excludes as $item)
-                                            <li class="flex items-start gap-3 text-zinc-700 dark:text-zinc-300">
-                                                <flux:icon.x-mark class="size-5 text-red-500 shrink-0 mt-0.5" />
-                                                <span>{{ $item }}</span>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @endif
-
-                <!-- Trip Info -->
-                @if(!empty($destination->trip_info))
-                    <div>
-                        <h2 class="text-3xl font-bold text-travel-blue dark:text-white mb-6">Trip Information</h2>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            @foreach($destination->trip_info as $info)
-                                <div class="bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700 text-center">
-                                    <p class="text-xs uppercase tracking-widest text-zinc-400 mb-1">{{ $info['key'] ?? '' }}</p>
-                                    <p class="text-lg font-bold text-zinc-800 dark:text-white">{{ $info['value'] ?? '' }}</p>
-                                </div>
-                            @endforeach
-                        </div>
+                    <div class="grid sm:grid-cols-2 gap-8">
+                        @if(!empty($destination->includes))
+                            <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
+                                <h3 class="text-lg font-bold text-travel-green mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
+                                    <i class="material-icons text-lg">check_circle</i> What's Included
+                                </h3>
+                                <ul class="space-y-4">
+                                    @foreach($destination->includes as $item)
+                                        <li class="flex items-start gap-3 text-secondary/70 text-sm">
+                                            <i class="material-icons text-travel-green text-sm mt-0.5">check</i>
+                                            <span>{{ $item }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                        @if(!empty($destination->excludes))
+                            <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
+                                <h3 class="text-lg font-bold text-red-500 mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
+                                    <i class="material-icons text-lg">cancel</i> What's Excluded
+                                </h3>
+                                <ul class="space-y-4">
+                                    @foreach($destination->excludes as $item)
+                                        <li class="flex items-start gap-3 text-secondary/70 text-sm">
+                                            <i class="material-icons text-red-500 text-sm mt-0.5">close</i>
+                                            <span>{{ $item }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
                 <!-- FAQ -->
                 @if(!empty($destination->faq))
                     <div>
-                        <h2 class="text-3xl font-bold text-travel-blue dark:text-white mb-6">FAQ</h2>
-                        <div class="space-y-3" x-data="{ openFaq: null }">
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">Common Questions</h2>
+                        <div class="space-y-4" x-data="{ openFaq: null }">
                             @foreach($destination->faq as $index => $item)
-                                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 overflow-hidden">
-                                    <button type="button" @click="openFaq = openFaq === {{ $index }} ? null : {{ $index }}" class="w-full flex items-center justify-between p-5 text-left">
-                                        <span class="font-semibold text-zinc-800 dark:text-white">{{ $item['question'] ?? '' }}</span>
-                                        <flux:icon.chevron-down class="size-5 text-zinc-400 transition-transform duration-200" ::class="{ 'rotate-180': openFaq === {{ $index }} }" />
+                                <div class="bg-white rounded-xl border border-secondary/5 overflow-hidden transition-all duration-300" :class="{ 'shadow-lg border-primary/20': openFaq === {{ $index }} }">
+                                    <button type="button" @click="openFaq = openFaq === {{ $index }} ? null : {{ $index }}" class="w-full flex items-center justify-between p-5 text-left group">
+                                        <span class="font-bold text-secondary group-hover:text-primary transition-colors pr-4">{{ $item['question'] ?? '' }}</span>
+                                        <div class="w-8 h-8 rounded-full bg-secondary/5 flex items-center justify-center text-secondary/50 group-hover:bg-primary group-hover:text-white transition-all shrink-0">
+                                            <i class="material-icons transition-transform duration-300" :class="{ 'rotate-180': openFaq === {{ $index }} }">keyboard_arrow_down</i>
+                                        </div>
                                     </button>
                                     <div x-show="openFaq === {{ $index }}" x-collapse>
-                                        <div class="px-5 pb-5 text-zinc-600 dark:text-zinc-300">
+                                        <div class="px-5 pb-5 text-secondary/70 leading-relaxed border-t border-secondary/5 pt-4">
                                             {{ $item['answer'] ?? '' }}
                                         </div>
                                     </div>
@@ -192,61 +253,67 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <!-- Gallery -->
                 @if($destination->images->count() > 0)
                     <div>
-                         <h2 class="text-3xl font-bold text-travel-blue dark:text-white mb-6">Gallery</h2>
+                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">Gallery</h2>
                          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                              @foreach($destination->images as $image)
-                                 <div class="relative aspect-square rounded-2xl overflow-hidden group">
-                                     <img src="{{ Storage::url($image->image_path) }}" alt="Gallery Image" class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition duration-500">
+                                 <div class="relative aspect-square rounded-xl overflow-hidden group cursor-pointer">
+                                     <img src="{{ Storage::url($image->image_path) }}" alt="Gallery Image" class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
+                                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                  </div>
                              @endforeach
                          </div>
                     </div>
                 @endif
             </div>
-
+            
+            {{-- Sidebar --}}
             <div class="lg:col-span-1">
-                <div class="bg-white dark:bg-zinc-800 p-8 rounded-2xl shadow-xl sticky top-24 border border-zinc-100 dark:border-zinc-700">
-                    <h3 class="text-2xl font-bold mb-6 text-travel-blue dark:text-white">Book Your Trip</h3>
+                <div class="sticky top-24 space-y-6">
+                    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-secondary/5 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary via-secondary to-primary"></div>
+                        <h3 class="text-xl sm:text-2xl font-extrabold mb-6 text-secondary">Book Your Trip</h3>
+                        
+                        <div class="space-y-4">
+                            @if($whatsappUrl)
+                                <a href="{{ $whatsappUrl }}" target="_blank" class="w-full flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-green-200 transform hover:-translate-y-1">
+                                    <i class="material-icons">chat</i>
+                                    Book via WhatsApp
+                                </a>
+                            @endif
+                            
+                            @if($emailUrl)
+                                <a href="{{ $emailUrl }}" class="w-full flex items-center justify-center gap-3 bg-secondary hover:bg-primary text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-primary/20 transform hover:-translate-y-1">
+                                    <i class="material-icons">email</i>
+                                    Inquire via Email
+                                </a>
+                            @endif
 
-                    @if($destination->person)
-                        <div class="flex items-center gap-3 mb-6 p-3 bg-zinc-50 dark:bg-zinc-700 rounded-xl">
-                            <flux:icon.users class="size-5 text-travel-blue" />
-                            <div>
-                                <p class="text-xs text-zinc-400 uppercase tracking-widest">Group Size</p>
-                                <p class="font-bold text-zinc-800 dark:text-white">{{ $destination->person }} Person</p>
-                            </div>
+                            @if(!$whatsappUrl && !$emailUrl)
+                                <div class="text-center text-secondary/50 italic py-4 bg-secondary/5 rounded-xl">
+                                    Contact methods not configured.
+                                </div>
+                            @endif
                         </div>
-                    @endif
-
-                    <div class="space-y-4">
-                        @if($whatsappUrl)
-                            <a href="{{ $whatsappUrl }}" target="_blank" class="w-full flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                                <flux:icon.chat-bubble-left class="size-6" />
-                                Book via WhatsApp
-                            </a>
-                        @endif
-
-                        @if($emailUrl)
-                            <a href="{{ $emailUrl }}" class="w-full flex items-center justify-center gap-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-900 dark:text-white font-bold py-4 rounded-xl transition">
-                                <flux:icon.envelope class="size-6" />
-                                Inquire via Email
-                            </a>
-                        @endif
-
-                        @if(!$whatsappUrl && !$emailUrl)
-                            <div class="text-center text-zinc-500 italic">
-                                Contact methods not configured.
-                            </div>
-                        @endif
+                        
+                        <div class="mt-8 pt-8 border-t border-secondary/5">
+                            <h4 class="font-bold mb-4 text-xs uppercase tracking-widest text-secondary/40">Why book with us?</h4>
+                            <ul class="space-y-3 text-sm text-secondary/70">
+                                @foreach($benefits as $benefit)
+                                   <li class="flex gap-3">
+                                       <i class="material-icons text-primary text-sm">{{ $benefit['icon'] ?? 'check_circle' }}</i> 
+                                       {{ $benefit['title'] }}
+                                   </li>
+                                @endforeach
+                            </ul>
+                        </div>
                     </div>
 
-                    <div class="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-700">
-                        <h4 class="font-bold mb-4 text-zinc-900 dark:text-white">Why book with us?</h4>
-                        <ul class="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
-                            <li class="flex gap-3"><flux:icon.check class="size-5 text-travel-green shrink-0" /> Best Price Guarantee</li>
-                            <li class="flex gap-3"><flux:icon.check class="size-5 text-travel-green shrink-0" /> No Hidden Fees</li>
-                            <li class="flex gap-3"><flux:icon.check class="size-5 text-travel-green shrink-0" /> Secure Payment & Booking</li>
-                        </ul>
+                    {{-- Help Card --}}
+                    <div class="bg-secondary p-6 sm:p-8 rounded-2xl text-white text-center">
+                        <i class="material-icons text-4xl text-primary mb-4">support_agent</i>
+                        <h3 class="text-lg font-bold mb-2">Need Assistance?</h3>
+                        <p class="text-white/60 text-sm mb-6">Our travel experts are ready to help you plan your perfect trip.</p>
+                        <a href="{{ route('about') }}" wire:navigate class="text-primary font-bold uppercase tracking-widest text-xs hover:text-white transition-colors">Contact Support &rarr;</a>
                     </div>
                 </div>
             </div>
