@@ -16,6 +16,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         'name' => '',
         'email' => '',
         'phone' => '',
+        'travel_date' => '',
         'person' => 1,
         'destination' => '',
         'city' => '',
@@ -32,6 +33,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         $this->destination = $destination;
         $this->bookingForm['destination'] = $destination->title;
         $this->bookingForm['person'] = $destination->person ?? 1;
+        $this->bookingForm['travel_date'] = now()->addDay()->format('Y-m-d');
 
         $settings = Setting::whereIn('key', [
             'whatsapp_number', 
@@ -72,6 +74,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             'bookingForm.name' => 'required|string|max:255',
             'bookingForm.email' => 'required|email|max:255',
             'bookingForm.phone' => 'required|string|max:50',
+            'bookingForm.travel_date' => 'required|date|after_or_equal:today',
             'bookingForm.person' => 'required|integer|min:1',
             'bookingForm.city' => 'required|string|max:100',
             'bookingForm.country' => 'required|string|max:100',
@@ -105,6 +108,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             '{person}' => $this->bookingForm['person'],
             '{city}' => $this->bookingForm['city'],
             '{country}' => $this->bookingForm['country'],
+            '{travel_date}' => $this->bookingForm['travel_date'],
         ];
 
         foreach ($placeholders as $key => $value) {
@@ -119,6 +123,19 @@ new #[Layout('components.layouts.public')] class extends Component {
         } elseif ($this->bookingType === 'email' && $adminEmail) {
             $url = "mailto:{$adminEmail}?subject=" . rawurlencode($subjectTemplate) . "&body=" . rawurlencode($emailTemplate);
         }
+
+        // Save Booking
+        $this->destination->bookings()->create([
+            'name' => $this->bookingForm['name'],
+            'email' => $this->bookingForm['email'],
+            'phone' => $this->bookingForm['phone'],
+            'travel_date' => $this->bookingForm['travel_date'],
+            'person' => $this->bookingForm['person'],
+            'city' => $this->bookingForm['city'],
+            'country' => $this->bookingForm['country'],
+            'type' => $this->bookingType,
+            'status' => 'pending',
+        ]);
 
         if ($url) {
             $this->redirect($url, navigate: false);
@@ -414,6 +431,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                     <label class="block text-sm font-extrabold text-secondary mb-2">Email Address <span class="text-red-500">*</span></label>
                     <input type="email" wire:model="bookingForm.email" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="you@example.com">
                     @error('bookingForm.email') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-extrabold text-secondary mb-2">Travel Date <span class="text-red-500">*</span></label>
+                    <input type="date" wire:model="bookingForm.travel_date" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3">
+                    @error('bookingForm.travel_date') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="grid grid-cols-3 gap-5">

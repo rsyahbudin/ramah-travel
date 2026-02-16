@@ -15,6 +15,7 @@ Route::view('dashboard', 'dashboard')
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Volt::route('/', 'admin.dashboard')->name('dashboard');
+    Volt::route('/bookings', 'admin.bookings.index')->name('bookings');
     Volt::route('/destinations', 'admin.destinations.index')->name('destinations.index');
     Volt::route('/destinations/create', 'admin.destinations.form')->name('destinations.create');
     Volt::route('/destinations/{destination}/edit', 'admin.destinations.form')->name('destinations.edit');

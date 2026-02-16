@@ -21,6 +21,9 @@
                     <flux:sidebar.item icon="map" :href="route('admin.destinations.index')" :current="request()->routeIs('admin.destinations.*')" wire:navigate>
                         {{ __('Destinations') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="calendar-days" :href="route('admin.bookings')" :current="request()->routeIs('admin.bookings')" wire:navigate>
+                        {{ __('Bookings') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('System')" class="grid">
