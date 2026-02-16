@@ -4,6 +4,14 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 // Public Routes
+Route::get('/lang/{locale}', function (string $locale) {
+    if (in_array($locale, ['en', 'id', 'es'])) {
+        session()->put('locale', $locale);
+    }
+
+    return redirect()->back();
+})->name('lang.switch');
+
 Volt::route('/', 'public.home')->name('home');
 Volt::route('/destinations', 'public.destinations.index')->name('destinations.index');
 Volt::route('/destinations/{destination:slug}', 'public.destinations.show')->name('destinations.show');

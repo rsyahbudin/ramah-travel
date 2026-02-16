@@ -38,7 +38,6 @@ new #[Layout('components.layouts.public')] class extends Component {
         $settings = Setting::whereIn('key', [
             'whatsapp_number', 
             'admin_email', 
-            'experience_tiers_points', 
             'whatsapp_template', 
             'email_subject_template',
             'email_template'
@@ -51,15 +50,11 @@ new #[Layout('components.layouts.public')] class extends Component {
         if ($whatsappNumber) $this->whatsappUrl = "https://wa.me/{$whatsappNumber}";
         if ($adminEmail) $this->emailUrl = "mailto:{$adminEmail}";
 
-        $this->benefits = json_decode($settings['experience_tiers_points'] ?? '[]', true);
-        
-        if (empty($this->benefits)) {
-             $this->benefits = [
-                ['icon' => 'diamond', 'title' => 'Elite Concierge'],
-                ['icon' => 'map', 'title' => 'Bespoke Itineraries'],
-                ['icon' => 'verified_user', 'title' => 'Insider Access'],
-             ];
-        }
+        $this->benefits = Setting::getTranslated('experience_tiers_points') ?: [
+            ['icon' => 'diamond', 'title' => 'Elite Concierge'],
+            ['icon' => 'map', 'title' => 'Bespoke Itineraries'],
+            ['icon' => 'verified_user', 'title' => 'Insider Access'],
+        ];
     }
 
     public function initiateBooking(string $type): void
@@ -80,20 +75,12 @@ new #[Layout('components.layouts.public')] class extends Component {
             'bookingForm.country' => 'required|string|max:100',
         ]);
 
-        $settings = Setting::whereIn('key', [
-            'whatsapp_number', 
-            'admin_email', 
-            'whatsapp_template', 
-            'email_subject_template',
-            'email_template'
-        ])->pluck('value', 'key');
-        
-        $whatsappNumber = $settings['whatsapp_number'] ?? null;
-        $adminEmail = $settings['admin_email'] ?? null;
+        $whatsappNumber = Setting::where('key', 'whatsapp_number')->value('value');
+        $adminEmail = Setting::where('key', 'admin_email')->value('value');
 
-        $waTemplate = $settings['whatsapp_template'] ?? "Hello, my name is {name}. I would like to book {destination} for {person} pax from {city}, {country}. Email: {email}, Phone: {phone}.";
-        $subjectTemplate = $settings['email_subject_template'] ?? "New Booking: {destination} - {name}";
-        $emailTemplate = $settings['email_template'] ?? "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nURL: {url}";
+        $waTemplate = Setting::getTranslated('whatsapp_template', "Hello, my name is {name}. I would like to book {destination} for {person} pax from {city}, {country}. Email: {email}, Phone: {phone}.");
+        $subjectTemplate = Setting::getTranslated('email_subject_template', "New Booking: {destination} - {name}");
+        $emailTemplate = Setting::getTranslated('email_template', "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nURL: {url}");
 
         $placeholders = [
             '{title}' => $this->destination->title,
@@ -165,7 +152,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             </h1>
             <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-white">
                 <div class="text-2xl sm:text-3xl font-extrabold text-primary">
-                    {{ $destination->price_range }} <span class="text-base sm:text-lg font-normal text-white/50">/ person</span>
+                    {{ $destination->price_range }} <span class="text-base sm:text-lg font-normal text-white/50">/ {{ __('person') }}</span>
                 </div>
                 
                 <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
@@ -174,7 +161,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                     @if($destination->person)
                         <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/10">
                             <i class="material-icons text-sm">group</i>
-                            <span class="font-bold text-sm">{{ $destination->person }} Pax</span>
+                            <span class="font-bold text-sm">{{ $destination->person }} {{ __('Pax') }}</span>
                         </div>
                     @endif
                     @if($destination->duration)
@@ -215,9 +202,9 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <div>
                     <div class="flex items-center gap-4 mb-6">
                         <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
-                        <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">Overview</span>
+                        <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ __('Overview') }}</span>
                     </div>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-secondary mb-6 leading-tight">About this Journey</h2>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-secondary mb-6 leading-tight">{{ __('About this Journey') }}</h2>
                     <div class="prose prose-lg max-w-none text-secondary/70 font-light leading-relaxed">
                         {!! nl2br(e($destination->description)) !!}
                     </div>
@@ -226,7 +213,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <!-- Highlights - SIMPLIFIED -->
                 @if(!empty($destination->highlights))
                     <div>
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">Highlights</h2>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Highlights') }}</h2>
                         <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                             @foreach($destination->highlights as $highlight)
                                 <li class="flex items-start gap-3">
@@ -241,7 +228,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <!-- Itinerary - CLEAN TIMELINE LAYOUT -->
                 @if(!empty($destination->itinerary))
                     <div>
-                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-8">Itinerary</h2>
+                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-8">{{ __('Itinerary') }}</h2>
                          <div class="relative border-l border-secondary/20 ml-3 md:ml-4 my-8 md:my-10 space-y-0">
                             @foreach($destination->itinerary as $index => $day)
                                 <div class="relative pl-8 md:pl-10 py-6 group first:pt-0 last:pb-0">
@@ -251,7 +238,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                                     <!-- Day Badge -->
                                     <div class="mb-3">
                                         <span class="inline-block px-3 py-1 text-xs font-bold uppercase tracking-widest text-secondary/60 bg-secondary/5 rounded-md group-hover:text-primary group-hover:bg-primary/5 transition-colors">
-                                            {{ $day['day'] ?? "Day " . ($index + 1) }}
+                                            {{ $day['day'] ?? __('Day') . " " . ($index + 1) }}
                                         </span>
                                     </div>
                                     
@@ -271,7 +258,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                         @if(!empty($destination->includes))
                             <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
                                 <h3 class="text-lg font-bold text-travel-green mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
-                                    <i class="material-icons text-lg">check_circle</i> What's Included
+                                    <i class="material-icons text-lg">check_circle</i> {{ __("What's Included") }}
                                 </h3>
                                 <ul class="space-y-4">
                                     @foreach($destination->includes as $item)
@@ -286,7 +273,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                         @if(!empty($destination->excludes))
                             <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
                                 <h3 class="text-lg font-bold text-red-500 mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
-                                    <i class="material-icons text-lg">cancel</i> What's Excluded
+                                    <i class="material-icons text-lg">cancel</i> {{ __("What's Excluded") }}
                                 </h3>
                                 <ul class="space-y-4">
                                     @foreach($destination->excludes as $item)
@@ -304,7 +291,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <!-- FAQ -->
                 @if(!empty($destination->faq))
                     <div>
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">Common Questions</h2>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Common Questions') }}</h2>
                         <div class="space-y-4" x-data="{ openFaq: null }">
                             @foreach($destination->faq as $index => $item)
                                 <div class="bg-white rounded-xl border border-secondary/5 overflow-hidden transition-all duration-300" :class="{ 'shadow-lg border-primary/20': openFaq === {{ $index }} }">
@@ -328,7 +315,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <!-- Gallery -->
                 @if($destination->images->count() > 0)
                     <div>
-                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">Gallery</h2>
+                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Gallery') }}</h2>
                          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                              @foreach($destination->images as $image)
                                  <div class="relative aspect-square rounded-xl overflow-hidden group cursor-pointer">
@@ -346,35 +333,35 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <div class="sticky top-24 space-y-6">
                     <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-secondary/5 relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary via-secondary to-primary"></div>
-                        <h3 class="text-xl sm:text-2xl font-extrabold mb-6 text-secondary">Book Your Trip</h3>
+                        <h3 class="text-xl sm:text-2xl font-extrabold mb-6 text-secondary">{{ __('Book Your Trip') }}</h3>
                         
                         <div class="space-y-4">
                             @if($whatsappUrl)
                                 <button wire:click="initiateBooking('whatsapp')" class="w-full bg-green-600 text-white font-bold uppercase tracking-widest py-4 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 group transform hover:-translate-y-1">
-                                    <i class="material-icons">chat</i> Inquire via WhatsApp
+                                    <i class="material-icons">chat</i> {{ __('Inquire via WhatsApp') }}
                                 </button>
                             @endif
 
                             @if($emailUrl)
                                 <button wire:click="initiateBooking('email')" class="w-full bg-secondary text-white font-bold uppercase tracking-widest py-4 rounded-xl hover:bg-primary transition-all shadow-lg flex items-center justify-center gap-2 group transform hover:-translate-y-1">
-                                    <i class="material-icons">email</i> Inquire via Email
+                                    <i class="material-icons">email</i> {{ __('Inquire via Email') }}
                                 </button>
                             @endif
 
-                            @if(!$whatsappUrl && !$emailUrl)
+                            @if(!$whatsappUrl && !Setting::where('key', 'whatsapp_number')->value('value') && !Setting::where('key', 'admin_email')->value('value'))
                                 <div class="text-center text-secondary/50 italic py-4 bg-secondary/5 rounded-xl">
-                                    Contact methods not configured.
+                                    {{ __('Contact methods not configured.') }}
                                 </div>
                             @endif
                         </div>
                         
                         <div class="mt-8 pt-8 border-t border-secondary/5">
-                            <h4 class="font-bold mb-4 text-xs uppercase tracking-widest text-secondary/40">Why book with us?</h4>
+                            <h4 class="font-bold mb-4 text-xs uppercase tracking-widest text-secondary/40">{{ __('Why book with us?') }}</h4>
                             <ul class="space-y-3 text-sm text-secondary/70">
                                 @foreach($benefits as $benefit)
                                    <li class="flex gap-3">
                                        <i class="material-icons text-primary text-sm">{{ $benefit['icon'] ?? 'check_circle' }}</i> 
-                                       {{ $benefit['title'] }}
+                                       {{ __($benefit['title'] ?? '') }}
                                    </li>
                                 @endforeach
                             </ul>
@@ -384,9 +371,9 @@ new #[Layout('components.layouts.public')] class extends Component {
                     {{-- Help Card --}}
                     <div class="bg-secondary p-6 sm:p-8 rounded-2xl text-white text-center">
                         <i class="material-icons text-4xl text-primary mb-4">support_agent</i>
-                        <h3 class="text-lg font-bold mb-2">Need Assistance?</h3>
-                        <p class="text-white/60 text-sm mb-6">Our travel experts are ready to help you plan your perfect trip.</p>
-                        <a href="{{ route('about') }}" wire:navigate class="text-primary font-bold uppercase tracking-widest text-xs hover:text-white transition-colors">Contact Support &rarr;</a>
+                        <h3 class="text-lg font-bold mb-2">{{ __('Need Assistance?') }}</h3>
+                        <p class="text-white/60 text-sm mb-6">{{ __('Our travel experts are ready to help you plan your perfect trip.') }}</p>
+                        <a href="{{ route('about') }}" wire:navigate class="text-primary font-bold uppercase tracking-widest text-xs hover:text-white transition-colors">{{ __('Contact Support') }} &rarr;</a>
                     </div>
                 </div>
             </div>
@@ -402,7 +389,7 @@ new #[Layout('components.layouts.public')] class extends Component {
          
         <div @click.away="open = false; $wire.set('showBookingForm', false)" class="bg-slate-50 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200">
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <h3 class="text-lg font-bold text-secondary">Complete Your Booking</h3>
+                <h3 class="text-lg font-bold text-secondary">{{ __('Complete Your Booking') }}</h3>
                 <button type="button" @click="open = false; $wire.set('showBookingForm', false)" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="material-icons">close</i>
                 </button>
@@ -410,61 +397,61 @@ new #[Layout('components.layouts.public')] class extends Component {
             
             <form wire:submit="submitBooking" class="p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
                 <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">Destination</label>
+                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Destination') }}</label>
                     <input type="text" wire:model="bookingForm.destination" readonly class="w-full rounded-xl border-2 border-gray-200 bg-gray-100 text-gray-500 font-bold focus:ring-0 cursor-not-allowed px-4 py-3">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label class="block text-sm font-extrabold text-secondary mb-2">Full Name <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="bookingForm.name" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="E.g. John Doe">
+                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Full Name') }} <span class="text-red-500">*</span></label>
+                        <input type="text" wire:model="bookingForm.name" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="{{ __('E.g. John Doe') }}">
                         @error('bookingForm.name') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-extrabold text-secondary mb-2">Phone Number <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Phone Number') }} <span class="text-red-500">*</span></label>
                         <input type="text" wire:model="bookingForm.phone" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="+62...">
                         @error('bookingForm.phone') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">Email Address <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Email Address') }} <span class="text-red-500">*</span></label>
                     <input type="email" wire:model="bookingForm.email" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="you@example.com">
                     @error('bookingForm.email') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">Travel Date <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Travel Date') }} <span class="text-red-500">*</span></label>
                     <input type="date" wire:model="bookingForm.travel_date" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3">
                     @error('bookingForm.travel_date') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                 </div>
 
                 <div class="grid grid-cols-3 gap-5">
                     <div class="col-span-1">
-                        <label class="block text-sm font-extrabold text-secondary mb-2">Pax <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Pax') }} <span class="text-red-500">*</span></label>
                         <input type="number" wire:model="bookingForm.person" min="1" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3">
                         @error('bookingForm.person') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                     </div>
                     <div class="col-span-2">
-                        <label class="block text-sm font-extrabold text-secondary mb-2">City <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('City') }} <span class="text-red-500">*</span></label>
                         <input type="text" wire:model="bookingForm.city" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="Jakarta">
                         @error('bookingForm.city') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">Country <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Country') }} <span class="text-red-500">*</span></label>
                     <input type="text" wire:model="bookingForm.country" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="Indonesia">
                     @error('bookingForm.country') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                 </div>
                 
                 <div class="pt-6">
                     <button type="submit" class="w-full bg-primary text-white font-bold uppercase tracking-widest py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transform active:scale-95">
-                        <span>Proceed to</span>
+                        <span>{{ __('Proceed to') }}</span>
                         <span x-text="$wire.bookingType === 'whatsapp' ? 'WhatsApp' : 'Email'"></span>
                         <i class="material-icons text-sm">arrow_forward</i>
                     </button>
-                    <p class="text-center text-xs text-secondary/60 mt-4">You will be redirected to complete your request securely.</p>
+                    <p class="text-center text-xs text-secondary/60 mt-4">{{ __('You will be redirected to complete your request securely.') }}</p>
                 </div>
             </form>
         </div>

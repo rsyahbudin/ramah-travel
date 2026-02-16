@@ -1,6 +1,6 @@
 <?php
-
 use App\Models\Destination;
+use App\Models\Booking;
 use Livewire\Volt\Component;
 
 new class extends Component {
@@ -9,6 +9,9 @@ new class extends Component {
         return [
             'totalDestinations' => Destination::count(),
             'activeDestinations' => Destination::where('is_visible', true)->count(),
+            'totalBookings' => Booking::count(),
+            'whatsappBookings' => Booking::where('type', 'whatsapp')->count(),
+            'emailBookings' => Booking::where('type', 'email')->count(),
         ];
     }
 };
@@ -26,6 +29,21 @@ new class extends Component {
         <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
             <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('Active Destinations') }}</div>
             <div class="text-3xl font-bold">{{ $activeDestinations }}</div>
+        </div>
+
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('Total Bookings') }}</div>
+            <div class="text-3xl font-bold">{{ $totalBookings }}</div>
+        </div>
+
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('WhatsApp Bookings') }}</div>
+            <div class="text-3xl font-bold text-green-600">{{ $whatsappBookings }}</div>
+        </div>
+
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('Email Bookings') }}</div>
+            <div class="text-3xl font-bold text-blue-600">{{ $emailBookings }}</div>
         </div>
     </div>
 </div>

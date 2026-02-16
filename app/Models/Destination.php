@@ -2,23 +2,40 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 
 class Destination extends Model
 {
+    use HasTranslations;
+
     protected $guarded = ['id'];
+
+    protected $translatable = [
+        'title',
+        'description',
+        'location',
+        'duration',
+        'theme',
+        'highlights',
+        'itinerary',
+        'includes',
+        'excludes',
+        'faq',
+        'trip_info',
+    ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'price_max' => 'decimal:2',
         'is_featured' => 'boolean',
         'is_visible' => 'boolean',
-        'highlights' => 'array',
-        'itinerary' => 'array',
-        'includes' => 'array',
-        'excludes' => 'array',
-        'faq' => 'array',
-        'trip_info' => 'array',
+        'highlights' => 'json',
+        'itinerary' => 'json',
+        'includes' => 'json',
+        'excludes' => 'json',
+        'faq' => 'json',
+        'trip_info' => 'json',
     ];
 
     public function images()

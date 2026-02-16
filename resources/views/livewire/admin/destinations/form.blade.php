@@ -12,127 +12,143 @@ new class extends Component {
 
     public ?Destination $destination = null;
 
-    public string $title = '';
+    public array $title = ['en' => '', 'id' => '', 'es' => ''];
     public string $slug = '';
-    public string $location = '';
-    public string $duration = '';
-    public string $theme = '';
+    public array $location = ['en' => '', 'id' => '', 'es' => ''];
+    public array $duration = ['en' => '', 'id' => '', 'es' => ''];
+    public array $theme = ['en' => '', 'id' => '', 'es' => ''];
     public string $price = '';
     public ?string $price_max = '';
-    public string $description = '';
+    public array $description = ['en' => '', 'id' => '', 'es' => ''];
     public bool $is_featured = false;
     public bool $is_visible = true;
     public $image;
     public $existingImage;
 
-    public array $highlights = [];
-    public array $itinerary = [];
+    public array $highlights = ['en' => [], 'id' => [], 'es' => []];
+    public array $itinerary = ['en' => [], 'id' => [], 'es' => []];
     public ?string $person = '';
-    public array $includes = [];
-    public array $excludes = [];
-    public array $faq = [];
-    public array $trip_info = [];
+    public array $includes = ['en' => [], 'id' => [], 'es' => []];
+    public array $excludes = ['en' => [], 'id' => [], 'es' => []];
+    public array $faq = ['en' => [], 'id' => [], 'es' => []];
+    public array $trip_info = ['en' => [], 'id' => [], 'es' => []];
     public $gallery = [];
     public $existingGallery = [];
+    public string $activeTab = 'en';
 
     public function mount(?Destination $destination = null): void
     {
         if ($destination && $destination->exists) {
             $this->destination = $destination;
-            $this->title = $destination->title;
+            $this->title = $destination->getTranslations('title') ?: ['en' => $destination->getRawOriginal('title')];
             $this->slug = $destination->slug;
-            $this->location = $destination->location;
-            $this->duration = $destination->duration ?? '';
-            $this->theme = $destination->theme ?? '';
+            $this->location = $destination->getTranslations('location') ?: ['en' => $destination->getRawOriginal('location')];
+            $this->duration = $destination->getTranslations('duration') ?: ['en' => $destination->getRawOriginal('duration') ?? ''];
+            $this->theme = $destination->getTranslations('theme') ?: ['en' => $destination->getRawOriginal('theme') ?? ''];
             $this->price = (string) $destination->price;
             $this->price_max = $destination->price_max ? (string) $destination->price_max : '';
-            $this->description = $destination->description;
+            $this->description = $destination->getTranslations('description') ?: ['en' => $destination->getRawOriginal('description')];
             $this->is_featured = $destination->is_featured;
             $this->is_visible = $destination->is_visible;
             $this->existingImage = $destination->image_path;
 
-            $this->highlights = $destination->highlights ?? [];
-            $this->itinerary = $destination->itinerary ?? [];
+            $this->highlights = $destination->getTranslations('highlights') ?: ['en' => $destination->highlights ?? [], 'id' => [], 'es' => []];
+            $this->itinerary = $destination->getTranslations('itinerary') ?: ['en' => $destination->itinerary ?? [], 'id' => [], 'es' => []];
             $this->person = $destination->person ? (string) $destination->person : '';
-            $this->includes = $destination->includes ?? [];
-            $this->excludes = $destination->excludes ?? [];
-            $this->faq = $destination->faq ?? [];
-            $this->trip_info = $destination->trip_info ?? [];
+            $this->includes = $destination->getTranslations('includes') ?: ['en' => $destination->includes ?? [], 'id' => [], 'es' => []];
+            $this->excludes = $destination->getTranslations('excludes') ?: ['en' => $destination->excludes ?? [], 'id' => [], 'es' => []];
+            $this->faq = $destination->getTranslations('faq') ?: ['en' => $destination->faq ?? [], 'id' => [], 'es' => []];
+            $this->trip_info = $destination->getTranslations('trip_info') ?: ['en' => $destination->trip_info ?? [], 'id' => [], 'es' => []];
             $this->existingGallery = $destination->images()->get();
+
+            // Ensure all locales are present
+            foreach (['en', 'id', 'es'] as $locale) {
+                if (!isset($this->title[$locale])) $this->title[$locale] = '';
+                if (!isset($this->location[$locale])) $this->location[$locale] = '';
+                if (!isset($this->duration[$locale])) $this->duration[$locale] = '';
+                if (!isset($this->theme[$locale])) $this->theme[$locale] = '';
+                if (!isset($this->description[$locale])) $this->description[$locale] = '';
+                if (!isset($this->highlights[$locale])) $this->highlights[$locale] = [];
+                if (!isset($this->itinerary[$locale])) $this->itinerary[$locale] = [];
+                if (!isset($this->includes[$locale])) $this->includes[$locale] = [];
+                if (!isset($this->excludes[$locale])) $this->excludes[$locale] = [];
+                if (!isset($this->faq[$locale])) $this->faq[$locale] = [];
+                if (!isset($this->trip_info[$locale])) $this->trip_info[$locale] = [];
+            }
         }
     }
 
-    public function updatedTitle($value): void
+    public function updatedTitle($value, $key): void
     {
-        if (!$this->destination?->exists) {
+        if ($key === 'en' && !$this->destination?->exists) {
             $this->slug = Str::slug($value);
         }
     }
 
-    public function addHighlight(): void
+    public function addHighlight($locale): void
     {
-        $this->highlights[] = '';
+        $this->highlights[$locale][] = '';
     }
 
-    public function removeHighlight($index): void
+    public function removeHighlight($locale, $index): void
     {
-        unset($this->highlights[$index]);
-        $this->highlights = array_values($this->highlights);
+        unset($this->highlights[$locale][$index]);
+        $this->highlights[$locale] = array_values($this->highlights[$locale]);
     }
 
-    public function addItineraryDay(): void
+    public function addItineraryDay($locale): void
     {
-        $this->itinerary[] = ['day' => '', 'activity' => ''];
+        $this->itinerary[$locale][] = ['day' => '', 'activity' => ''];
     }
 
-    public function removeItineraryDay($index): void
+    public function removeItineraryDay($locale, $index): void
     {
-        unset($this->itinerary[$index]);
-        $this->itinerary = array_values($this->itinerary);
+        unset($this->itinerary[$locale][$index]);
+        $this->itinerary[$locale] = array_values($this->itinerary[$locale]);
     }
 
-    public function addInclude(): void
+    public function addInclude($locale): void
     {
-        $this->includes[] = '';
+        $this->includes[$locale][] = '';
     }
 
-    public function removeInclude($index): void
+    public function removeInclude($locale, $index): void
     {
-        unset($this->includes[$index]);
-        $this->includes = array_values($this->includes);
+        unset($this->includes[$locale][$index]);
+        $this->includes[$locale] = array_values($this->includes[$locale]);
     }
 
-    public function addExclude(): void
+    public function addExclude($locale): void
     {
-        $this->excludes[] = '';
+        $this->excludes[$locale][] = '';
     }
 
-    public function removeExclude($index): void
+    public function removeExclude($locale, $index): void
     {
-        unset($this->excludes[$index]);
-        $this->excludes = array_values($this->excludes);
+        unset($this->excludes[$locale][$index]);
+        $this->excludes[$locale] = array_values($this->excludes[$locale]);
     }
 
-    public function addFaq(): void
+    public function addFaq($locale): void
     {
-        $this->faq[] = ['question' => '', 'answer' => ''];
+        $this->faq[$locale][] = ['question' => '', 'answer' => ''];
     }
 
-    public function removeFaq($index): void
+    public function removeFaq($locale, $index): void
     {
-        unset($this->faq[$index]);
-        $this->faq = array_values($this->faq);
+        unset($this->faq[$locale][$index]);
+        $this->faq[$locale] = array_values($this->faq[$locale]);
     }
 
-    public function addTripInfo(): void
+    public function addTripInfo($locale): void
     {
-        $this->trip_info[] = ['key' => '', 'value' => ''];
+        $this->trip_info[$locale][] = ['key' => '', 'value' => ''];
     }
 
-    public function removeTripInfo($index): void
+    public function removeTripInfo($locale, $index): void
     {
-        unset($this->trip_info[$index]);
-        $this->trip_info = array_values($this->trip_info);
+        unset($this->trip_info[$locale][$index]);
+        $this->trip_info[$locale] = array_values($this->trip_info[$locale]);
     }
 
     public function deleteGalleryImage($id): void
@@ -148,43 +164,50 @@ new class extends Component {
     public function save(): void
     {
         $validated = $this->validate([
-            'title' => 'required|string|max:255',
+            'title.en' => 'required|string|max:255',
+            'title.id' => 'nullable|string|max:255',
+            'title.es' => 'nullable|string|max:255',
             'slug' => 'required|string|max:255|unique:destinations,slug,' . ($this->destination?->id ?? 'NULL'),
-            'location' => 'required|string|max:255',
-            'duration' => 'nullable|string|max:255',
-            'theme' => 'nullable|string|max:255',
+            'location.en' => 'required|string|max:255',
+            'location.id' => 'nullable|string|max:255',
+            'location.es' => 'nullable|string|max:255',
+            'duration.en' => 'nullable|string|max:255',
+            'duration.id' => 'nullable|string|max:255',
+            'duration.es' => 'nullable|string|max:255',
+            'theme.en' => 'nullable|string|max:255',
+            'theme.id' => 'nullable|string|max:255',
+            'theme.es' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0',
             'price_max' => 'nullable|numeric|gt:price',
-            'description' => 'required|string',
+            'description.en' => 'required|string',
+            'description.id' => 'nullable|string',
+            'description.es' => 'nullable|string',
             'is_featured' => 'boolean',
             'is_visible' => 'boolean',
             'image' => 'nullable|image|max:2048',
-            'highlights' => 'array',
-            'highlights.*' => 'required|string|max:255',
-            'itinerary' => 'array',
-            'itinerary.*.day' => 'required|string|max:255',
-            'itinerary.*.activity' => 'required|string',
             'person' => 'nullable|integer|min:1',
-            'includes' => 'array',
-            'includes.*' => 'nullable|string|max:255',
-            'excludes' => 'array',
-            'excludes.*' => 'nullable|string|max:255',
-            'faq' => 'array',
-            'faq.*.question' => 'required|string|max:500',
-            'faq.*.answer' => 'required|string',
-            'trip_info' => 'array',
-            'trip_info.*.key' => 'required|string|max:255',
-            'trip_info.*.value' => 'required|string|max:255',
             'gallery.*' => 'image|max:2048',
         ]);
 
-        $validated['highlights'] = array_values(array_filter($this->highlights));
-        $validated['itinerary'] = array_values($this->itinerary);
-        $validated['includes'] = array_values(array_filter($this->includes));
-        $validated['excludes'] = array_values(array_filter($this->excludes));
-        $validated['faq'] = array_values($this->faq);
-        $validated['trip_info'] = array_values($this->trip_info);
-        $validated['person'] = $this->person !== '' ? (int) $this->person : null;
+        $data = [
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'location' => $this->location,
+            'duration' => $this->duration,
+            'theme' => $this->theme,
+            'price' => $this->price,
+            'price_max' => $this->price_max,
+            'description' => $this->description,
+            'is_featured' => $this->is_featured,
+            'is_visible' => $this->is_visible,
+            'person' => $this->person !== '' ? (int) $this->person : null,
+            'highlights' => $this->highlights,
+            'itinerary' => $this->itinerary,
+            'includes' => $this->includes,
+            'excludes' => $this->excludes,
+            'faq' => $this->faq,
+            'trip_info' => $this->trip_info,
+        ];
 
         // Handle Main Image
         if ($this->image) {
@@ -193,9 +216,9 @@ new class extends Component {
 
         // Create or Update Destination
         if ($this->destination?->exists) {
-            $this->destination->update($validated);
+            $this->destination->update($data);
         } else {
-            $this->destination = Destination::create($validated);
+            $this->destination = Destination::create($data);
         }
 
         // Handle Gallery
@@ -216,12 +239,23 @@ new class extends Component {
 <div>
     <div class="flex justify-between items-center mb-6">
         <flux:heading size="xl">{{ $destination?->exists ? __('Edit Destination') : __('New Destination') }}</flux:heading>
+        
+        <div class="flex gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+            @foreach(['en' => 'English', 'id' => 'Indonesia', 'es' => 'Español'] as $locale => $label)
+                <button type="button" 
+                    wire:click="$set('activeTab', '{{ $locale }}')"
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition {{ $activeTab === $locale ? 'bg-white dark:bg-zinc-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-700' }}"
+                >
+                    {{ $label }}
+                </button>
+            @endforeach
+        </div>
     </div>
 
     <form wire:submit="save" class="space-y-6 max-w-4xl">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <flux:input label="{{ __('Title') }}" wire:model.live="title" />
-            <flux:input label="{{ __('Slug') }}" wire:model="slug" />
+            <flux:input label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" wire:model.live="title.{{ $activeTab }}" />
+            <flux:input label="{{ __('Slug') }}" wire:model="slug" description="Slug is generated from English title" />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -230,27 +264,27 @@ new class extends Component {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <flux:input label="{{ __('Location') }}" wire:model="location" icon="map-pin" />
+            <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:model="location.{{ $activeTab }}" icon="map-pin" />
             <flux:input label="{{ __('Person (Pax)') }}" wire:model="person" type="number" min="1" icon="user" />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <flux:input label="{{ __('Duration (e.g. 5 Days 4 Nights)') }}" wire:model="duration" icon="clock" />
-            <flux:input label="{{ __('Theme (e.g. Adventure, Romance)') }}" wire:model="theme" icon="tag" />
+            <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:model="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
+            <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:model="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
         </div>
 
-        <flux:textarea label="{{ __('Description') }}" wire:model="description" rows="5" />
+        <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:model="description.{{ $activeTab }}" rows="5" />
 
         <!-- Highlights Section -->
         <div class="space-y-3">
              <div class="flex justify-between items-center">
-                <flux:label>{{ __('Highlights') }}</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addHighlight">{{ __('Add Highlight') }}</flux:button>
+                <flux:label>{{ __('Highlights') }} ({{ strtoupper($activeTab) }})</flux:label>
+                <flux:button size="sm" icon="plus" wire:click="addHighlight('{{ $activeTab }}')">{{ __('Add Highlight') }}</flux:button>
              </div>
-             @foreach($highlights as $index => $highlight)
+             @foreach($highlights[$activeTab] as $index => $highlight)
                 <div class="flex gap-2">
-                    <flux:input wire:model="highlights.{{ $index }}" placeholder="e.g. Sunset Dinner" />
-                    <flux:button icon="trash" wire:click="removeHighlight({{ $index }})" variant="danger" />
+                    <flux:input wire:model="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
+                    <flux:button icon="trash" wire:click="removeHighlight('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
              @endforeach
         </div>
@@ -258,18 +292,18 @@ new class extends Component {
         <!-- Itinerary Section -->
         <div class="space-y-3">
             <div class="flex justify-between items-center">
-                <flux:label>{{ __('Itinerary') }}</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addItineraryDay">{{ __('Add Day') }}</flux:button>
+                <flux:label>{{ __('Itinerary') }} ({{ strtoupper($activeTab) }})</flux:label>
+                <flux:button size="sm" icon="plus" wire:click="addItineraryDay('{{ $activeTab }}')">{{ __('Add Day') }}</flux:button>
             </div>
-            @foreach($itinerary as $index => $day)
+            @foreach($itinerary[$activeTab] as $index => $day)
                 <div class="flex gap-2 items-start">
                     <div class="w-32 shrink-0">
-                        <flux:input wire:model="itinerary.{{ $index }}.day" placeholder="e.g. Day 1" />
+                        <flux:input wire:model="itinerary.{{ $activeTab }}.{{ $index }}.day" placeholder="e.g. Day 1" />
                     </div>
                     <div class="flex-1">
-                        <flux:textarea wire:model="itinerary.{{ $index }}.activity" placeholder="e.g. Arrival & Hotel Check-in" rows="2" />
+                        <flux:textarea wire:model="itinerary.{{ $activeTab }}.{{ $index }}.activity" placeholder="e.g. Arrival & Hotel Check-in" rows="2" />
                     </div>
-                    <flux:button icon="trash" wire:click="removeItineraryDay({{ $index }})" variant="danger" />
+                    <flux:button icon="trash" wire:click="removeItineraryDay('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>
@@ -277,13 +311,13 @@ new class extends Component {
         <!-- Includes Section -->
         <div class="space-y-3">
             <div class="flex justify-between items-center">
-                <flux:label>{{ __('Includes') }}</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addInclude">{{ __('Add Include') }}</flux:button>
+                <flux:label>{{ __('Includes') }} ({{ strtoupper($activeTab) }})</flux:label>
+                <flux:button size="sm" icon="plus" wire:click="addInclude('{{ $activeTab }}')">{{ __('Add Include') }}</flux:button>
             </div>
-            @foreach($includes as $index => $item)
+            @foreach($includes[$activeTab] as $index => $item)
                 <div class="flex gap-2">
-                    <flux:input wire:model="includes.{{ $index }}" placeholder="e.g. Airport pickup & drop-off" />
-                    <flux:button icon="trash" wire:click="removeInclude({{ $index }})" variant="danger" />
+                    <flux:input wire:model="includes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Airport pickup & drop-off" />
+                    <flux:button icon="trash" wire:click="removeInclude('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>
@@ -291,13 +325,13 @@ new class extends Component {
         <!-- Excludes Section -->
         <div class="space-y-3">
             <div class="flex justify-between items-center">
-                <flux:label>{{ __('Excludes') }}</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addExclude">{{ __('Add Exclude') }}</flux:button>
+                <flux:label>{{ __('Excludes') }} ({{ strtoupper($activeTab) }})</flux:label>
+                <flux:button size="sm" icon="plus" wire:click="addExclude('{{ $activeTab }}')">{{ __('Add Exclude') }}</flux:button>
             </div>
-            @foreach($excludes as $index => $item)
+            @foreach($excludes[$activeTab] as $index => $item)
                 <div class="flex gap-2">
-                    <flux:input wire:model="excludes.{{ $index }}" placeholder="e.g. International flights" />
-                    <flux:button icon="trash" wire:click="removeExclude({{ $index }})" variant="danger" />
+                    <flux:input wire:model="excludes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. International flights" />
+                    <flux:button icon="trash" wire:click="removeExclude('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>
@@ -305,16 +339,16 @@ new class extends Component {
         <!-- FAQ Section -->
         <div class="space-y-3">
             <div class="flex justify-between items-center">
-                <flux:label>{{ __('FAQ') }}</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addFaq">{{ __('Add FAQ') }}</flux:button>
+                <flux:label>{{ __('FAQ') }} ({{ strtoupper($activeTab) }})</flux:label>
+                <flux:button size="sm" icon="plus" wire:click="addFaq('{{ $activeTab }}')">{{ __('Add FAQ') }}</flux:button>
             </div>
-            @foreach($faq as $index => $item)
+            @foreach($faq[$activeTab] as $index => $item)
                 <div class="space-y-2 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg relative">
                     <div class="absolute top-2 right-2">
-                        <flux:button size="sm" icon="trash" wire:click="removeFaq({{ $index }})" variant="danger" />
+                        <flux:button size="sm" icon="trash" wire:click="removeFaq('{{ $activeTab }}', {{ $index }})" variant="danger" />
                     </div>
-                    <flux:input wire:model="faq.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
-                    <flux:textarea wire:model="faq.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
+                    <flux:input wire:model="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
+                    <flux:textarea wire:model="faq.{{ $activeTab }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
                 </div>
             @endforeach
         </div>
@@ -322,18 +356,18 @@ new class extends Component {
         <!-- Trip Info Section -->
         <div class="space-y-3">
             <div class="flex justify-between items-center">
-                <flux:label>{{ __('Trip Info') }}</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addTripInfo">{{ __('Add Info') }}</flux:button>
+                <flux:label>{{ __('Trip Info') }} ({{ strtoupper($activeTab) }})</flux:label>
+                <flux:button size="sm" icon="plus" wire:click="addTripInfo('{{ $activeTab }}')">{{ __('Add Info') }}</flux:button>
             </div>
-            @foreach($trip_info as $index => $item)
+            @foreach($trip_info[$activeTab] as $index => $item)
                 <div class="flex gap-2">
                     <div class="w-48 shrink-0">
-                        <flux:input wire:model="trip_info.{{ $index }}.key" placeholder="e.g. Wifi" />
+                        <flux:input wire:model="trip_info.{{ $activeTab }}.{{ $index }}.key" placeholder="e.g. Wifi" />
                     </div>
                     <div class="flex-1">
-                        <flux:input wire:model="trip_info.{{ $index }}.value" placeholder="e.g. Yes" />
+                        <flux:input wire:model="trip_info.{{ $activeTab }}.{{ $index }}.value" placeholder="e.g. Yes" />
                     </div>
-                    <flux:button icon="trash" wire:click="removeTripInfo({{ $index }})" variant="danger" />
+                    <flux:button icon="trash" wire:click="removeTripInfo('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>
@@ -347,6 +381,7 @@ new class extends Component {
             @elseif ($existingImage)
                 <img src="{{ Storage::url($existingImage) }}" class="mt-2 h-48 w-full object-cover rounded-lg" />
             @endif
+            <flux:description>Recommended: 1200×800px (3:2 ratio).</flux:description>
             <flux:error name="image" />
         </flux:field>
 
@@ -374,6 +409,7 @@ new class extends Component {
                     @endforeach
                 @endif
             </div>
+            <flux:description>Recommended: 1000×1000px (1:1 ratio).</flux:description>
             <flux:error name="gallery.*" />
         </flux:field>
 

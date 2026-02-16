@@ -28,14 +28,14 @@ new #[Layout('components.layouts.public')] class extends Component {
         <div class="relative z-10 text-center px-4 max-w-4xl">
             <div class="flex items-center justify-center gap-4 mb-6">
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
-                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">Curated Selection</span>
+                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ __('Curated Selection') }}</span>
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
             </div>
             <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
-                Our Destinations
+                {{ __('Our Destinations') }}
             </h1>
             <p class="text-white/70 text-base sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                Discover handpicked journeys crafted for the world's most discerning travelers.
+                {{ __("Discover handpicked journeys crafted for the world's most discerning travelers.") }}
             </p>
         </div>
     </section>
@@ -54,8 +54,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                                     <i class="material-icons text-secondary/20" style="font-size: 80px;">photo</i>
                                 </div>
                             @endif
-                            <div class="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-8">
-                                <span class="bg-white text-secondary px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest">View Details</span>
+                            <div class="absolute inset-0 bg-linear-to-t from-secondary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6 sm:p-8">
+                                <span class="bg-white text-secondary px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest">{{ __('View Details') }}</span>
                             </div>
                             @if($destination->price_range)
                                 <div class="absolute top-4 right-4 bg-white/95 backdrop-blur px-4 py-1.5 rounded-full text-sm font-bold text-primary shadow-sm">
@@ -92,7 +92,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                                 @if($destination->person)
                                     <span class="inline-flex items-center gap-1 text-xs font-medium text-travel-green bg-travel-green/10 px-2.5 py-1 rounded-full">
                                         <i class="material-icons" style="font-size: 14px;">group</i>
-                                        {{ $destination->person }} Pax
+                                        {{ $destination->person }} {{ __('Pax') }}
                                     </span>
                                 @endif
                             </div>
@@ -122,10 +122,10 @@ new #[Layout('components.layouts.public')] class extends Component {
     <section class="relative py-16 md:py-24 overflow-hidden bg-secondary">
         <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2280%22%20height%3D%2280%22%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2240%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.03)%22/%3E%3C/svg%3E')]"></div>
         <div class="relative z-10 px-4 sm:px-6 md:px-8 max-w-4xl mx-auto text-center">
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">Can't Find What You're Looking For?</h2>
-            <p class="text-white/60 text-base sm:text-lg mb-8 font-light">We craft bespoke journeys tailored to your every desire. Let us design your dream trip.</p>
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">{{ __("Can't Find What You're Looking For?") }}</h2>
+            <p class="text-white/60 text-base sm:text-lg mb-8 font-light">{{ __('We craft bespoke journeys tailored to your every desire. Let us design your dream trip.') }}</p>
             <a href="{{ route('about') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform inline-block">
-                Get In Touch
+                {{ __('Get In Touch') }}
             </a>
         </div>
     </section>

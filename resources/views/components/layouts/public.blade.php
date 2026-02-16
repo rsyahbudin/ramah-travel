@@ -1,7 +1,9 @@
 @php
-    $siteSettings = \App\Models\Setting::pluck('value', 'key');
-    $siteName = $siteSettings['site_name'] ?? 'TravelApp';
+    $siteSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
+    $siteName = \App\Models\Setting::getTranslated('site_name', 'TravelApp');
     $logoImage = $siteSettings['logo_image'] ?? null;
+    $whatsappNumber = $siteSettings['whatsapp_number'] ?? null;
+    $footerText = \App\Models\Setting::getTranslated('footer_text', 'Crafting extraordinary journeys for the world\'s most discerning travelers.');
     $isHome = request()->routeIs('home');
 @endphp
 <!DOCTYPE html>
@@ -21,14 +23,35 @@
             @endif
         </a>
         <div class="hidden md:flex items-center gap-10">
-            <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('destinations.index') }}" wire:navigate>Destinations</a>
-            <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('about') }}" wire:navigate>Our Story</a>
+            <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a>
+            <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a>
 
+            {{-- Language Switcher Desktop --}}
+            <div class="relative group" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center gap-1 text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors">
+                    <span>{{ strtoupper(app()->getLocale()) }}</span>
+                    <i class="material-icons text-lg">language</i>
+                </button>
+                <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl py-2 min-w-[140px] border border-secondary/5 z-50">
+                    <a href="{{ route('lang.switch', 'en') }}" class="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'en' ? 'bg-primary' : 'bg-transparent' }}"></span>
+                        {{ __('English') }}
+                    </a>
+                    <a href="{{ route('lang.switch', 'id') }}" class="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'id' ? 'bg-primary' : 'bg-transparent' }}"></span>
+                        {{ __('Indonesian') }}
+                    </a>
+                    <a href="{{ route('lang.switch', 'es') }}" class="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'es' ? 'bg-primary' : 'bg-transparent' }}"></span>
+                        {{ __('Spanish') }}
+                    </a>
+                </div>
+            </div>
         </div>
         <div class="flex items-center gap-4">
             @if($siteSettings['whatsapp_number'] ?? false)
                 <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank" class="bg-primary text-white px-6 md:px-8 py-2.5 md:py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-opacity-90 transition-all hidden sm:inline-block">
-                    Inquire Now
+                    {{ __('Inquire Now') }}
                 </a>
             @endif
 
@@ -37,11 +60,19 @@
                 <button @click="open = !open" class="{{ $isHome ? 'text-white' : 'text-secondary' }}">
                     <i class="material-icons text-2xl">menu</i>
                 </button>
-                <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-4 mt-2 bg-white rounded-xl shadow-2xl py-4 px-6 min-w-[200px] border border-secondary/5">
-                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('home') }}" wire:navigate>Home</a>
-                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('destinations.index') }}" wire:navigate>Destinations</a>
-                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('about') }}" wire:navigate>Our Story</a>
+                <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-4 mt-2 bg-white rounded-xl shadow-2xl py-4 px-6 min-w-[200px] border border-secondary/5 z-50">
+                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('home') }}" wire:navigate>{{ __('Home') }}</a>
+                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a>
+                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a>
 
+                    <div class="mt-4 pt-4 border-t border-secondary/5">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-secondary/30 mb-2">{{ __('Select Language') }}</p>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all {{ app()->getLocale() == 'en' ? 'bg-primary text-white' : 'bg-bg-light text-secondary' }}">EN</a>
+                            <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all {{ app()->getLocale() == 'id' ? 'bg-primary text-white' : 'bg-bg-light text-secondary' }}">ID</a>
+                            <a href="{{ route('lang.switch', 'es') }}" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all {{ app()->getLocale() == 'es' ? 'bg-primary text-white' : 'bg-bg-light text-secondary' }}">ES</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -63,30 +94,30 @@
                     @endif
                 </div>
                 <p class="text-secondary/50 text-sm leading-relaxed">
-                    {{ $siteSettings['footer_text'] ?? 'Crafting extraordinary journeys for the world\'s most discerning travelers.' }}
+                    {{ $footerText }}
                 </p>
             </div>
             <div>
-                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">Navigation</h4>
+                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">{{ __('Navigation') }}</h4>
                 <ul class="space-y-4">
-                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('home') }}" wire:navigate>Home</a></li>
-                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('destinations.index') }}" wire:navigate>Destinations</a></li>
-                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('about') }}" wire:navigate>Our Story</a></li>
+                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('home') }}" wire:navigate>{{ __('Home') }}</a></li>
+                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a></li>
+                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a></li>
                 </ul>
             </div>
             <div>
-                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">Contact</h4>
+                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">{{ __('Contact') }}</h4>
                 <ul class="space-y-4">
                     @if($siteSettings['whatsapp_number'] ?? false)
-                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm flex items-center gap-2" href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank"><i class="material-icons text-sm">phone</i> WhatsApp</a></li>
+                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm flex items-center gap-2" href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank"><i class="material-icons text-sm">phone</i> {{ __('WhatsApp') }}</a></li>
                     @endif
                     @if($siteSettings['admin_email'] ?? false)
-                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm flex items-center gap-2" href="mailto:{{ $siteSettings['admin_email'] }}"><i class="material-icons text-sm">email</i> Email</a></li>
+                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm flex items-center gap-2" href="mailto:{{ $siteSettings['admin_email'] }}"><i class="material-icons text-sm">email</i> {{ __('Email') }}</a></li>
                     @endif
                 </ul>
             </div>
             <div>
-                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">Connect</h4>
+                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">{{ __('Connect') }}</h4>
                 <div class="flex gap-4">
                     @if($siteSettings['social_instagram'] ?? false)
                         <a class="w-10 h-10 rounded-full border border-secondary/10 flex items-center justify-center text-secondary hover:bg-primary hover:text-white hover:border-primary transition-all" href="{{ $siteSettings['social_instagram'] }}" target="_blank">
@@ -117,7 +148,7 @@
             </div>
         </div>
         <div class="max-w-7xl mx-auto pt-8 border-t border-secondary/5 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-secondary/40 text-xs uppercase tracking-widest">&copy; {{ date('Y') }} {{ $siteName }}. All Rights Reserved.</p>
+            <p class="text-secondary/40 text-xs uppercase tracking-widest">&copy; {{ date('Y') }} {{ $siteName }}. {{ __('All Rights Reserved') }}.</p>
         </div>
     </footer>
 
