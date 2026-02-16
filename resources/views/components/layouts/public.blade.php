@@ -22,9 +22,7 @@
         <div class="hidden md:flex items-center gap-10">
             <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('destinations.index') }}" wire:navigate>Destinations</a>
             <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('about') }}" wire:navigate>Our Story</a>
-            @auth
-                <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('admin.dashboard') }}" wire:navigate>Dashboard</a>
-            @endauth
+
         </div>
         <div class="flex items-center gap-4">
             @if($siteSettings['whatsapp_number'] ?? false)
@@ -42,9 +40,7 @@
                     <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('home') }}" wire:navigate>Home</a>
                     <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('destinations.index') }}" wire:navigate>Destinations</a>
                     <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('about') }}" wire:navigate>Our Story</a>
-                    @auth
-                        <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('admin.dashboard') }}" wire:navigate>Dashboard</a>
-                    @endauth
+
                 </div>
             </div>
         </div>

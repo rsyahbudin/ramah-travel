@@ -14,6 +14,11 @@ class Destination extends Model
         'is_featured' => 'boolean',
         'is_visible' => 'boolean',
         'highlights' => 'array',
+        'itinerary' => 'array',
+        'includes' => 'array',
+        'excludes' => 'array',
+        'faq' => 'array',
+        'trip_info' => 'array',
     ];
 
     public function images()
@@ -24,9 +29,9 @@ class Destination extends Model
     public function getPriceRangeAttribute()
     {
         if ($this->price_max) {
-            return '$' . number_format($this->price, 0) . ' - $' . number_format($this->price_max, 0);
+            return '$'.number_format($this->price, 0).' - $'.number_format($this->price_max, 0);
         }
 
-        return '$' . number_format($this->price, 0);
+        return '$'.number_format($this->price, 0);
     }
 }
