@@ -1,23 +1,24 @@
+@php
+    $siteSettings = \App\Models\Setting::pluck('value', 'key');
+    $siteName = $siteSettings['site_name'] ?? 'TravelApp';
+    $logoImage = $siteSettings['logo_image'] ?? null;
+    $isHome = request()->routeIs('home');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
-    @include('partials.head')
+    @include('partials.head', ['logoImage' => $logoImage, 'siteName' => $siteName])
 </head>
 <body class="font-sans antialiased text-secondary bg-bg-light selection:bg-primary/30">
-    @php
-        $siteSettings = \App\Models\Setting::pluck('value', 'key');
-        $siteName = $siteSettings['site_name'] ?? 'TravelApp';
-        $logoImage = $siteSettings['logo_image'] ?? null;
-        $isHome = request()->routeIs('home');
-    @endphp
 
     {{-- Header / Navigation --}}
     <nav class="fixed top-0 w-full z-50 px-4 sm:px-6 md:px-8 py-4 md:py-5 flex items-center justify-between transition-all {{ $isHome ? 'bg-transparent' : 'bg-white/90 backdrop-blur border-b border-secondary/5' }}" @if($isHome) style="text-shadow: 0 1px 4px rgba(0,0,0,0.5);" @endif>
-        <a href="{{ route('home') }}" class="flex items-center gap-2" wire:navigate>
+        <a href="{{ route('home') }}" class="flex items-center gap-2" wire:navigate title="{{ $siteName }}">
             @if($logoImage)
-                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-8 object-contain" />
+                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-14 w-auto object-contain" />
+            @else
+                <span class="text-2xl font-extrabold tracking-tighter {{ $isHome ? 'text-white' : 'text-secondary' }} uppercase">{{ $siteName }}</span>
             @endif
-            <span class="text-2xl font-extrabold tracking-tighter {{ $isHome ? 'text-white' : 'text-secondary' }} uppercase">{{ $siteName }}</span>
         </a>
         <div class="hidden md:flex items-center gap-10">
             <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('destinations.index') }}" wire:navigate>Destinations</a>
@@ -56,9 +57,10 @@
             <div class="col-span-1">
                 <div class="flex items-center gap-2 mb-6">
                     @if($logoImage)
-                        <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-8 object-contain" />
+                        <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-14 w-auto object-contain" />
+                    @else
+                        <span class="text-2xl font-extrabold tracking-tighter text-secondary uppercase">{{ $siteName }}</span>
                     @endif
-                    <span class="text-2xl font-extrabold tracking-tighter text-secondary uppercase">{{ $siteName }}</span>
                 </div>
                 <p class="text-secondary/50 text-sm leading-relaxed">
                     {{ $siteSettings['footer_text'] ?? 'Crafting extraordinary journeys for the world\'s most discerning travelers.' }}

@@ -1,10 +1,16 @@
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+@php
+    $siteName = $siteName ?? \App\Models\Setting::where('key', 'site_name')->value('value') ?? config('app.name');
+    $logoImage = $logoImage ?? \App\Models\Setting::where('key', 'logo_image')->value('value');
+@endphp
 
-<title>{{ $title ?? config('app.name') }}</title>
+<title>{{ $title ?? $siteName }}</title>
 
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+@if($logoImage)
+    <link rel="icon" href="{{ Storage::url($logoImage) }}" sizes="any">
+@else
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+@endif
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <link rel="preconnect" href="https://fonts.bunny.net">
