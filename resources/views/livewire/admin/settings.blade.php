@@ -40,9 +40,9 @@ new class extends Component {
         $this->social_youtube = $settings['social_youtube'] ?? '';
         $this->social_tiktok = $settings['social_tiktok'] ?? '';
         
-        $this->whatsapp_template = $settings['whatsapp_template'] ?? "Hello, I would like to book a trip to {title}. Is it available?";
-        $this->email_subject_template = $settings['email_subject_template'] ?? "Booking Inquiry: {title}";
-        $this->email_template = $settings['email_template'] ?? "I would like to inquire about a trip to {title} ({url}).";
+        $this->whatsapp_template = $settings['whatsapp_template'] ?? "Hello, my name is {name}. I would like to book {destination} for {person} pax. I am from {city}, {country}. Email: {email}, Phone: {phone}.";
+        $this->email_subject_template = $settings['email_subject_template'] ?? "New Booking Inquiry: {destination} - {name}";
+        $this->email_template = $settings['email_template'] ?? "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nURL: {url}";
     }
 
     public function save(): void
@@ -126,7 +126,12 @@ new class extends Component {
         <!-- Chat Templates -->
         <section class="space-y-4">
             <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Chat Templates</h3>
-            <p class="text-sm text-zinc-500">Available placeholders: <code>{title}</code>, <code>{url}</code>, <code>{price}</code>, <code>{location}</code>, <code>{duration}</code>.</p>
+            <p class="text-sm text-zinc-500">
+                Available placeholders: 
+                <br>
+                <code>{name}</code>, <code>{email}</code>, <code>{phone}</code>, <code>{person}</code>, <code>{city}</code>, <code>{country}</code>, <code>{destination}</code> (or <code>{title}</code>), 
+                <code>{url}</code>, <code>{price}</code>, <code>{location}</code>, <code>{duration}</code>.
+            </p>
             <div class="grid grid-cols-1 gap-6">
                 <flux:textarea label="{{ __('WhatsApp Main Template') }}" wire:model="whatsapp_template" rows="3" />
                 <flux:input label="{{ __('Email Subject Template') }}" wire:model="email_subject_template" />

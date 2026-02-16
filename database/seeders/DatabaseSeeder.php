@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Destination;
 use App\Models\Page;
 use App\Models\Setting;
-use App\Models\Destination;
+use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -32,21 +32,21 @@ class DatabaseSeeder extends Seeder
         Setting::create(['key' => 'admin_email', 'value' => 'admin@example.com']);
 
         Destination::create([
-             'title' => 'Beautiful Bali',
-             'slug' => 'beautiful-bali',
-             'description' => 'Experience the magic of the Island of the Gods.',
-             'price' => 500.00,
-             'location' => 'Bali, Indonesia',
-             'is_featured' => true,
+            'title' => 'Beautiful Bali',
+            'slug' => 'beautiful-bali',
+            'description' => 'Experience the magic of the Island of the Gods.',
+            'price' => 500.00,
+            'location' => 'Bali, Indonesia',
+            'is_featured' => true,
         ]);
-        
+
         Destination::create([
-             'title' => 'Majestic Paris',
-             'slug' => 'majestic-paris',
-             'description' => 'The city of lights awaits you.',
-             'price' => 1200.00,
-             'location' => 'Paris, France',
-             'is_featured' => true,
+            'title' => 'Majestic Paris',
+            'slug' => 'majestic-paris',
+            'description' => 'The city of lights awaits you.',
+            'price' => 1200.00,
+            'location' => 'Paris, France',
+            'is_featured' => true,
         ]);
     }
 }
