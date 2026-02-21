@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Destination;
+use App\Models\Page;
 use App\Models\Setting;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -13,6 +14,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     public function with(): array
     {
         return [
+            'page' => Page::where('slug', 'destinations')->first(),
             'destinations' => Destination::where('is_visible', true)
                 ->orderBy('created_at', 'desc')
                 ->paginate(9),
@@ -29,7 +31,12 @@ new #[Layout('components.layouts.public')] class extends Component {
 
 <div class="bg-bg-light">
     {{-- Hero Header --}}
-    <section class="relative h-[50vh] min-h-[350px] bg-secondary overflow-hidden flex items-center justify-center">
+    <section class="relative h-[50vh] min-h-[350px] overflow-hidden flex items-center justify-center">
+        @if($page && $page->image_path)
+            <img src="{{ Storage::url($page->image_path) }}" alt="{{ $page->title ?? __('Our Destinations') }}" class="absolute inset-0 w-full h-full object-cover" />
+        @else
+            <div class="absolute inset-0 bg-secondary"></div>
+        @endif
         <div class="absolute inset-0 hero-overlay"></div>
         <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2280%22%20height%3D%2280%22%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2240%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.03)%22/%3E%3C/svg%3E')]"></div>
         <div class="relative z-10 text-center px-4 max-w-4xl">
@@ -39,10 +46,10 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
             </div>
             <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
-                {{ __('Our Destinations') }}
+                {{ $page?->title ?? __('Our Destinations') }}
             </h1>
             <p class="text-white/70 text-base sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                {{ __("Discover handpicked journeys crafted for the world's most discerning travelers.") }}
+                {{ $page?->content ?? __("Discover handpicked journeys crafted for the world's most discerning travelers.") }}
             </p>
         </div>
     </section>

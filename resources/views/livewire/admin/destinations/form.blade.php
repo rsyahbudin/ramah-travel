@@ -211,7 +211,12 @@ new class extends Component {
 
         // Handle Main Image
         if ($this->image) {
-            $validated['image_path'] = $this->image->store('destinations', 'public');
+            if ($this->existingImage) {
+                Storage::disk('public')->delete($this->existingImage);
+            }
+            $data['image_path'] = $this->image->store('destinations', 'public');
+            $this->existingImage = $data['image_path'];
+            $this->image = null;
         }
 
         // Create or Update Destination

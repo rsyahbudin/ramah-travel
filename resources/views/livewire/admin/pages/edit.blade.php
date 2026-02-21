@@ -31,8 +31,12 @@ new class extends Component {
     public function save(): void
     {
         $validated = $this->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'title.en' => 'required|string|max:255',
+            'title.id' => 'nullable|string|max:255',
+            'title.es' => 'nullable|string|max:255',
+            'content.en' => 'required|string',
+            'content.id' => 'nullable|string',
+            'content.es' => 'nullable|string',
             'image' => 'nullable|image|max:4096',
         ]);
 

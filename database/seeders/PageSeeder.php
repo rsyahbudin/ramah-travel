@@ -23,6 +23,19 @@ class PageSeeder extends Seeder
                     'es' => 'Fundada según el principio de que viajar debe ser tan único como el viajero, Ramah Travel ha estado curando viajes extraordinarios desde 2008. Creemos en el poder de la exploración para transformar vidas y nos dedicamos a descubrir los rincones más recónditos del mundo a través de una lente de lujo absoluto y exclusividad curada.',
                 ],
             ],
+            [
+                'title' => [
+                    'en' => 'Our Destinations',
+                    'id' => 'Destinasi Kami',
+                    'es' => 'Nuestros Destinos',
+                ],
+                'slug' => 'destinations',
+                'content' => [
+                    'en' => 'Discover handpicked journeys crafted for the world\'s most discerning travelers.',
+                    'id' => 'Temukan perjalanan pilihan yang dirancang untuk para pelancong paling istimewa di dunia.',
+                    'es' => 'Descubra viajes seleccionados diseñados para los viajeros más exigentes del mundo.',
+                ],
+            ],
         ];
 
         foreach ($pages as $data) {

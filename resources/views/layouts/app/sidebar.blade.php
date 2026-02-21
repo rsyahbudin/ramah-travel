@@ -15,8 +15,11 @@
                     <flux:sidebar.item icon="home" :href="route('admin.pages.home')" :current="request()->routeIs('admin.pages.home')" wire:navigate>
                         {{ __('Home Page') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="document-text" :href="route('admin.pages.edit', 'about')" :current="request()->routeIs('admin.pages.edit')" wire:navigate>
+                    <flux:sidebar.item icon="document-text" :href="route('admin.pages.edit', 'about')" :current="request()->routeIs('admin.pages.edit') && request()->route('page')?->slug === 'about'" wire:navigate>
                         {{ __('About Page') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="globe-alt" :href="route('admin.pages.edit', 'destinations')" :current="request()->routeIs('admin.pages.edit') && request()->route('page')?->slug === 'destinations'" wire:navigate>
+                        {{ __('Destination Page') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="map" :href="route('admin.destinations.index')" :current="request()->routeIs('admin.destinations.*')" wire:navigate>
                         {{ __('Destinations') }}
