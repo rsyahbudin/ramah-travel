@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::firstOrCreate(
-            ['email' => 'admin@ramah-travel.com'],
+            ['email' => 'admin@ramahindonesia.com'],
             [
                 'name' => 'Admin User',
                 'password' => bcrypt('password'),
