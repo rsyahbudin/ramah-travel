@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Storage;
 new class extends Component {
     use WithFileUploads;
 
-    public string $site_name = 'Ramah Travel';
+    public string $site_name = 'Ramah Indonesia';
     public $logo_image;
     public ?string $existing_logo_image = null;
+    public $logo_white;
+    public ?string $existing_logo_white = null;
 
     public string $whatsapp_number = '';
     public string $admin_email = '';
@@ -30,10 +32,11 @@ new class extends Component {
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 
-        $siteNameValue = $settings['site_name'] ?? 'Ramah Travel';
+        $siteNameValue = $settings['site_name'] ?? 'Ramah Indonesia';
         $decodedSiteName = json_decode($siteNameValue, true);
         $this->site_name = is_array($decodedSiteName) ? ($decodedSiteName['en'] ?? reset($decodedSiteName)) : $siteNameValue;
         $this->existing_logo_image = $settings['logo_image'] ?? null;
+        $this->existing_logo_white = $settings['logo_white'] ?? null;
 
         $this->whatsapp_number = $settings['whatsapp_number'] ?? '';
         $this->admin_email = $settings['admin_email'] ?? '';
@@ -67,6 +70,7 @@ new class extends Component {
         $validated = $this->validate([
             'site_name' => 'required|string|max:100',
             'logo_image' => 'nullable|image|max:2048',
+            'logo_white' => 'nullable|image|max:2048',
             'whatsapp_number' => 'nullable|string',
             'admin_email' => 'nullable|email',
             'footer_text.en' => 'nullable|string|max:500',
@@ -93,7 +97,7 @@ new class extends Component {
         ];
 
         foreach ($validated as $key => $value) {
-            if ($key === 'logo_image') continue;
+            if (in_array($key, ['logo_image', 'logo_white'])) continue;
 
             $saveValue = in_array($key, $translatable) ? json_encode($value) : ($value ?? '');
             Setting::updateOrCreate(['key' => $key], ['value' => $saveValue]);
@@ -107,6 +111,16 @@ new class extends Component {
             Setting::updateOrCreate(['key' => 'logo_image'], ['value' => $path]);
             $this->existing_logo_image = $path;
             $this->logo_image = null;
+        }
+
+        if ($this->logo_white) {
+            if ($this->existing_logo_white) {
+                Storage::disk('public')->delete($this->existing_logo_white);
+            }
+            $path = $this->logo_white->store('settings', 'public');
+            Setting::updateOrCreate(['key' => 'logo_white'], ['value' => $path]);
+            $this->existing_logo_white = $path;
+            $this->logo_white = null;
         }
 
         $this->dispatch('settings-saved');
@@ -158,8 +172,25 @@ new class extends Component {
                             <input type="file" wire:model="logo_image" class="block w-full text-xs text-zinc-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
                         </div>
                     </div>
-                    <flux:description>Recommended: 200×50px, transparent PNG.</flux:description>
-                    <flux:error name="logo_image" />
+                    <flux:description>Recommended: square PNG. Used on non-hero pages (dark logo).</flux:description>
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>{{ __('Logo White (Hero / Dark Background)') }}</flux:label>
+                    <div class="mt-2 flex items-center gap-4">
+                        @if ($logo_white)
+                            <img src="{{ $logo_white->temporaryUrl() }}" class="h-12 object-contain rounded border border-zinc-200 bg-zinc-800 p-1" />
+                        @elseif ($existing_logo_white)
+                            <img src="{{ Storage::url($existing_logo_white) }}" class="h-12 object-contain rounded border border-zinc-200 bg-zinc-800 p-1" />
+                        @else
+                            <div class="h-12 w-24 bg-zinc-800 rounded flex items-center justify-center border border-dashed border-zinc-600 text-xs text-zinc-400">No Logo</div>
+                        @endif
+                        
+                        <div class="flex-1">
+                            <input type="file" wire:model="logo_white" class="block w-full text-xs text-zinc-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                        </div>
+                    </div>
+                    <flux:description>White/light version of logo. Shown on the hero (transparent navbar).</flux:description>
                 </flux:field>
             </div>
         </flux:card>

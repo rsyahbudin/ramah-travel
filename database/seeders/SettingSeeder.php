@@ -10,7 +10,7 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         $settings = [
-            'site_name' => 'Ramah Travel',
+            'site_name' => 'Ramah Indonesia',
             'footer_text' => [
                 'en' => 'Crafting extraordinary journeys for the world\'s most discerning travelers.',
                 'id' => 'Menciptakan perjalanan luar biasa bagi para pelancong paling cerdas di dunia.',

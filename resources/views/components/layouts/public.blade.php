@@ -2,6 +2,7 @@
     $siteSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
     $siteName = \App\Models\Setting::getTranslated('site_name', 'TravelApp');
     $logoImage = $siteSettings['logo_image'] ?? null;
+    $logoWhite = $siteSettings['logo_white'] ?? null;
     $whatsappNumber = $siteSettings['whatsapp_number'] ?? null;
     $footerText = \App\Models\Setting::getTranslated('footer_text', 'Crafting extraordinary journeys for the world\'s most discerning travelers.');
     $isHome = request()->routeIs('home');
@@ -13,51 +14,70 @@
 </head>
 <body class="font-sans antialiased text-secondary bg-bg-light selection:bg-primary/30">
 
-    {{-- Header / Navigation --}}
-    <nav class="fixed top-0 w-full z-50 px-4 sm:px-6 md:px-8 py-2 md:py-3 flex items-center justify-between transition-all {{ $isHome ? 'bg-transparent' : 'bg-white/90 backdrop-blur border-b border-secondary/5' }}" @if($isHome) style="text-shadow: 0 1px 4px rgba(0,0,0,0.5);" @endif>
+    {{-- Header / Navigation (Scroll-Aware: all pages) --}}
+    <nav
+        x-data="{
+            scrolled: false,
+            heroHeight: 0,
+            init() {
+                const hero = document.querySelector('main section:first-child, main > div > section:first-child, main > div > div:first-child');
+                this.heroHeight = hero ? hero.offsetHeight - 100 : 300;
+                this.scrolled = window.scrollY > this.heroHeight;
+            }
+        }"
+        @scroll.window="scrolled = window.scrollY > heroHeight"
+        class="fixed top-0 w-full z-50 px-4 sm:px-6 md:px-8 py-2 md:py-3 flex items-center justify-between bg-transparent transition-all duration-300"
+    >
         <a href="{{ route('home') }}" class="flex items-center gap-2" wire:navigate title="{{ $siteName }}">
-            @if($logoImage)
+            @if($logoImage && $logoWhite)
+                <img src="{{ Storage::url($logoWhite) }}" alt="{{ $siteName }}" class="h-24 w-24 sm:h-30 sm:w-36 object-contain transition-all duration-300" x-show="!scrolled" />
+                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-24 w-24 sm:h-30 sm:w-36 object-contain transition-all duration-300" x-show="scrolled" x-cloak />
+            @elseif($logoImage)
                 <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-24 w-24 sm:h-30 sm:w-36 object-contain" />
             @else
-                <span class="text-3xl font-extrabold tracking-tighter {{ $isHome ? 'text-white' : 'text-secondary' }} uppercase">{{ $siteName }}</span>
+                <span :class="scrolled ? 'text-secondary' : 'text-white'" class="text-3xl font-extrabold tracking-tighter uppercase transition-colors duration-300">{{ $siteName }}</span>
             @endif
         </a>
+
         <div class="hidden md:flex items-center gap-10">
-            <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a>
-            <a class="text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a>
+            <a :class="scrolled ? 'text-secondary' : 'text-white'" class="text-sm font-semibold tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a>
+            <a :class="scrolled ? 'text-secondary' : 'text-white'" class="text-sm font-semibold tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a>
 
             {{-- Language Switcher Desktop --}}
             <div class="relative group" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center gap-1 text-sm font-semibold {{ $isHome ? 'text-white' : 'text-secondary' }} tracking-widest uppercase hover:text-primary transition-colors">
+                <button @click="open = !open" :class="scrolled ? 'text-secondary' : 'text-white'" class="flex items-center gap-1 text-sm font-semibold tracking-widest uppercase hover:text-primary transition-colors">
                     <span>{{ strtoupper(app()->getLocale()) }}</span>
                     <i class="material-icons text-lg">language</i>
                 </button>
                 <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl py-2 min-w-[140px] border border-secondary/5 z-50">
-                    <a href="{{ route('lang.switch', 'en') }}" class="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
+                    <a href="{{ route('lang.switch', 'en') }}" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'en' ? 'bg-primary' : 'bg-transparent' }}"></span>
                         {{ __('English') }}
                     </a>
-                    <a href="{{ route('lang.switch', 'id') }}" class="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
+                    <a href="{{ route('lang.switch', 'id') }}" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'id' ? 'bg-primary' : 'bg-transparent' }}"></span>
                         {{ __('Indonesian') }}
                     </a>
-                    <a href="{{ route('lang.switch', 'es') }}" class="block px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
+                    <a href="{{ route('lang.switch', 'es') }}" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'es' ? 'bg-primary' : 'bg-transparent' }}"></span>
                         {{ __('Spanish') }}
                     </a>
                 </div>
             </div>
         </div>
+
         <div class="flex items-center gap-4">
             @if($siteSettings['whatsapp_number'] ?? false)
-                <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank" class="bg-primary text-white px-6 md:px-8 py-2.5 md:py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-opacity-90 transition-all hidden sm:inline-block">
+                <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank"
+                   :class="scrolled ? 'bg-primary text-white' : 'bg-white/20 text-white border border-white/40 backdrop-blur-sm hover:bg-white/30'"
+                   class="px-6 md:px-8 py-2.5 md:py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all hidden sm:inline-block">
                     {{ __('Inquire Now') }}
                 </a>
             @endif
 
             {{-- Mobile Menu --}}
             <div class="md:hidden" x-data="{ open: false }">
-                <button @click="open = !open" class="{{ $isHome ? 'text-white' : 'text-secondary' }}">
+                <button @click="open = !open" :class="scrolled ? 'text-secondary' : 'text-white'">
                     <i class="material-icons text-2xl">menu</i>
                 </button>
                 <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-4 mt-2 bg-white rounded-xl shadow-2xl py-4 px-6 min-w-[200px] border border-secondary/5 z-50">
