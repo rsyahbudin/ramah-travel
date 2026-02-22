@@ -1,6 +1,6 @@
 @php
-    $siteName = $siteName ?? \App\Models\Setting::where('key', 'site_name')->value('value') ?? config('app.name');
-    $logoImage = $logoImage ?? \App\Models\Setting::where('key', 'logo_image')->value('value');
+    $siteName = (isset($siteName) ? $siteName : null) ?? \App\Models\Setting::where('key', 'site_name')->value('value') ?? config('app.name');
+    $logoImage = (isset($logoImage) ? $logoImage : null) ?? \App\Models\Setting::where('key', 'logo_image')->value('value');
 @endphp
 
 <meta charset="utf-8" />

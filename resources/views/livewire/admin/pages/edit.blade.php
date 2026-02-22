@@ -77,26 +77,55 @@ new class extends Component {
         </div>
     </div>
 
-    <form wire:submit="save" class="space-y-6 max-w-4xl">
-        <flux:input label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" wire:model="title.{{ $activeTab }}" />
+    <form wire:submit="save" class="space-y-8 max-w-4xl">
+        <!-- Page Identity -->
+        <flux:card class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.identification class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Page Identity') }}</flux:heading>
+            </div>
+            <flux:separator />
 
-        <flux:field>
-            <flux:label>{{ __('Cover Image') }}</flux:label>
-            <input type="file" wire:model="image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            @if ($image)
-                <img src="{{ $image->temporaryUrl() }}" class="mt-2 h-48 w-full object-cover rounded-lg" />
-            @elseif ($existing_image)
-                <img src="{{ Storage::url($existing_image) }}" class="mt-2 h-48 w-full object-cover rounded-lg" />
-            @endif
-            <flux:description>Recommended: 1200×600px.</flux:description>
-            <flux:error name="image" />
-        </flux:field>
+            <div class="space-y-6">
+                <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:model="title.{{ $activeTab }}" />
 
-        <flux:textarea label="{{ __('Content') }} ({{ strtoupper($activeTab) }})" wire:model="content.{{ $activeTab }}" rows="15" />
+                <flux:field>
+                    <flux:label>{{ __('Cover Image') }}</flux:label>
+                    <div class="mt-2 flex items-center gap-4">
+                        @if ($image)
+                            <img src="{{ $image->temporaryUrl() }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
+                        @elseif ($existing_image)
+                            <img src="{{ Storage::url($existing_image) }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
+                        @else
+                            <div class="h-32 w-64 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200 text-zinc-400">
+                                {{ __('No Image') }}
+                            </div>
+                        @endif
+                        
+                        <div class="flex-1 space-y-2">
+                            <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                            <flux:description>Recommended: 1200×600px. Max 4MB.</flux:description>
+                        </div>
+                    </div>
+                    <flux:error name="image" />
+                </flux:field>
+            </div>
+        </flux:card>
 
-        <div class="flex justify-end gap-2">
+        <!-- Page Content -->
+        <flux:card class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.document-text class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Page Content') }}</flux:heading>
+            </div>
+            <flux:separator />
+
+            <flux:textarea label="{{ __('Main Body Content') }} ({{ strtoupper($activeTab) }})" wire:model="content.{{ $activeTab }}" rows="20" />
+        </flux:card>
+
+        <div class="flex justify-end gap-3 pt-4">
             <flux:button href="{{ route('admin.dashboard') }}" wire:navigate variant="ghost">{{ __('Cancel') }}</flux:button>
-            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            <flux:button type="submit" variant="primary" class="px-12">{{ __('Save Page') }}</flux:button>
         </div>
     </form>
 </div>

@@ -21,6 +21,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         'destination' => '',
         'city' => '',
         'country' => '',
+        'message' => '',
     ];
 
     public string $whatsappUrl = '';
@@ -78,9 +79,9 @@ new #[Layout('components.layouts.public')] class extends Component {
         $whatsappNumber = Setting::where('key', 'whatsapp_number')->value('value');
         $adminEmail = Setting::where('key', 'admin_email')->value('value');
 
-        $waTemplate = Setting::getTranslated('whatsapp_template', "Hello, my name is {name}. I would like to book {destination} for {person} pax from {city}, {country}. Email: {email}, Phone: {phone}.");
+        $waTemplate = Setting::getTranslated('whatsapp_template', "Hello, my name is {name}. I would like to book {destination} for {person} pax from {city}, {country}. Email: {email}, Phone: {phone}.\n\nMessage: {message}");
         $subjectTemplate = Setting::getTranslated('email_subject_template', "New Booking: {destination} - {name}");
-        $emailTemplate = Setting::getTranslated('email_template', "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nURL: {url}");
+        $emailTemplate = Setting::getTranslated('email_template', "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nMessage: {message}\n\nURL: {url}");
 
         $placeholders = [
             '{title}' => $this->destination->title,
@@ -96,6 +97,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             '{city}' => $this->bookingForm['city'],
             '{country}' => $this->bookingForm['country'],
             '{travel_date}' => $this->bookingForm['travel_date'],
+            '{message}' => $this->bookingForm['message'],
         ];
 
         foreach ($placeholders as $key => $value) {
@@ -122,6 +124,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             'country' => $this->bookingForm['country'],
             'type' => $this->bookingType,
             'status' => 'pending',
+            'message' => $this->bookingForm['message'],
         ]);
 
         if ($url) {
@@ -455,6 +458,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                     <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Country') }} <span class="text-red-500">*</span></label>
                     <input type="text" wire:model="bookingForm.country" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="Indonesia">
                     @error('bookingForm.country') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Special Message') }}</label>
+                    <textarea wire:model="bookingForm.message" rows="3" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="{{ __('Any special requests or questions?') }}"></textarea>
+                    @error('bookingForm.message') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
                 </div>
                 
                 <div class="pt-6">

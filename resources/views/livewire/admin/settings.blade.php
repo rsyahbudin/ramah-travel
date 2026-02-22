@@ -133,78 +133,102 @@ new class extends Component {
     <form wire:submit="save" class="space-y-8 max-w-4xl">
 
         <!-- Branding -->
-        <section class="space-y-4">
-            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Branding</h3>
+        <flux:card class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.briefcase class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Branding') }}</flux:heading>
+            </div>
+            <flux:separator />
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <flux:input label="{{ __('Site Name') }}" wire:model="site_name" />
+                
                 <flux:field>
                     <flux:label>{{ __('Logo Image') }}</flux:label>
-                    <input type="file" wire:model="logo_image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                    @if ($logo_image)
-                        <img src="{{ $logo_image->temporaryUrl() }}" class="mt-2 h-16 object-contain rounded" />
-                    @elseif ($existing_logo_image)
-                        <img src="{{ Storage::url($existing_logo_image) }}" class="mt-2 h-16 object-contain rounded" />
-                    @endif
+                    <div class="mt-2 flex items-center gap-4">
+                        @if ($logo_image)
+                            <img src="{{ $logo_image->temporaryUrl() }}" class="h-12 object-contain rounded border border-zinc-200" />
+                        @elseif ($existing_logo_image)
+                            <img src="{{ Storage::url($existing_logo_image) }}" class="h-12 object-contain rounded border border-zinc-200" />
+                        @else
+                            <div class="h-12 w-24 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center border border-dashed border-zinc-300 text-xs text-zinc-400">No Logo</div>
+                        @endif
+                        
+                        <div class="flex-1">
+                            <input type="file" wire:model="logo_image" class="block w-full text-xs text-zinc-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                        </div>
+                    </div>
                     <flux:description>Recommended: 200×50px, transparent PNG.</flux:description>
                     <flux:error name="logo_image" />
                 </flux:field>
             </div>
-        </section>
-
-        <flux:separator />
+        </flux:card>
 
         <!-- Contact Settings -->
-        <section class="space-y-4">
-            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Contact Information</h3>
+        <flux:card class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.phone class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Contact Information') }}</flux:heading>
+            </div>
+            <flux:separator />
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('WhatsApp Number') }}" description="Format: 628123456789" wire:model="whatsapp_number" placeholder="628123456789" />
-                <flux:input label="{{ __('Admin Email') }}" wire:model="admin_email" type="email" />
+                <flux:input label="{{ __('WhatsApp Number') }}" description="Format: 628123456789" wire:model="whatsapp_number" placeholder="628123456789" icon="phone" />
+                <flux:input label="{{ __('Admin Email') }}" wire:model="admin_email" type="email" icon="envelope" />
             </div>
-        </section>
-
-        <flux:separator />
-
-        <!-- Chat Templates -->
-        <section class="space-y-4">
-            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Chat Templates</h3>
-            <p class="text-sm text-zinc-500">
-                Available placeholders: 
-                <br>
-                <code>{name}</code>, <code>{email}</code>, <code>{phone}</code>, <code>{person}</code>, <code>{city}</code>, <code>{country}</code>, <code>{destination}</code> (or <code>{title}</code>), 
-                <code>{url}</code>, <code>{price}</code>, <code>{location}</code>, <code>{duration}</code>.
-            </p>
-            <div class="grid grid-cols-1 gap-6">
-                <flux:textarea label="{{ __('WhatsApp Main Template') }} ({{ strtoupper($activeTab) }})" wire:model="whatsapp_template.{{ $activeTab }}" rows="3" />
-                <flux:input label="{{ __('Email Subject Template') }} ({{ strtoupper($activeTab) }})" wire:model="email_subject_template.{{ $activeTab }}" />
-                <flux:textarea label="{{ __('Email Body Template') }} ({{ strtoupper($activeTab) }})" wire:model="email_template.{{ $activeTab }}" rows="3" />
-            </div>
-        </section>
-
-        <flux:separator />
-
-        <!-- Footer Settings -->
-        <section class="space-y-4">
-            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Footer</h3>
+            
             <flux:textarea label="{{ __('Footer Description') }} ({{ strtoupper($activeTab) }})" wire:model="footer_text.{{ $activeTab }}" rows="3" />
-        </section>
+        </flux:card>
 
-        <flux:separator />
+        <!-- Communication Templates -->
+        <flux:card class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.chat-bubble-left-right class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Communication Templates') }}</flux:heading>
+            </div>
+            <flux:separator />
+
+            <div class="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg space-y-2 border border-zinc-200 dark:border-zinc-700">
+                <flux:heading size="sm" class="flex items-center gap-2">
+                    <flux:icon.information-circle class="size-4 text-zinc-500" />
+                    {{ __('Dynamic Placeholders') }}
+                </flux:heading>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono text-zinc-500">
+                    <div>{name}</div><div>{email}</div><div>{phone}</div><div>{person}</div>
+                    <div>{city}</div><div>{country}</div><div>{destination}</div><div>{url}</div>
+                    <div>{message}</div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <flux:textarea label="{{ __('WhatsApp Main Template') }} ({{ strtoupper($activeTab) }})" wire:model="whatsapp_template.{{ $activeTab }}" rows="3" />
+                
+                <div class="space-y-4">
+                    <flux:input label="{{ __('Email Subject Template') }} ({{ strtoupper($activeTab) }})" wire:model="email_subject_template.{{ $activeTab }}" />
+                    <flux:textarea label="{{ __('Email Body Template') }} ({{ strtoupper($activeTab) }})" wire:model="email_template.{{ $activeTab }}" rows="4" />
+                </div>
+            </div>
+        </flux:card>
 
         <!-- Social Media -->
-        <section class="space-y-4">
-            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Social Media</h3>
-            <p class="text-sm text-zinc-500">Paste the full URL to each social profile. Leave blank to hide.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Instagram') }}" wire:model="social_instagram" placeholder="https://instagram.com/..." />
-                <flux:input label="{{ __('Facebook') }}" wire:model="social_facebook" placeholder="https://facebook.com/..." />
-                <flux:input label="{{ __('Twitter / X') }}" wire:model="social_twitter" placeholder="https://x.com/..." />
-                <flux:input label="{{ __('YouTube') }}" wire:model="social_youtube" placeholder="https://youtube.com/..." />
-                <flux:input label="{{ __('TikTok') }}" wire:model="social_tiktok" placeholder="https://tiktok.com/@..." />
+        <flux:card class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.globe-alt class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Social Media Profiles') }}</flux:heading>
             </div>
-        </section>
+            <flux:separator />
 
-        <div class="flex justify-end gap-2 pt-4">
-            <flux:button type="submit" variant="primary">{{ __('Save Settings') }}</flux:button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('Instagram') }}" wire:model="social_instagram" placeholder="https://instagram.com/..." icon="at-symbol" />
+                <flux:input label="{{ __('Facebook') }}" wire:model="social_facebook" placeholder="https://facebook.com/..." icon="camera" />
+                <flux:input label="{{ __('Twitter / X') }}" wire:model="social_twitter" placeholder="https://x.com/..." icon="hashtag" />
+                <flux:input label="{{ __('YouTube') }}" wire:model="social_youtube" placeholder="https://youtube.com/..." icon="play" />
+                <flux:input label="{{ __('TikTok') }}" wire:model="social_tiktok" placeholder="https://tiktok.com/@..." icon="musical-note" />
+            </div>
+        </flux:card>
+
+        <div class="flex justify-end pt-4">
+            <flux:button type="submit" variant="primary" class="px-12">{{ __('Save Settings') }}</flux:button>
         </div>
     </form>
 </div>

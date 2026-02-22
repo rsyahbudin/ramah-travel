@@ -17,6 +17,7 @@ class Booking extends Model
         'country',
         'type',
         'status',
+        'message',
     ];
 
     protected $casts = [

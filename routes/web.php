@@ -29,7 +29,15 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Volt::route('/destinations/{destination}/edit', 'admin.destinations.form')->name('destinations.edit');
     Volt::route('/pages/home', 'admin.pages.home')->name('pages.home');
     Volt::route('/pages/{page:slug}/edit', 'admin.pages.edit')->name('pages.edit');
+
     Volt::route('/settings', 'admin.settings')->name('settings');
+
+    // Admin Only
+    Route::middleware(['admin'])->group(function () {
+        Volt::route('/users', 'admin.users.index')->name('users.index');
+        Volt::route('/users/create', 'admin.users.form')->name('users.create');
+        Volt::route('/users/{user}/edit', 'admin.users.form')->name('users.edit');
+    });
 });
 
 require __DIR__.'/settings.php';

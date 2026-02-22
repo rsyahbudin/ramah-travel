@@ -17,33 +17,58 @@ new class extends Component {
 };
 ?>
 
-<div>
-    <flux:heading size="xl" class="mb-6">{{ __('Dashboard') }}</flux:heading>
+<div class="space-y-6">
+    <flux:heading size="xl">{{ __('Dashboard') }}</flux:heading>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
-            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('Total Destinations') }}</div>
+        <flux:card class="space-y-2">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                    <flux:icon.map class="size-5 text-zinc-500" />
+                </div>
+                <flux:heading size="sm" class="text-zinc-500">{{ __('Total Destinations') }}</flux:heading>
+            </div>
             <div class="text-3xl font-bold">{{ $totalDestinations }}</div>
-        </div>
+        </flux:card>
         
-        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
-            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('Active Destinations') }}</div>
+        <flux:card class="space-y-2">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <flux:icon.eye class="size-5 text-green-600" />
+                </div>
+                <flux:heading size="sm" class="text-zinc-500">{{ __('Active Destinations') }}</flux:heading>
+            </div>
             <div class="text-3xl font-bold">{{ $activeDestinations }}</div>
-        </div>
+        </flux:card>
 
-        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
-            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('Total Bookings') }}</div>
+        <flux:card class="space-y-2">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <flux:icon.calendar-days class="size-5 text-blue-600" />
+                </div>
+                <flux:heading size="sm" class="text-zinc-500">{{ __('Total Bookings') }}</flux:heading>
+            </div>
             <div class="text-3xl font-bold">{{ $totalBookings }}</div>
-        </div>
+        </flux:card>
 
-        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
-            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('WhatsApp Bookings') }}</div>
+        <flux:card class="space-y-2">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <flux:icon.chat-bubble-bottom-center-text class="size-5 text-green-600" />
+                </div>
+                <flux:heading size="sm" class="text-zinc-500">{{ __('WhatsApp Bookings') }}</flux:heading>
+            </div>
             <div class="text-3xl font-bold text-green-600">{{ $whatsappBookings }}</div>
-        </div>
+        </flux:card>
 
-        <div class="p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl">
-            <div class="text-sm font-medium text-zinc-500 mb-2">{{ __('Email Bookings') }}</div>
+        <flux:card class="space-y-2">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <flux:icon.envelope class="size-5 text-blue-600" />
+                </div>
+                <flux:heading size="sm" class="text-zinc-500">{{ __('Email Bookings') }}</flux:heading>
+            </div>
             <div class="text-3xl font-bold text-blue-600">{{ $emailBookings }}</div>
-        </div>
+        </flux:card>
     </div>
 </div>

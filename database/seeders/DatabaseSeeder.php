@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin User',
             'email' => 'admin@ramah-travel.com',
             'password' => bcrypt('password'),
+            'is_admin' => true,
         ]);
     }
 }

@@ -12,7 +12,7 @@ test('authenticated users can view general settings', function () {
     $response->assertSee('General Settings');
     $response->assertSee('Branding');
     $response->assertSee('Contact Information');
-    
+
     // Verify redundant sections are NOT seen
     $response->assertDontSee('Hero Section');
     $response->assertDontSee('Experience Tiers');

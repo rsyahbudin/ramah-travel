@@ -257,28 +257,50 @@ new class extends Component {
         </div>
     </div>
 
-    <form wire:submit="save" class="space-y-6 max-w-4xl">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <flux:input label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" wire:model.live="title.{{ $activeTab }}" />
-            <flux:input label="{{ __('Slug') }}" wire:model="slug" description="Slug is generated from English title" />
-        </div>
+    <form wire:submit="save" class="space-y-8 max-w-5xl">
+        <!-- General Information -->
+        <flux:card class="space-y-6">
+            <flux:heading size="lg">{{ __('General Information') }}</flux:heading>
+            <flux:separator />
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <flux:input label="{{ __('Min Price (USD)') }}" wire:model="price" type="number" step="0.01" icon="currency-dollar" />
-            <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model="price_max" type="number" step="0.01" icon="currency-dollar" />
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" wire:model.live="title.{{ $activeTab }}" />
+                <flux:input label="{{ __('Slug') }}" wire:model="slug" description="Slug is generated from English title" />
+            </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:model="location.{{ $activeTab }}" icon="map-pin" />
-            <flux:input label="{{ __('Person (Pax)') }}" wire:model="person" type="number" min="1" icon="user" />
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:model="location.{{ $activeTab }}" icon="map-pin" />
+                <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:model="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
+            </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:model="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
-            <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:model="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:model="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
+                <flux:input label="{{ __('Person (Pax)') }}" wire:model="person" type="number" min="1" icon="user" />
+            </div>
 
-        <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:model="description.{{ $activeTab }}" rows="5" />
+            <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:model="description.{{ $activeTab }}" rows="5" />
+        </flux:card>
+
+        <!-- Pricing & Availability -->
+        <flux:card class="space-y-6">
+            <flux:heading size="lg">{{ __('Pricing & Visibility') }}</flux:heading>
+            <flux:separator />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('Min Price (USD)') }}" wire:model="price" type="number" step="0.01" icon="currency-dollar" />
+                <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model="price_max" type="number" step="0.01" icon="currency-dollar" />
+            </div>
+
+            <div class="flex gap-6">
+                <flux:switch label="{{ __('Featured Destination') }}" description="{{ __('Show on home page') }}" wire:model="is_featured" />
+                <flux:switch label="{{ __('Visible on Site') }}" description="{{ __('Publish to public list') }}" wire:model="is_visible" />
+            </div>
+        </flux:card>
+
+        <!-- Content & Details -->
+        <flux:card class="space-y-8">
+            <flux:heading size="lg">{{ __('Detailed Content') }}</flux:heading>
+            <flux:separator />
 
         <!-- Highlights Section -->
         <div class="space-y-3">
@@ -377,55 +399,71 @@ new class extends Component {
             @endforeach
         </div>
 
-        <!-- Main Image -->
-        <flux:field>
-            <flux:label>{{ __('Main Image') }}</flux:label>
-            <input type="file" wire:model="image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            @if ($image)
-                <img src="{{ $image->temporaryUrl() }}" class="mt-2 h-48 w-full object-cover rounded-lg" />
-            @elseif ($existingImage)
-                <img src="{{ Storage::url($existingImage) }}" class="mt-2 h-48 w-full object-cover rounded-lg" />
-            @endif
-            <flux:description>Recommended: 1200×800px (3:2 ratio).</flux:description>
-            <flux:error name="image" />
-        </flux:field>
+        </flux:card>
 
-        <!-- Gallery Images -->
-         <flux:field>
-            <flux:label>{{ __('Gallery Images') }}</flux:label>
-            <input type="file" wire:model="gallery" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4" />
+        <!-- Media Management -->
+        <flux:card class="space-y-6">
+            <flux:heading size="lg">{{ __('Media Management') }}</flux:heading>
+            <flux:separator />
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                @foreach($gallery as $photo)
-                     <div class="relative group">
-                        <img src="{{ $photo->temporaryUrl() }}" class="h-32 w-full object-cover rounded-lg" />
-                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs rounded-lg">New</div>
-                     </div>
-                @endforeach
-
-                @if($destination?->exists)
-                    @foreach($existingGallery as $photo)
-                        <div class="relative group">
-                            <img src="{{ Storage::url($photo->image_path) }}" class="h-32 w-full object-cover rounded-lg" />
-                            <button type="button" wire:click="deleteGalleryImage({{ $photo->id }})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition">
-                                <flux:icon.trash class="size-4" />
-                            </button>
+            <!-- Main Image -->
+            <flux:field>
+                <flux:label>{{ __('Main Cover Image') }}</flux:label>
+                <div class="mt-2 flex items-center gap-4">
+                    @if ($image)
+                        <img src="{{ $image->temporaryUrl() }}" class="h-32 w-48 object-cover rounded-lg border border-zinc-200" />
+                    @elseif ($existingImage)
+                        <img src="{{ Storage::url($existingImage) }}" class="h-32 w-48 object-cover rounded-lg border border-zinc-200" />
+                    @else
+                        <div class="h-32 w-48 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200">
+                            <flux:icon.photo class="size-8 text-zinc-400" />
                         </div>
-                    @endforeach
-                @endif
-            </div>
-            <flux:description>Recommended: 1000×1000px (1:1 ratio).</flux:description>
-            <flux:error name="gallery.*" />
-        </flux:field>
+                    @endif
+                    
+                    <div class="flex-1 space-y-2">
+                        <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                        <flux:description>Recommended: 1200×800px (3:2 ratio). Max 2MB.</flux:description>
+                        <flux:error name="image" />
+                    </div>
+                </div>
+            </flux:field>
 
-        <div class="flex gap-6">
-            <flux:switch label="{{ __('Featured') }}" wire:model="is_featured" />
-            <flux:switch label="{{ __('Visible') }}" wire:model="is_visible" />
-        </div>
+            <flux:separator />
 
-        <div class="flex justify-end gap-2">
+            <!-- Gallery Images -->
+             <flux:field>
+                <flux:label>{{ __('Gallery Images') }}</flux:label>
+                <div class="mt-2 space-y-4">
+                    <input type="file" wire:model="gallery" multiple class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        @foreach($gallery as $photo)
+                             <div class="relative group aspect-square">
+                                <img src="{{ $photo->temporaryUrl() }}" class="h-full w-full object-cover rounded-lg ring-2 ring-primary-500" />
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs rounded-lg font-bold">NEW</div>
+                             </div>
+                        @endforeach
+
+                        @if($destination?->exists)
+                            @foreach($existingGallery as $photo)
+                                <div class="relative group aspect-square">
+                                    <img src="{{ Storage::url($photo->image_path) }}" class="h-full w-full object-cover rounded-lg border border-zinc-200" />
+                                    <button type="button" wire:click="deleteGalleryImage({{ $photo->id }})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition shadow-lg hover:scale-110">
+                                        <flux:icon.trash class="size-3" />
+                                    </button>
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+                <flux:description>Recommended: 1:1 ratio. Max 2MB per image.</flux:description>
+                <flux:error name="gallery.*" />
+            </flux:field>
+        </flux:card>
+
+        <div class="flex justify-end gap-3 pt-6">
             <flux:button href="{{ route('admin.destinations.index') }}" wire:navigate variant="ghost">{{ __('Cancel') }}</flux:button>
-            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            <flux:button type="submit" variant="primary" class="px-8">{{ __('Save Destination') }}</flux:button>
         </div>
     </form>
 </div>
