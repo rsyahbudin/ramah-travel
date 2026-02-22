@@ -39,9 +39,10 @@ class PageSeeder extends Seeder
         ];
 
         foreach ($pages as $data) {
+            $slug = $data['slug'];
             $data['title'] = json_encode($data['title']);
             $data['content'] = json_encode($data['content']);
-            Page::create($data);
+            Page::updateOrCreate(['slug' => $slug], $data);
         }
     }
 }

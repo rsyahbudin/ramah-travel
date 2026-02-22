@@ -121,14 +121,19 @@ class DestinationSeeder extends Seeder
         ];
 
         foreach ($destinations as $data) {
-            // Encode translatable fields that are NOT in $casts
-            $translatableNotCast = ['title', 'description', 'location', 'duration', 'theme'];
-            foreach ($translatableNotCast as $field) {
-                if (isset($data[$field])) {
+            $slug = $data['slug'];
+
+            // Encode translatable string fields that are NOT automatically cast by Eloquent
+            $translatableStrings = ['title', 'description', 'location', 'duration', 'theme'];
+            foreach ($translatableStrings as $field) {
+                if (isset($data[$field]) && is_array($data[$field])) {
                     $data[$field] = json_encode($data[$field]);
                 }
             }
-            Destination::create($data);
+
+            // json-cast fields (highlights, itinerary, includes, excludes) are handled by Eloquent automatically
+
+            Destination::updateOrCreate(['slug' => $slug], $data);
         }
     }
 }

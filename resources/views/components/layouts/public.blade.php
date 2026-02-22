@@ -14,12 +14,12 @@
 <body class="font-sans antialiased text-secondary bg-bg-light selection:bg-primary/30">
 
     {{-- Header / Navigation --}}
-    <nav class="fixed top-0 w-full z-50 px-4 sm:px-6 md:px-8 py-4 md:py-5 flex items-center justify-between transition-all {{ $isHome ? 'bg-transparent' : 'bg-white/90 backdrop-blur border-b border-secondary/5' }}" @if($isHome) style="text-shadow: 0 1px 4px rgba(0,0,0,0.5);" @endif>
+    <nav class="fixed top-0 w-full z-50 px-4 sm:px-6 md:px-8 py-2 md:py-3 flex items-center justify-between transition-all {{ $isHome ? 'bg-transparent' : 'bg-white/90 backdrop-blur border-b border-secondary/5' }}" @if($isHome) style="text-shadow: 0 1px 4px rgba(0,0,0,0.5);" @endif>
         <a href="{{ route('home') }}" class="flex items-center gap-2" wire:navigate title="{{ $siteName }}">
             @if($logoImage)
-                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-10 sm:h-14 w-auto object-contain" />
+                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-24 w-24 sm:h-30 sm:w-36 object-contain" />
             @else
-                <span class="text-2xl font-extrabold tracking-tighter {{ $isHome ? 'text-white' : 'text-secondary' }} uppercase">{{ $siteName }}</span>
+                <span class="text-3xl font-extrabold tracking-tighter {{ $isHome ? 'text-white' : 'text-secondary' }} uppercase">{{ $siteName }}</span>
             @endif
         </a>
         <div class="hidden md:flex items-center gap-10">
@@ -84,13 +84,13 @@
 
     {{-- Footer --}}
     <footer class="bg-white py-12 md:py-20 px-4 sm:px-6 md:px-8 border-t border-secondary/5">
-        <div class="max-w-7xl mx-auto grid sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12 md:mb-20">
+        <div class="max-w-7xl mx-auto grid sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12 md:mb-12">
             <div class="col-span-1">
                 <div class="flex items-center gap-2 mb-6">
                     @if($logoImage)
-                        <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-10 sm:h-14 w-auto object-contain" />
+                        <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-30 w-30 object-contain" />
                     @else
-                        <span class="text-2xl font-extrabold tracking-tighter text-secondary uppercase">{{ $siteName }}</span>
+                        <span class="text-3xl font-extrabold tracking-tighter text-secondary uppercase">{{ $siteName }}</span>
                     @endif
                 </div>
                 <p class="text-secondary/50 text-sm leading-relaxed">

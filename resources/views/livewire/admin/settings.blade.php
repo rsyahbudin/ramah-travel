@@ -196,7 +196,7 @@ new class extends Component {
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono text-zinc-500">
                     <div>{name}</div><div>{email}</div><div>{phone}</div><div>{person}</div>
                     <div>{city}</div><div>{country}</div><div>{destination}</div><div>{url}</div>
-                    <div>{message}</div>
+                    <div>{travel_date}</div><div>{date}</div><div>{message}</div>
                 </div>
             </div>
 
