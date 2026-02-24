@@ -23,33 +23,32 @@
             mobileMenuOpen: false,
             init() {
                 const updateScrolled = () => {
-                    const hero = document.querySelector('main section:first-child, main > div > section:first-child, main > div > div:first-child');
-                    // if there's a hero image height, use it. Otherwise use window height or fixed small 50px
-                    this.heroHeight = hero ? Math.max(hero.offsetHeight - 100, 50) : 50;
-                    this.scrolled = window.scrollY > Math.min(this.heroHeight, window.innerHeight * 0.8);
+                    this.scrolled = window.scrollY > 50;
                 };
                 updateScrolled();
                 window.addEventListener('resize', updateScrolled);
             }
         }"
-        @scroll.window="scrolled = window.scrollY > Math.min(heroHeight, window.innerHeight * 0.8)"
+        @scroll.window="scrolled = window.scrollY > 50"
     >
         <nav
             :class="scrolled ? 'bg-white/95 backdrop-blur-xl shadow-sm py-3 border-b border-gray-100' : 'bg-transparent py-5 md:py-8'"
-            class="fixed top-0 w-full z-50 px-6 sm:px-8 md:px-12 flex items-center justify-between transition-all duration-500 ease-out"
+            class="fixed top-0 w-full z-[100] px-6 sm:px-8 md:px-12 flex items-center justify-between transition-all duration-500 ease-out"
         >
-        <a href="{{ route('home') }}" @click="mobileMenuOpen = false" class="flex items-center gap-2 group relative shrink-0" wire:navigate title="{{ $siteName }}">
-            @if($logoImage && $logoWhite)
-                <img src="{{ Storage::url($logoWhite) }}" alt="{{ $siteName }}" class="h-12 w-auto sm:h-14 md:h-16 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="!scrolled && !mobileMenuOpen" />
-                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-12 w-auto sm:h-14 md:h-16 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="scrolled || mobileMenuOpen" x-cloak />
-            @elseif($logoImage)
-                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" :class="(scrolled || mobileMenuOpen) ? 'h-12 sm:h-14 md:h-16' : 'h-16 sm:h-20 md:h-24'" class="w-auto object-contain transition-all duration-500 transform group-hover:scale-105" />
-            @else
-                <span :class="(scrolled || mobileMenuOpen) ? 'text-secondary' : 'text-white'" class="text-2xl sm:text-3xl font-extrabold tracking-tighter uppercase transition-colors duration-500 truncate max-w-[50vw] sm:max-w-xs">{{ $siteName }}</span>
-            @endif
-        </a>
+        <div class="flex-1 flex justify-start">
+            <a href="{{ route('home') }}" @click="mobileMenuOpen = false" class="flex items-center gap-2 group relative shrink-0" wire:navigate title="{{ $siteName }}">
+                @if($logoImage && $logoWhite)
+                    <img src="{{ Storage::url($logoWhite) }}" alt="{{ $siteName }}" class="h-12 w-auto sm:h-14 md:h-16 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="!scrolled && !mobileMenuOpen" />
+                    <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-12 w-auto sm:h-14 md:h-16 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="scrolled || mobileMenuOpen" x-cloak />
+                @elseif($logoImage)
+                    <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" :class="(scrolled || mobileMenuOpen) ? 'h-12 sm:h-14 md:h-16' : 'h-16 sm:h-20 md:h-24'" class="w-auto object-contain transition-all duration-500 transform group-hover:scale-105" />
+                @else
+                    <span :class="(scrolled || mobileMenuOpen) ? 'text-secondary' : 'text-white'" class="text-2xl sm:text-3xl font-extrabold tracking-tighter uppercase transition-colors duration-500 truncate max-w-[50vw] sm:max-w-xs">{{ $siteName }}</span>
+                @endif
+            </a>
+        </div>
 
-        <div class="hidden md:flex items-center gap-10 lg:gap-14">
+        <div class="flex-1 justify-center hidden md:flex items-center gap-10 lg:gap-14">
             <a :class="scrolled ? 'text-secondary hover:text-primary' : 'text-white/95 hover:text-white'" class="text-[11px] font-bold tracking-[0.2em] relative group uppercase transition-colors duration-300" href="{{ route('destinations.index') }}" wire:navigate>
                 {{ __('Destinations') }}
                 <span class="absolute -bottom-2 left-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -60,7 +59,7 @@
             </a>
         </div>
 
-        <div class="flex items-center gap-4 sm:gap-6">
+        <div class="flex-1 flex items-center justify-end gap-4 sm:gap-6">
             @if($siteSettings['whatsapp_number'] ?? false)
                 <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}{{ $whatsappGeneralTemplate ? '?text=' . urlencode($whatsappGeneralTemplate) : '' }}" target="_blank"
                    :class="(scrolled || mobileMenuOpen) ? 'bg-secondary text-white hover:bg-primary shadow-md hover:-translate-y-0.5' : 'bg-white/10 text-white border border-white/20 backdrop-blur-md hover:bg-white hover:text-secondary'"
@@ -83,7 +82,7 @@
                      x-transition:leave="transition ease-in duration-150" 
                      x-transition:leave-start="opacity-100 translate-y-0" 
                      x-transition:leave-end="opacity-0 translate-y-3" 
-                     class="absolute top-full pt-6 right-0 min-w-[180px] z-50" 
+                     class="absolute top-full pt-6 right-0 min-w-[180px] z-[110]" 
                      x-cloak>
                     <div class="bg-white rounded-2xl shadow-xl py-3 border border-gray-100 overflow-hidden relative">
                         <div class="relative z-10">
@@ -111,7 +110,6 @@
                 <i class="material-icons text-3xl transition-transform duration-300" :class="mobileMenuOpen ? 'rotate-90' : ''" x-text="mobileMenuOpen ? 'close' : 'menu'"></i>
             </button>
         </div>
-
     </nav>
 
     {{-- Mobile Full Screen Menu (Moved out of NAV to avoid CSS stacking context locks) --}}

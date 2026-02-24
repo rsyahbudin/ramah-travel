@@ -26,6 +26,8 @@ new class extends Component {
     public $existing_about_gallery_3;
     public $existing_about_gallery_4;
 
+    public array $about_who_we_are_label = ['en' => '', 'id' => '', 'es' => ''];
+
     public string $activeTab = 'en';
 
     public function mount(Page $page): void
@@ -55,9 +57,14 @@ new class extends Component {
             $this->existing_about_gallery_3 = $settings['about_gallery_3'] ?? null;
             $this->existing_about_gallery_4 = $settings['about_gallery_4'] ?? null;
 
+            $this->about_who_we_are_label = $this->decodeSetting($settings, 'about_who_we_are_label', [
+                'en' => 'Who We Are', 'id' => '', 'es' => ''
+            ]);
+
             foreach (['en', 'id', 'es'] as $locale) {
                 if (!isset($this->about_hero_subtitle[$locale])) $this->about_hero_subtitle[$locale] = '';
                 if (!isset($this->about_hero_label[$locale])) $this->about_hero_label[$locale] = '';
+                if (!isset($this->about_who_we_are_label[$locale])) $this->about_who_we_are_label[$locale] = '';
             }
         }
     }
@@ -119,8 +126,8 @@ new class extends Component {
 
             ]);
             \App\Models\Setting::updateOrCreate(['key' => 'about_hero_subtitle'], ['value' => json_encode($this->about_hero_subtitle)]);
-
             \App\Models\Setting::updateOrCreate(['key' => 'about_hero_label'], ['value' => json_encode($this->about_hero_label)]);
+            \App\Models\Setting::updateOrCreate(['key' => 'about_who_we_are_label'], ['value' => json_encode($this->about_who_we_are_label)]);
 
             foreach (['1', '2', '3', '4'] as $i) {
                 $field = "about_gallery_$i";
@@ -163,106 +170,130 @@ new class extends Component {
     <form wire:submit="save" class="space-y-8 max-w-7xl">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
-        <!-- Page Identity -->
-        <flux:card class="space-y-6">
-            <div class="flex items-center gap-2">
-                <flux:icon.identification class="size-5 text-zinc-400" />
-                <flux:heading size="lg">{{ __('Page Identity') }}</flux:heading>
-            </div>
-            <flux:separator />
+                @if($page->slug === 'about')
+                    <!-- About Hero Section -->
+                    <flux:card class="space-y-6">
+                        <div class="flex items-center gap-2">
+                            <flux:icon.star class="size-5 text-zinc-400" />
+                            <flux:heading size="lg">{{ __('Hero Section') }}</flux:heading>
+                        </div>
+                        <flux:separator />
 
-            <div class="space-y-6">
-                <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:key="title_activeTab-{{ $activeTab }}" wire:model="title.{{ $activeTab }}" />
-            </div>
-        </flux:card>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <flux:field>
+                                <flux:label>{{ __('Hero Image') }}</flux:label>
+                                <div class="flex flex-col gap-4">
+                                    @if ($image)
+                                        <img src="{{ $image->temporaryUrl() }}" class="h-32 w-full object-cover rounded-lg border border-zinc-200" />
+                                    @elseif ($existing_image)
+                                        <img src="{{ Storage::url($existing_image) }}" class="h-32 w-full object-cover rounded-lg border border-zinc-200" />
+                                    @endif
+                                    <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                                </div>
+                                <flux:error name="image" />
+                            </flux:field>
 
-        <!-- Page Content -->
-        <flux:card class="space-y-6">
-            <div class="flex items-center gap-2">
-                <flux:icon.document-text class="size-5 text-zinc-400" />
-                <flux:heading size="lg">{{ __('Page Content') }}</flux:heading>
-            </div>
-            <flux:separator />
+                            <div class="space-y-6">
+                                <flux:input label="{{ __('Hero Label') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_label_activeTab-{{ $activeTab }}" wire:model="about_hero_label.{{ $activeTab }}" />
+                                <flux:textarea label="{{ __('Hero Subtitle') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_subtitle_activeTab-{{ $activeTab }}" wire:model="about_hero_subtitle.{{ $activeTab }}" rows="4" />
+                            </div>
+                        </div>
+                    </flux:card>
 
-            <flux:textarea label="{{ __('Main Body Content') }} ({{ strtoupper($activeTab) }})" wire:key="content_activeTab-{{ $activeTab }}" wire:model="content.{{ $activeTab }}" rows="20" />
-        </flux:card>
+                    <!-- About Our Story Section -->
+                    <flux:card class="space-y-6">
+                        <div class="flex items-center gap-2">
+                            <flux:icon.book-open class="size-5 text-zinc-400" />
+                            <flux:heading size="lg">{{ __('Our Story Section') }}</flux:heading>
+                        </div>
+                        <flux:separator />
+
+                        <div class="space-y-6">
+                            <flux:input label="{{ __('Section Label') }} ({{ strtoupper($activeTab) }})" wire:key="about_who_we_are_label_activeTab-{{ $activeTab }}" wire:model="about_who_we_are_label.{{ $activeTab }}" description="e.g. 'Who We Are'" />
+                            <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:key="title_activeTab-{{ $activeTab }}" wire:model="title.{{ $activeTab }}" />
+                            <flux:textarea label="{{ __('Main Body Content') }} ({{ strtoupper($activeTab) }})" wire:key="content_activeTab-{{ $activeTab }}" wire:model="content.{{ $activeTab }}" rows="15" />
+                        </div>
+                    </flux:card>
+                @else
+                    <!-- Standard Page Layout -->
+                    <flux:card class="space-y-6">
+                        <div class="flex items-center gap-2">
+                            <flux:icon.identification class="size-5 text-zinc-400" />
+                            <flux:heading size="lg">{{ __('Page Identity') }}</flux:heading>
+                        </div>
+                        <flux:separator />
+                        <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:key="title_activeTab-{{ $activeTab }}" wire:model="title.{{ $activeTab }}" />
+                    </flux:card>
+
+                    <flux:card class="space-y-6">
+                        <div class="flex items-center gap-2">
+                            <flux:icon.document-text class="size-5 text-zinc-400" />
+                            <flux:heading size="lg">{{ __('Page Content') }}</flux:heading>
+                        </div>
+                        <flux:separator />
+                        <flux:textarea label="{{ __('Main Body Content') }} ({{ strtoupper($activeTab) }})" wire:key="content_activeTab-{{ $activeTab }}" wire:model="content.{{ $activeTab }}" rows="20" />
+                    </flux:card>
+                @endif
             </div>
 
             <div class="lg:col-span-1 space-y-8">
-
-        <flux:card class="space-y-6">
-            <div class="flex items-center gap-2">
-                <flux:icon.photo class="size-5 text-zinc-400" />
-                <flux:heading size="lg">{{ __('Cover Image') }}</flux:heading>
-            </div>
-            <flux:separator />
-
-            <flux:field>
-                <div class="flex flex-col gap-4">
-                        @if ($image)
-                            <img src="{{ $image->temporaryUrl() }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
-                        @elseif ($existing_image)
-                            <img src="{{ Storage::url($existing_image) }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
-                        @else
-                            <div class="h-32 w-64 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200 text-zinc-400">
-                                {{ __('No Image') }}
-                            </div>
-                        @endif
-                        
-                        <div class="flex-1 space-y-2">
-                            <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
-                            <flux:description>Recommended: 1200×600px. Max 4MB.</flux:description>
+                @if($page->slug !== 'about')
+                    <flux:card class="space-y-6">
+                        <div class="flex items-center gap-2">
+                            <flux:icon.photo class="size-5 text-zinc-400" />
+                            <flux:heading size="lg">{{ __('Cover Image') }}</flux:heading>
                         </div>
-                    </div>
-                    <flux:error name="image" />
-                </flux:field>
-        </flux:card>
+                        <flux:separator />
 
-
-        @if($page->slug === 'about')
-            <!-- About Hero Settings -->
-            <flux:card class="space-y-6">
-                <div class="flex items-center gap-2">
-                    <flux:icon.star class="size-5 text-zinc-400" />
-                    <flux:heading size="lg">{{ __('Hero Settings') }}</flux:heading>
-                </div>
-                <flux:separator />
-
-                <flux:input label="{{ __('Hero Label') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_label_activeTab-{{ $activeTab }}" wire:model="about_hero_label.{{ $activeTab }}" />
-                <flux:textarea label="{{ __('Hero Subtitle') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_subtitle_activeTab-{{ $activeTab }}" wire:model="about_hero_subtitle.{{ $activeTab }}" rows="3" />
-            </flux:card>
-
-            <!-- About Page Sidebar Gallery -->
-            <flux:card class="space-y-6">
-                <div class="flex items-center gap-2">
-                    <flux:icon.photo class="size-5 text-zinc-400" />
-                    <flux:heading size="lg">{{ __('Sidebar Gallery') }}</flux:heading>
-                </div>
-                <flux:separator />
-
-                <p class="text-sm text-zinc-500 mb-4">Upload 4 aesthetic photos to be displayed when stats are hidden on the About Page. Recommended: luxury aesthetic photos.</p>
-                
-                <div class="grid grid-cols-1 gap-6">
-                    @for ($i = 1; $i <= 4; $i++)
-                        @php
-                            $field = "about_gallery_$i";
-                            $existingField = "existing_about_gallery_$i";
-                        @endphp
                         <flux:field>
-                            <flux:label>Gallery Image {{ $i }}</flux:label>
-                            <input type="file" wire:model="{{ $field }}" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
-                            @if ($this->$field)
-                                <img src="{{ $this->$field->temporaryUrl() }}" class="mt-2 h-32 w-full object-cover rounded-lg" />
-                            @elseif ($this->$existingField)
-                                <img src="{{ Storage::url($this->$existingField) }}" class="mt-2 h-32 w-full object-cover rounded-lg" />
-                            @endif
-                            <flux:error name="{{ $field }}" />
+                            <div class="flex flex-col gap-4">
+                                @if ($image)
+                                    <img src="{{ $image->temporaryUrl() }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
+                                @elseif ($existing_image)
+                                    <img src="{{ Storage::url($existing_image) }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
+                                @else
+                                    <div class="h-32 w-64 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200 text-zinc-400">
+                                        {{ __('No Image') }}
+                                    </div>
+                                @endif
+                                <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                            </div>
+                            <flux:error name="image" />
                         </flux:field>
-                    @endfor
-                </div>
-            </flux:card>
+                    </flux:card>
+                @endif
 
-        @endif
+                @if($page->slug === 'about')
+                    <!-- About Page Sidebar Gallery -->
+                    <flux:card class="space-y-6">
+                        <div class="flex items-center gap-2">
+                            <flux:icon.photo class="size-5 text-zinc-400" />
+                            <flux:heading size="lg">{{ __('Sidebar Gallery') }}</flux:heading>
+                        </div>
+                        <flux:separator />
+
+                        <p class="text-sm text-zinc-500 mb-4">Upload 4 aesthetic photos for the sidebar. Recommended: luxury aesthetic photos.</p>
+                        
+                        <div class="grid grid-cols-1 gap-6">
+                            @for ($i = 1; $i <= 4; $i++)
+                                @php
+                                    $field = "about_gallery_$i";
+                                    $existingField = "existing_about_gallery_$i";
+                                @endphp
+                                <flux:field>
+                                    <flux:label>Gallery Image {{ $i }}</flux:label>
+                                    <input type="file" wire:model="{{ $field }}" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+                                    @if ($this->$field)
+                                        <img src="{{ $this->$field->temporaryUrl() }}" class="mt-2 h-32 w-full object-cover rounded-lg" />
+                                    @elseif ($this->$existingField)
+                                        <img src="{{ Storage::url($this->$existingField) }}" class="mt-2 h-32 w-full object-cover rounded-lg" />
+                                    @endif
+                                    <flux:error name="{{ $field }}" />
+                                </flux:field>
+                            @endfor
+                        </div>
+                    </flux:card>
+                @endif
             </div>
         </div>
 
