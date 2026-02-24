@@ -15,130 +15,215 @@
 <body class="font-sans antialiased text-secondary bg-bg-light selection:bg-primary/30">
 
     {{-- Header / Navigation (Scroll-Aware: all pages) --}}
-    <nav
+    <header
         x-data="{
             scrolled: false,
             heroHeight: 0,
+            mobileMenuOpen: false,
             init() {
-                const hero = document.querySelector('main section:first-child, main > div > section:first-child, main > div > div:first-child');
-                this.heroHeight = hero ? hero.offsetHeight - 100 : 300;
-                this.scrolled = window.scrollY > this.heroHeight;
+                const updateScrolled = () => {
+                    const hero = document.querySelector('main section:first-child, main > div > section:first-child, main > div > div:first-child');
+                    // if there's a hero image height, use it. Otherwise use window height or fixed small 50px
+                    this.heroHeight = hero ? Math.max(hero.offsetHeight - 100, 50) : 50;
+                    this.scrolled = window.scrollY > Math.min(this.heroHeight, window.innerHeight * 0.8);
+                };
+                updateScrolled();
+                window.addEventListener('resize', updateScrolled);
             }
         }"
-        @scroll.window="scrolled = window.scrollY > heroHeight"
-        class="fixed top-0 w-full z-50 px-4 sm:px-6 md:px-8 py-2 md:py-3 flex items-center justify-between bg-transparent transition-all duration-300"
+        @scroll.window="scrolled = window.scrollY > Math.min(heroHeight, window.innerHeight * 0.8)"
     >
-        <a href="{{ route('home') }}" class="flex items-center gap-2" wire:navigate title="{{ $siteName }}">
+        <nav
+            :class="scrolled ? 'bg-white/95 backdrop-blur-xl shadow-sm py-3 border-b border-gray-100' : 'bg-transparent py-5 md:py-8'"
+            class="fixed top-0 w-full z-50 px-6 sm:px-8 md:px-12 flex items-center justify-between transition-all duration-500 ease-out"
+        >
+        <a href="{{ route('home') }}" @click="mobileMenuOpen = false" class="flex items-center gap-2 group relative shrink-0" wire:navigate title="{{ $siteName }}">
             @if($logoImage && $logoWhite)
-                <img src="{{ Storage::url($logoWhite) }}" alt="{{ $siteName }}" class="h-24 w-24 sm:h-30 sm:w-36 object-contain transition-all duration-300" x-show="!scrolled" />
-                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-24 w-24 sm:h-30 sm:w-36 object-contain transition-all duration-300" x-show="scrolled" x-cloak />
+                <img src="{{ Storage::url($logoWhite) }}" alt="{{ $siteName }}" class="h-12 w-auto sm:h-14 md:h-16 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="!scrolled && !mobileMenuOpen" />
+                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-12 w-auto sm:h-14 md:h-16 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="scrolled || mobileMenuOpen" x-cloak />
             @elseif($logoImage)
-                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-24 w-24 sm:h-30 sm:w-36 object-contain" />
+                <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" :class="(scrolled || mobileMenuOpen) ? 'h-12 sm:h-14 md:h-16' : 'h-16 sm:h-20 md:h-24'" class="w-auto object-contain transition-all duration-500 transform group-hover:scale-105" />
             @else
-                <span :class="scrolled ? 'text-secondary' : 'text-white'" class="text-3xl font-extrabold tracking-tighter uppercase transition-colors duration-300">{{ $siteName }}</span>
+                <span :class="(scrolled || mobileMenuOpen) ? 'text-secondary' : 'text-white'" class="text-2xl sm:text-3xl font-extrabold tracking-tighter uppercase transition-colors duration-500 truncate max-w-[50vw] sm:max-w-xs">{{ $siteName }}</span>
             @endif
         </a>
 
-        <div class="hidden md:flex items-center gap-10">
-            <a :class="scrolled ? 'text-secondary' : 'text-white'" class="text-sm font-semibold tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a>
-            <a :class="scrolled ? 'text-secondary' : 'text-white'" class="text-sm font-semibold tracking-widest uppercase hover:text-primary transition-colors" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a>
-
-            {{-- Language Switcher Desktop --}}
-            <div class="relative group" x-data="{ open: false }">
-                <button @click="open = !open" :class="scrolled ? 'text-secondary' : 'text-white'" class="flex items-center gap-1 text-sm font-semibold tracking-widest uppercase hover:text-primary transition-colors">
-                    <span>{{ strtoupper(app()->getLocale()) }}</span>
-                    <i class="material-icons text-lg">language</i>
-                </button>
-                <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl py-2 min-w-[140px] border border-secondary/5 z-50">
-                    <a href="{{ route('lang.switch', 'en') }}" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'en' ? 'bg-primary' : 'bg-transparent' }}"></span>
-                        {{ __('English') }}
-                    </a>
-                    <a href="{{ route('lang.switch', 'id') }}" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'id' ? 'bg-primary' : 'bg-transparent' }}"></span>
-                        {{ __('Indonesian') }}
-                    </a>
-                    <a href="{{ route('lang.switch', 'es') }}" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-secondary hover:bg-bg-light hover:text-primary transition-all flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full {{ app()->getLocale() == 'es' ? 'bg-primary' : 'bg-transparent' }}"></span>
-                        {{ __('Spanish') }}
-                    </a>
-                </div>
-            </div>
+        <div class="hidden md:flex items-center gap-10 lg:gap-14">
+            <a :class="scrolled ? 'text-secondary hover:text-primary' : 'text-white/95 hover:text-white'" class="text-[11px] font-bold tracking-[0.2em] relative group uppercase transition-colors duration-300" href="{{ route('destinations.index') }}" wire:navigate>
+                {{ __('Destinations') }}
+                <span class="absolute -bottom-2 left-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </a>
+            <a :class="scrolled ? 'text-secondary hover:text-primary' : 'text-white/95 hover:text-white'" class="text-[11px] font-bold tracking-[0.2em] relative group uppercase transition-colors duration-300" href="{{ route('about') }}" wire:navigate>
+                {{ __('Our Story') }}
+                <span class="absolute -bottom-2 left-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </a>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 sm:gap-6">
             @if($siteSettings['whatsapp_number'] ?? false)
                 <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank"
-                   :class="scrolled ? 'bg-primary text-white' : 'bg-white/20 text-white border border-white/40 backdrop-blur-sm hover:bg-white/30'"
-                   class="px-6 md:px-8 py-2.5 md:py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all hidden sm:inline-block">
+                   :class="(scrolled || mobileMenuOpen) ? 'bg-secondary text-white hover:bg-primary shadow-md hover:-translate-y-0.5' : 'bg-white/10 text-white border border-white/20 backdrop-blur-md hover:bg-white hover:text-secondary'"
+                   class="px-5 py-2.5 sm:px-7 sm:py-3 md:py-3.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 hidden sm:inline-block border-transparent">
                     {{ __('Inquire Now') }}
                 </a>
             @endif
 
-            {{-- Mobile Menu --}}
-            <div class="md:hidden" x-data="{ open: false }">
-                <button @click="open = !open" :class="scrolled ? 'text-secondary' : 'text-white'">
-                    <i class="material-icons text-2xl">menu</i>
+            {{-- Language Switcher Desktop (Far Right) --}}
+            <div class="relative group hidden md:block" x-data="{ open: false }" @mouseleave="open = false">
+                <button @mouseover="open = true" @click="open = !open" :class="(scrolled || mobileMenuOpen) ? 'text-secondary hover:text-primary' : 'text-white/95 hover:text-white'" class="flex items-center gap-1.5 text-[11px] font-bold tracking-[0.2em] uppercase transition-colors duration-300 pl-2 sm:pl-4 md:border-l md:border-white/20" :class="(scrolled || mobileMenuOpen) ? 'md:border-secondary/20' : 'md:border-white/20'">
+                    <span>{{ strtoupper(app()->getLocale()) }}</span>
+                    <i class="material-icons text-[14px] transition-transform duration-300" :class="open ? '-rotate-180' : ''">expand_more</i>
                 </button>
-                <div x-show="open" @click.away="open = false" x-transition class="absolute top-full right-4 mt-2 bg-white rounded-xl shadow-2xl py-4 px-6 min-w-[200px] border border-secondary/5 z-50">
-                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('home') }}" wire:navigate>{{ __('Home') }}</a>
-                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a>
-                    <a class="block py-2 text-sm font-semibold text-secondary tracking-widest uppercase hover:text-primary" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a>
 
-                    <div class="mt-4 pt-4 border-t border-secondary/5">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-secondary/30 mb-2">{{ __('Select Language') }}</p>
-                        <div class="flex flex-wrap gap-2">
-                            <a href="{{ route('lang.switch', 'en') }}" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all {{ app()->getLocale() == 'en' ? 'bg-primary text-white' : 'bg-bg-light text-secondary' }}">EN</a>
-                            <a href="{{ route('lang.switch', 'id') }}" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all {{ app()->getLocale() == 'id' ? 'bg-primary text-white' : 'bg-bg-light text-secondary' }}">ID</a>
-                            <a href="{{ route('lang.switch', 'es') }}" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all {{ app()->getLocale() == 'es' ? 'bg-primary text-white' : 'bg-bg-light text-secondary' }}">ES</a>
+                <div x-show="open" 
+                     x-transition:enter="transition ease-out duration-200" 
+                     x-transition:enter-start="opacity-0 translate-y-3" 
+                     x-transition:enter-end="opacity-100 translate-y-0" 
+                     x-transition:leave="transition ease-in duration-150" 
+                     x-transition:leave-start="opacity-100 translate-y-0" 
+                     x-transition:leave-end="opacity-0 translate-y-3" 
+                     class="absolute top-full pt-6 right-0 min-w-[180px] z-50" 
+                     x-cloak>
+                    <div class="bg-white rounded-2xl shadow-xl py-3 border border-gray-100 overflow-hidden relative">
+                        <div class="relative z-10">
+                            <a href="{{ route('lang.switch', 'en') }}" class="px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-secondary hover:bg-gray-50 hover:text-primary transition-all flex items-center gap-3">
+                                <span class="w-1.5 h-1.5 rounded-full transition-colors {{ app()->getLocale() == 'en' ? 'bg-primary' : 'bg-gray-200' }}"></span>
+                                {{ __('English') }}
+                            </a>
+                            <a href="{{ route('lang.switch', 'id') }}" class="px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-secondary hover:bg-gray-50 hover:text-primary transition-all flex items-center gap-3">
+                                <span class="w-1.5 h-1.5 rounded-full transition-colors {{ app()->getLocale() == 'id' ? 'bg-primary' : 'bg-gray-200' }}"></span>
+                                {{ __('Indonesian') }}
+                            </a>
+                            <a href="{{ route('lang.switch', 'es') }}" class="px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-secondary hover:bg-gray-50 hover:text-primary transition-all flex items-center gap-3">
+                                <span class="w-1.5 h-1.5 rounded-full transition-colors {{ app()->getLocale() == 'es' ? 'bg-primary' : 'bg-gray-200' }}"></span>
+                                {{ __('Spanish') }}
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {{-- Mobile Menu Toggle --}}
+            <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                    :class="(scrolled || mobileMenuOpen) ? 'text-secondary hover:text-primary' : 'text-white hover:text-white/80'" 
+                    class="md:hidden p-2 transition-colors duration-300 focus:outline-none flex items-center justify-center shrink-0">
+                <i class="material-icons text-3xl transition-transform duration-300" :class="mobileMenuOpen ? 'rotate-90' : ''" x-text="mobileMenuOpen ? 'close' : 'menu'"></i>
+            </button>
         </div>
+
     </nav>
+
+    {{-- Mobile Full Screen Menu (Moved out of NAV to avoid CSS stacking context locks) --}}
+    
+    <div x-show="mobileMenuOpen" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-4"
+            class="fixed inset-0 z-[60] bg-white md:hidden shadow-2xl flex flex-col" 
+            style="display: none;"
+            x-cloak>
+            
+        {{-- Mobile Menu Header --}}
+        <div class="px-6 sm:px-8 py-5 sm:py-6 flex items-center justify-between border-b border-gray-100 shrink-0">
+            <a href="{{ route('home') }}" @click="mobileMenuOpen = false" class="flex items-center gap-2 group relative shrink-0" wire:navigate title="{{ $siteName }}">
+                @if($logoImage)
+                    <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-14 w-auto sm:h-14 object-contain" />
+                @else
+                    <span class="text-secondary text-2xl sm:text-3xl font-extrabold tracking-tighter uppercase truncate max-w-[60vw]">{{ $siteName }}</span>
+                @endif
+            </a>
+            <button @click="mobileMenuOpen = false" class="p-2 text-secondary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0">
+                <i class="material-icons text-3xl">close</i>
+            </button>
+        </div>
+
+        <div class="flex flex-col h-full pb-12 px-8 overflow-y-auto">
+            <div class="flex flex-col gap-8 text-center grow mt-12">
+                <a href="{{ route('home') }}" class="text-3xl font-light text-secondary hover:text-primary transition-colors duration-300" wire:navigate @click="mobileMenuOpen = false">{{ __('Home') }}</a>
+                <a href="{{ route('destinations.index') }}" class="text-3xl font-light text-secondary hover:text-primary transition-colors duration-300" wire:navigate @click="mobileMenuOpen = false">{{ __('Destinations') }}</a>
+                <a href="{{ route('about') }}" class="text-3xl font-light text-secondary hover:text-primary transition-colors duration-300" wire:navigate @click="mobileMenuOpen = false">{{ __('Our Story') }}</a>
+            </div>
+
+            <div class="mt-auto pt-16 text-center">
+                <p class="text-[10px] font-bold tracking-[0.2em] text-secondary/40 uppercase mb-6">{{ __('Select Language') }}</p>
+                <div class="flex justify-center gap-4">
+                    <a href="{{ route('lang.switch', 'en') }}" class="w-12 h-12 flex items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300 {{ app()->getLocale() == 'en' ? 'bg-secondary text-white shadow-lg' : 'bg-gray-50 text-secondary hover:bg-gray-100' }}">EN</a>
+                    <a href="{{ route('lang.switch', 'id') }}" class="w-12 h-12 flex items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300 {{ app()->getLocale() == 'id' ? 'bg-secondary text-white shadow-lg' : 'bg-gray-50 text-secondary hover:bg-gray-100' }}">ID</a>
+                    <a href="{{ route('lang.switch', 'es') }}" class="w-12 h-12 flex items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300 {{ app()->getLocale() == 'es' ? 'bg-secondary text-white shadow-lg' : 'bg-gray-50 text-secondary hover:bg-gray-100' }}">ES</a>
+                </div>
+            </div>
+
+            @if($siteSettings['whatsapp_number'] ?? false)
+                <div class="mt-10 mx-auto w-full max-w-xs">
+                    <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank" class="block w-full py-4 bg-secondary text-white text-center rounded-full text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-primary transition-colors shadow-lg">
+                        {{ __('Inquire Now') }}
+                    </a>
+                </div>
+            @endif
+        </div>
+    </div>
+    </header>
 
     <main>
         {{ $slot }}
     </main>
 
     {{-- Footer --}}
-    <footer class="bg-white py-12 md:py-20 px-4 sm:px-6 md:px-8 border-t border-secondary/5">
-        <div class="max-w-7xl mx-auto grid sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12 md:mb-12">
-            <div class="col-span-1">
-                <div class="flex items-center gap-2 mb-6">
-                    @if($logoImage)
-                        <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-30 w-30 object-contain" />
-                    @else
-                        <span class="text-3xl font-extrabold tracking-tighter text-secondary uppercase">{{ $siteName }}</span>
-                    @endif
+    <footer class="bg-white pt-16 md:pt-24 pb-8 px-6 sm:px-8 border-t border-gray-100 mt-20">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16 md:mb-20">
+                <div class="sm:col-span-2 lg:col-span-4 lg:pr-10">
+                    <div class="mb-6 inline-block">
+                        @if($logoImage)
+                            <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-12 md:h-16 w-auto object-contain" />
+                        @else
+                            <span class="text-3xl font-extrabold tracking-tighter text-secondary uppercase">{{ $siteName }}</span>
+                        @endif
+                    </div>
+                    <p class="text-secondary/60 text-sm md:text-base leading-relaxed">
+                        {{ $footerText }}
+                    </p>
                 </div>
-                <p class="text-secondary/50 text-sm leading-relaxed">
-                    {{ $footerText }}
-                </p>
-            </div>
-            <div>
-                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">{{ __('Navigation') }}</h4>
-                <ul class="space-y-4">
-                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('home') }}" wire:navigate>{{ __('Home') }}</a></li>
-                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a></li>
-                    <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">{{ __('Contact') }}</h4>
-                <ul class="space-y-4">
-                    @if($siteSettings['whatsapp_number'] ?? false)
-                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm flex items-center gap-2" href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank"><i class="material-icons text-sm">phone</i> {{ __('WhatsApp') }}</a></li>
-                    @endif
-                    @if($siteSettings['admin_email'] ?? false)
-                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm flex items-center gap-2" href="mailto:{{ $siteSettings['admin_email'] }}"><i class="material-icons text-sm">email</i> {{ __('Email') }}</a></li>
-                    @endif
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-secondary font-bold uppercase tracking-widest text-xs mb-8">{{ __('Connect') }}</h4>
-                <div class="flex gap-4">
+                <div class="lg:col-span-2 lg:col-start-6">
+                    <h4 class="text-secondary font-bold uppercase tracking-[0.15em] text-xs mb-6">{{ __('Navigation') }}</h4>
+                    <ul class="space-y-4">
+                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium" href="{{ route('home') }}" wire:navigate>{{ __('Home') }}</a></li>
+                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium" href="{{ route('destinations.index') }}" wire:navigate>{{ __('Destinations') }}</a></li>
+                        <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a></li>
+                    </ul>
+                </div>
+                <div class="lg:col-span-3">
+                    <h4 class="text-secondary font-bold uppercase tracking-[0.15em] text-xs mb-6">{{ __('Contact Us') }}</h4>
+                    <ul class="space-y-4">
+                        @if($siteSettings['whatsapp_number'] ?? false)
+                            <li>
+                                <a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium flex items-center gap-3 group" href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank">
+                                    <div class="w-8 h-8 rounded-full bg-secondary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                        <i class="material-icons text-[15px]">phone</i>
+                                    </div>
+                                    {{ __('WhatsApp') }}
+                                </a>
+                            </li>
+                        @endif
+                        @if($siteSettings['admin_email'] ?? false)
+                            <li>
+                                <a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium flex items-center gap-3 group" href="mailto:{{ $siteSettings['admin_email'] }}">
+                                    <div class="w-8 h-8 rounded-full bg-secondary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                        <i class="material-icons text-[15px]">email</i>
+                                    </div>
+                                    {{ __('Email') }}
+                                </a>
+                            </li>
+                        @endif
+                    </ul>
+                </div>
+
+                <div class="lg:col-span-3">
+                    <h4 class="text-secondary font-bold uppercase tracking-[0.15em] text-xs mb-6">{{ __('Connect') }}</h4>
+                    <div class="flex flex-wrap gap-3">
                     @if($siteSettings['social_instagram'] ?? false)
                         <a class="w-10 h-10 rounded-full border border-secondary/10 flex items-center justify-center text-secondary hover:bg-primary hover:text-white hover:border-primary transition-all" href="{{ $siteSettings['social_instagram'] }}" target="_blank">
                             <svg class="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
@@ -166,9 +251,15 @@
                     @endif
                 </div>
             </div>
-        </div>
-        <div class="max-w-7xl mx-auto pt-8 border-t border-secondary/5 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-secondary/40 text-xs uppercase tracking-widest">&copy; {{ date('Y') }} {{ $siteName }}. {{ __('All Rights Reserved') }}.</p>
+            </div>
+
+            <div class="pt-8 border-t border-secondary/10 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-secondary/50 text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em]">&copy; {{ date('Y') }} {{ $siteName }}. {{ __('All Rights Reserved') }}.</p>
+                <!-- <div class="flex items-center gap-6">
+                    <a href="#" class="text-secondary/50 hover:text-primary text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] transition-colors gap-2">{{ __('Privacy Policy') }}</a>
+                    <a href="#" class="text-secondary/50 hover:text-primary text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] transition-colors gap-2">{{ __('Terms of Service') }}</a>
+                </div> -->
+            </div>
         </div>
     </footer>
 

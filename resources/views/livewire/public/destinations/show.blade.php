@@ -203,9 +203,10 @@ new #[Layout('components.layouts.public')] class extends Component {
             <div class="lg:col-span-2 space-y-12 md:space-y-16">
                 
                 <!-- Trip Info (Visual Guide) - MOVED TO TOP -->
-                @if(!empty($destination->trip_info))
+                @php $tripInfo = is_array($destination->trip_info) ? $destination->trip_info : []; @endphp
+                @if(!empty($tripInfo))
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        @foreach($destination->trip_info as $info)
+                        @foreach($tripInfo as $info)
                             <div class="p-4 rounded-xl bg-secondary/5 text-center hover:bg-secondary/10 transition-colors">
                                  <p class="text-[10px] sm:text-xs uppercase tracking-widest text-secondary/60 mb-1.5">{{ $info['key'] ?? '' }}</p>
                                  <p class="font-bold text-secondary text-base sm:text-lg leading-tight">{{ $info['value'] ?? '' }}</p>
@@ -227,11 +228,14 @@ new #[Layout('components.layouts.public')] class extends Component {
                 </div>
 
                 <!-- Highlights - SIMPLIFIED -->
-                @if(!empty($destination->highlights))
+                @php
+                    $highlights = is_array($destination->highlights) ? $destination->highlights : (is_string($destination->highlights) && !empty(trim($destination->highlights)) ? [$destination->highlights] : []);
+                @endphp
+                @if(!empty($highlights))
                     <div>
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Highlights') }}</h2>
                         <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
-                            @foreach($destination->highlights as $highlight)
+                            @foreach($highlights as $highlight)
                                 <li class="flex items-start gap-3">
                                     <i class="material-icons text-primary text-xl mt-0.5 shrink-0">check_circle</i>
                                     <span class="font-medium text-secondary/80 text-lg">{{ $highlight }}</span>
@@ -242,11 +246,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @endif
 
                 <!-- Itinerary - CLEAN TIMELINE LAYOUT -->
-                @if(!empty($destination->itinerary))
+                @php $itinerary = is_array($destination->itinerary) ? $destination->itinerary : []; @endphp
+                @if(!empty($itinerary))
                     <div>
                          <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-8">{{ __('Itinerary') }}</h2>
                          <div class="relative border-l border-secondary/20 ml-3 md:ml-4 my-8 md:my-10 space-y-0">
-                            @foreach($destination->itinerary as $index => $day)
+                            @foreach($itinerary as $index => $day)
                                 <div class="relative pl-8 md:pl-10 py-6 group first:pt-0 last:pb-0">
                                     <!-- Dot -->
                                     <span class="absolute -left-[5px] top-8 first:top-2 w-2.5 h-2.5 rounded-full bg-secondary group-hover:bg-primary group-hover:scale-150 transition-all duration-300 ring-4 ring-bg-light"></span>
@@ -269,15 +274,19 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @endif
 
                 <!-- Includes / Excludes -->
-                @if(!empty($destination->includes) || !empty($destination->excludes))
+                @php
+                    $includes = is_array($destination->includes) ? $destination->includes : (is_string($destination->includes) && !empty(trim($destination->includes)) ? [$destination->includes] : []);
+                    $excludes = is_array($destination->excludes) ? $destination->excludes : (is_string($destination->excludes) && !empty(trim($destination->excludes)) ? [$destination->excludes] : []);
+                @endphp
+                @if(!empty($includes) || !empty($excludes))
                     <div class="grid sm:grid-cols-2 gap-8">
-                        @if(!empty($destination->includes))
+                        @if(!empty($includes))
                             <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
                                 <h3 class="text-lg font-bold text-travel-green mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
                                     <i class="material-icons text-lg">check_circle</i> {{ __("What's Included") }}
                                 </h3>
                                 <ul class="space-y-4">
-                                    @foreach($destination->includes as $item)
+                                    @foreach($includes as $item)
                                         <li class="flex items-start gap-3 text-secondary/70 text-sm">
                                             <i class="material-icons text-travel-green text-sm mt-0.5">check</i>
                                             <span>{{ $item }}</span>
@@ -286,13 +295,13 @@ new #[Layout('components.layouts.public')] class extends Component {
                                 </ul>
                             </div>
                         @endif
-                        @if(!empty($destination->excludes))
+                        @if(!empty($excludes))
                             <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
                                 <h3 class="text-lg font-bold text-red-500 mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
                                     <i class="material-icons text-lg">cancel</i> {{ __("What's Excluded") }}
                                 </h3>
                                 <ul class="space-y-4">
-                                    @foreach($destination->excludes as $item)
+                                    @foreach($excludes as $item)
                                         <li class="flex items-start gap-3 text-secondary/70 text-sm">
                                             <i class="material-icons text-red-500 text-sm mt-0.5">close</i>
                                             <span>{{ $item }}</span>
@@ -305,11 +314,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @endif
 
                 <!-- FAQ -->
-                @if(!empty($destination->faq))
+                @php $faq = is_array($destination->faq) ? $destination->faq : []; @endphp
+                @if(!empty($faq))
                     <div>
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Common Questions') }}</h2>
                         <div class="space-y-4" x-data="{ openFaq: null }">
-                            @foreach($destination->faq as $index => $item)
+                            @foreach($faq as $index => $item)
                                 <div class="bg-white rounded-xl border border-secondary/5 overflow-hidden transition-all duration-300" :class="{ 'shadow-lg border-primary/20': openFaq === {{ $index }} }">
                                     <button type="button" @click="openFaq = openFaq === {{ $index }} ? null : {{ $index }}" class="w-full flex items-center justify-between p-5 text-left group">
                                         <span class="font-bold text-secondary group-hover:text-primary transition-colors pr-4">{{ $item['question'] ?? '' }}</span>

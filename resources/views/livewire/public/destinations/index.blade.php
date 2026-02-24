@@ -18,11 +18,11 @@ new #[Layout('components.layouts.public')] class extends Component {
             'destinations' => Destination::where('is_visible', true)
                 ->orderBy('created_at', 'desc')
                 ->paginate(9),
-            'ctaSection' => [
-                'title' => Setting::getTranslated('cta_title', 'Stay Inspired.'),
-                'subtitle' => Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates and private travel insights.'),
-                'bg_image' => Setting::getTranslated('cta_bg_image'),
-            ],
+            // // 'ctaSection' => [
+            // //     'title' => Setting::getTranslated('cta_title', 'Stay Inspired.'),
+            // //     'subtitle' => Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates and private travel insights.'),
+            // //     'bg_image' => Setting::getTranslated('cta_bg_image'),
+            // ],
             'whatsapp_number' => Setting::where('key', 'whatsapp_number')->value('value'),
         ];
     }
@@ -112,13 +112,16 @@ new #[Layout('components.layouts.public')] class extends Component {
                             </div>
                         @endif
 
-                        @if(!empty($destination->highlights))
+                        @php
+                            $highlights = is_array($destination->highlights) ? $destination->highlights : (is_string($destination->highlights) && !empty(trim($destination->highlights)) ? [$destination->highlights] : []);
+                        @endphp
+                        @if(!empty($highlights))
                             <div class="flex flex-wrap gap-1.5 mt-1">
-                                @foreach(array_slice($destination->highlights, 0, 3) as $highlight)
+                                @foreach(array_slice($highlights, 0, 3) as $highlight)
                                     <span class="text-xs font-medium text-secondary/70 border border-secondary/10 px-2 py-0.5 rounded-full">{{ $highlight }}</span>
                                 @endforeach
-                                @if(count($destination->highlights) > 3)
-                                    <span class="text-xs font-medium text-secondary/40">+{{ count($destination->highlights) - 3 }} more</span>
+                                @if(count($highlights) > 3)
+                                    <span class="text-xs font-medium text-secondary/40">+{{ count($highlights) - 3 }} more</span>
                                 @endif
                             </div>
                         @endif
@@ -130,29 +133,5 @@ new #[Layout('components.layouts.public')] class extends Component {
         </div>
 
         {{ $destinations->links() }}
-    </section>
-
-    {{-- CTA Section --}}
-    <section class="relative py-16 md:py-24 lg:py-32 overflow-hidden bg-secondary">
-        @if($ctaSection['bg_image'])
-            <div class="absolute inset-0 opacity-10">
-                <img src="{{ Storage::url($ctaSection['bg_image']) }}" alt="CTA Background" class="w-full h-full object-cover" />
-            </div>
-        @endif
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2280%22%20height%3D%2280%22%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2240%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.03)%22/%3E%3C/svg%3E')] opacity-20"></div>
-        <div class="relative z-10 px-4 sm:px-6 md:px-8 max-w-4xl mx-auto text-center">
-            <h2 class="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white mb-6 sm:mb-8 tracking-tight leading-tight">{{ $ctaSection['title'] }}</h2>
-            <p class="text-white/70 text-base sm:text-lg mb-8 sm:mb-12 font-light leading-relaxed">{{ $ctaSection['subtitle'] }}</p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('destinations.index') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform shadow-xl shadow-primary/20">
-                    {{ __('Explore Destinations') }}
-                </a>
-                @if($whatsapp_number)
-                    <a href="https://wa.me/{{ $whatsapp_number }}" target="_blank" class="border border-white/20 text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:bg-white/10 transition-colors backdrop-blur-sm">
-                        {{ __('Contact Us') }}
-                    </a>
-                @endif
-            </div>
-        </div>
     </section>
 </div>
