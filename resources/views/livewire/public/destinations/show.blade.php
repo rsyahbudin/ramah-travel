@@ -4,9 +4,12 @@ use App\Models\Destination;
 use App\Models\Setting;
 use Livewire\Volt\Component;
 use Livewire\Attributes\Layout;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
 
 new #[Layout('components.layouts.public')] class extends Component {
+    use WithPagination;
+
     public Destination $destination;
     
     // Booking Form State
@@ -351,17 +354,85 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @endif
 
                 <!-- Gallery -->
-                @if($destination->images->count() > 0)
-                    <div>
+                @php
+                    $images = $destination->images()->paginate(6);
+                @endphp
+                
+                @if($images->total() > 0)
+                    <div x-data="{ 
+                            showLightbox: false, 
+                            currentIndex: 0, 
+                            images: [
+                                @foreach($images as $image)
+                                    '{{ Storage::url($image->image_path) }}',
+                                @endforeach
+                            ]
+                        }"
+                        x-on:keydown.window.escape="showLightbox = false"
+                        x-on:keydown.window.arrow-left="if(showLightbox) currentIndex = (currentIndex - 1 + images.length) % images.length"
+                        x-on:keydown.window.arrow-right="if(showLightbox) currentIndex = (currentIndex + 1) % images.length"
+                        class="mb-20"
+                    >
                          <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Gallery') }}</h2>
-                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                             @foreach($destination->images as $image)
-                                 <div class="relative aspect-square rounded-xl overflow-hidden group cursor-pointer">
-                                     <img src="{{ Storage::url($image->image_path) }}" alt="Gallery Image" class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
-                                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                             @foreach($images as $index => $image)
+                                 <div @click="currentIndex = {{ $index }}; showLightbox = true" 
+                                      class="relative aspect-square rounded-xl overflow-hidden group cursor-pointer border border-secondary/5">
+                                     <img src="{{ Storage::url($image->image_path) }}" 
+                                          alt="Gallery Image" 
+                                          class="absolute inset-0 w-full h-full object-cover transform group-hover:scale-110 transition duration-700">
+                                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                         <i class="material-icons text-white text-3xl">zoom_in</i>
+                                     </div>
                                  </div>
                              @endforeach
                          </div>
+
+                         <!-- Pagination Links -->
+                         <div class="mt-8">
+                             {{ $images->links() }}
+                         </div>
+
+                        <!-- Lightbox Modal -->
+                        <div x-show="showLightbox" 
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 sm:p-8"
+                             x-on:click.self="showLightbox = false"
+                             style="display: none;"
+                        >
+                            <!-- Close Button -->
+                            <button @click="showLightbox = false" class="absolute top-6 right-6 text-white/70 hover:text-white z-[110] transition-colors">
+                                <i class="material-icons text-4xl">close</i>
+                            </button>
+
+                            <!-- Navigation Buttons -->
+                            <button @click.stop="currentIndex = (currentIndex - 1 + images.length) % images.length" 
+                                    class="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white z-[110] transition-colors p-2 bg-white/5 rounded-full hover:bg-white/10">
+                                <i class="material-icons text-4xl sm:text-5xl">chevron_left</i>
+                            </button>
+
+                            <button @click.stop="currentIndex = (currentIndex + 1) % images.length" 
+                                    class="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white z-[110] transition-colors p-2 bg-white/5 rounded-full hover:bg-white/10">
+                                <i class="material-icons text-4xl sm:text-5xl">chevron_right</i>
+                            </button>
+
+                            <!-- Image Container -->
+                            <div class="relative w-full h-full flex items-center justify-center pointer-events-none">
+                                <img :src="images[currentIndex]" 
+                                     class="max-w-full max-h-full object-contain rounded-lg shadow-2xl select-none animate-in fade-in zoom-in duration-300 pointer-events-auto" 
+                                     alt="Full size gallery image">
+                                
+                                <!-- Image Counter -->
+                                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 mb-4 bg-black/50 text-white px-4 py-1 rounded-full text-xs font-bold tracking-widest uppercase">
+                                    <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>
