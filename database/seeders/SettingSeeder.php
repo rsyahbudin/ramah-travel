@@ -144,6 +144,12 @@ class SettingSeeder extends Seeder
                 'id' => "Pertanyaan Baru dari {name} ({email}).\n\nDestinasi: {destination}\nTanggal: {travel_date}\nOrang: {person}\nNo. HP: {phone}\nKota/Negara: {city}, {country}\n\nURL: {url}",
                 'es' => "Nueva consulta de {name} ({email}).\n\nDestino: {destination}\nFecha: {travel_date}\nPersonas: {person}\nTeléfono: {phone}\nCiudad/País: {city}, {country}\n\nURL: {url}",
             ],
+
+            'whatsapp_general_template' => [
+                'en' => "Hello, I am interested in booking a trip. Could you provide more information?",
+                'id' => "Halo, saya tertarik untuk memesan perjalanan. Bisakah Anda memberikan informasi lebih lanjut?",
+                'es' => "Hola, estoy interesado en reservar un viaje. ¿Podría darme más información?",
+            ],
         ];
 
         foreach ($settings as $key => $value) {
