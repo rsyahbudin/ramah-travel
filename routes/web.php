@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Volt::route('/pages/{page:slug}/edit', 'admin.pages.edit')->name('pages.edit');
 
     Volt::route('/settings', 'admin.settings')->name('settings');
+    Volt::route('/communications', 'admin.communications')->name('communications');
 
     // Admin Only
     Route::middleware(['admin'])->group(function () {

@@ -4,6 +4,7 @@
     $logoImage = $siteSettings['logo_image'] ?? null;
     $logoWhite = $siteSettings['logo_white'] ?? null;
     $whatsappNumber = $siteSettings['whatsapp_number'] ?? null;
+    $whatsappGeneralTemplate = \App\Models\Setting::getTranslated('whatsapp_general_template', '');
     $footerText = \App\Models\Setting::getTranslated('footer_text', 'Crafting extraordinary journeys for the world\'s most discerning travelers.');
     $isHome = request()->routeIs('home');
 @endphp
@@ -61,7 +62,7 @@
 
         <div class="flex items-center gap-4 sm:gap-6">
             @if($siteSettings['whatsapp_number'] ?? false)
-                <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank"
+                <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}{{ $whatsappGeneralTemplate ? '?text=' . urlencode($whatsappGeneralTemplate) : '' }}" target="_blank"
                    :class="(scrolled || mobileMenuOpen) ? 'bg-secondary text-white hover:bg-primary shadow-md hover:-translate-y-0.5' : 'bg-white/10 text-white border border-white/20 backdrop-blur-md hover:bg-white hover:text-secondary'"
                    class="px-5 py-2.5 sm:px-7 sm:py-3 md:py-3.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 hidden sm:inline-block border-transparent">
                     {{ __('Inquire Now') }}
@@ -158,7 +159,7 @@
 
             @if($siteSettings['whatsapp_number'] ?? false)
                 <div class="mt-10 mx-auto w-full max-w-xs">
-                    <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank" class="block w-full py-4 bg-secondary text-white text-center rounded-full text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-primary transition-colors shadow-lg">
+                    <a href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}{{ $whatsappGeneralTemplate ? '?text=' . urlencode($whatsappGeneralTemplate) : '' }}" target="_blank" class="block w-full py-4 bg-secondary text-white text-center rounded-full text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-primary transition-colors shadow-lg">
                         {{ __('Inquire Now') }}
                     </a>
                 </div>
@@ -195,12 +196,12 @@
                         <li><a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium" href="{{ route('about') }}" wire:navigate>{{ __('Our Story') }}</a></li>
                     </ul>
                 </div>
-                <div class="lg:col-span-3">
+                <div class="lg:col-span-2">
                     <h4 class="text-secondary font-bold uppercase tracking-[0.15em] text-xs mb-6">{{ __('Contact Us') }}</h4>
                     <ul class="space-y-4">
                         @if($siteSettings['whatsapp_number'] ?? false)
                             <li>
-                                <a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium flex items-center gap-3 group" href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}" target="_blank">
+                                <a class="text-secondary/60 hover:text-primary transition-colors text-sm font-medium flex items-center gap-3 group" href="https://wa.me/{{ $siteSettings['whatsapp_number'] }}{{ $whatsappGeneralTemplate ? '?text=' . urlencode($whatsappGeneralTemplate) : '' }}" target="_blank">
                                     <div class="w-8 h-8 rounded-full bg-secondary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                                         <i class="material-icons text-[15px]">phone</i>
                                     </div>
@@ -221,7 +222,7 @@
                     </ul>
                 </div>
 
-                <div class="lg:col-span-3">
+                <div class="lg:col-span-2">
                     <h4 class="text-secondary font-bold uppercase tracking-[0.15em] text-xs mb-6">{{ __('Connect') }}</h4>
                     <div class="flex flex-wrap gap-3">
                     @if($siteSettings['social_instagram'] ?? false)

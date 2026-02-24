@@ -22,9 +22,6 @@ new class extends Component {
     public string $social_twitter = '';
     public string $social_youtube = '';
     public string $social_tiktok = '';
-    public array $whatsapp_template = ['en' => '', 'id' => '', 'es' => ''];
-    public array $email_subject_template = ['en' => '', 'id' => '', 'es' => ''];
-    public array $email_template = ['en' => '', 'id' => '', 'es' => ''];
     
     public string $activeTab = 'en';
 
@@ -38,18 +35,12 @@ new class extends Component {
         $this->existing_logo_image = $settings['logo_image'] ?? null;
         $this->existing_logo_white = $settings['logo_white'] ?? null;
 
-        $this->whatsapp_number = $settings['whatsapp_number'] ?? '';
-        $this->admin_email = $settings['admin_email'] ?? '';
         $this->footer_text = $this->decodeSetting($settings, 'footer_text', ['en' => 'Discover the world with us. Unforgettable journeys await.', 'id' => '', 'es' => '']);
         $this->social_instagram = $settings['social_instagram'] ?? '';
         $this->social_facebook = $settings['social_facebook'] ?? '';
         $this->social_twitter = $settings['social_twitter'] ?? '';
         $this->social_youtube = $settings['social_youtube'] ?? '';
         $this->social_tiktok = $settings['social_tiktok'] ?? '';
-        
-        $this->whatsapp_template = $this->decodeSetting($settings, 'whatsapp_template', ['en' => "Hello, my name is {name}. I would like to book {destination} for {person} pax. I am from {city}, {country}. Email: {email}, Phone: {phone}."]);
-        $this->email_subject_template = $this->decodeSetting($settings, 'email_subject_template', ['en' => "New Booking Inquiry: {destination} - {name}"]);
-        $this->email_template = $this->decodeSetting($settings, 'email_template', ['en' => "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nURL: {url}"]);
     }
 
     protected function decodeSetting(array $settings, string $key, array $defaults = []): array
@@ -71,8 +62,6 @@ new class extends Component {
             'site_name' => 'required|string|max:100',
             'logo_image' => 'nullable|image|max:2048',
             'logo_white' => 'nullable|image|max:2048',
-            'whatsapp_number' => 'nullable|string',
-            'admin_email' => 'nullable|email',
             'footer_text.en' => 'nullable|string|max:500',
             'footer_text.id' => 'nullable|string|max:500',
             'footer_text.es' => 'nullable|string|max:500',
@@ -81,19 +70,10 @@ new class extends Component {
             'social_twitter' => 'nullable|url|max:255',
             'social_youtube' => 'nullable|url|max:255',
             'social_tiktok' => 'nullable|url|max:255',
-            'whatsapp_template.en' => 'nullable|string',
-            'whatsapp_template.id' => 'nullable|string',
-            'whatsapp_template.es' => 'nullable|string',
-            'email_subject_template.en' => 'nullable|string',
-            'email_subject_template.id' => 'nullable|string',
-            'email_subject_template.es' => 'nullable|string',
-            'email_template.en' => 'nullable|string',
-            'email_template.id' => 'nullable|string',
-            'email_template.es' => 'nullable|string',
         ]);
 
         $translatable = [
-            'footer_text', 'whatsapp_template', 'email_subject_template', 'email_template'
+            'footer_text'
         ];
 
         foreach ($validated as $key => $value) {
@@ -197,51 +177,16 @@ new class extends Component {
                 </flux:field>
             </div>
         </flux:card>
-
-                <!-- Communication Templates -->
-        <flux:card class="space-y-6">
-            <div class="flex items-center gap-2">
-                <flux:icon.chat-bubble-left-right class="size-5 text-zinc-400" />
-                <flux:heading size="lg">{{ __('Communication Templates') }}</flux:heading>
-            </div>
-            <flux:separator />
-
-            <div class="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg space-y-2 border border-zinc-200 dark:border-zinc-700">
-                <flux:heading size="sm" class="flex items-center gap-2">
-                    <flux:icon.information-circle class="size-4 text-zinc-500" />
-                    {{ __('Dynamic Placeholders') }}
-                </flux:heading>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono text-zinc-500">
-                    <div>{name}</div><div>{email}</div><div>{phone}</div><div>{person}</div>
-                    <div>{city}</div><div>{country}</div><div>{destination}</div><div>{url}</div>
-                    <div>{travel_date}</div><div>{date}</div><div>{message}</div>
-                </div>
-            </div>
-
-            <div class="space-y-6">
-                <flux:textarea label="{{ __('WhatsApp Main Template') }} ({{ strtoupper($activeTab) }})" wire:key="whatsapp_template_activeTab-{{ $activeTab }}" wire:model="whatsapp_template.{{ $activeTab }}" rows="3" />
-                
-                <div class="space-y-4">
-                    <flux:input label="{{ __('Email Subject Template') }} ({{ strtoupper($activeTab) }})" wire:key="email_subject_template_activeTab-{{ $activeTab }}" wire:model="email_subject_template.{{ $activeTab }}" />
-                    <flux:textarea label="{{ __('Email Body Template') }} ({{ strtoupper($activeTab) }})" wire:key="email_template_activeTab-{{ $activeTab }}" wire:model="email_template.{{ $activeTab }}" rows="4" />
-                </div>
-            </div>
-        </flux:card>
             </div>
 
             <div class="lg:col-span-1 space-y-8">
                 <!-- Contact Settings -->
         <flux:card class="space-y-6">
             <div class="flex items-center gap-2">
-                <flux:icon.phone class="size-5 text-zinc-400" />
-                <flux:heading size="lg">{{ __('Contact Information') }}</flux:heading>
+                <flux:icon.document-text class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Footer Information') }}</flux:heading>
             </div>
             <flux:separator />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('WhatsApp Number') }}" description="Format: 628123456789" wire:model="whatsapp_number" placeholder="628123456789" icon="phone" />
-                <flux:input label="{{ __('Admin Email') }}" wire:model="admin_email" type="email" icon="envelope" />
-            </div>
             
             <flux:textarea label="{{ __('Footer Description') }} ({{ strtoupper($activeTab) }})" wire:key="footer_text_activeTab-{{ $activeTab }}" wire:model="footer_text.{{ $activeTab }}" rows="3" />
         </flux:card>

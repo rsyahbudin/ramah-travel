@@ -109,7 +109,19 @@ new #[Layout('components.layouts.public')] class extends Component {
 
         $url = null;
         if ($this->bookingType === 'whatsapp' && $whatsappNumber) {
-            $url = "https://wa.me/{$whatsappNumber}?text=" . urlencode($waTemplate);
+            $baseWaTemplate = Setting::getTranslated('whatsapp_template', '');
+            
+            // Apply placeholders to WhatsApp template if not empty
+            if ($baseWaTemplate) {
+                foreach ($placeholders as $key => $value) {
+                    $baseWaTemplate = str_replace($key, $value, $baseWaTemplate);
+                }
+            } else {
+                // Fallback to exactly what the email body has or just standard text
+                $baseWaTemplate = $waTemplate;
+            }
+            
+            $url = "https://wa.me/{$whatsappNumber}?text=" . urlencode($baseWaTemplate);
         } elseif ($this->bookingType === 'email' && $adminEmail) {
             $url = "mailto:{$adminEmail}?subject=" . rawurlencode($subjectTemplate) . "&body=" . rawurlencode($emailTemplate);
         }

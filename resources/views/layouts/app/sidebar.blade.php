@@ -11,7 +11,20 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Website Content')" class="grid">
+                <flux:sidebar.item icon="chart-bar-square" :href="route('admin.dashboard')" :current="request()->routeIs('admin.dashboard') || request()->routeIs('dashboard')" wire:navigate>
+                    {{ __('Dashboard') }}
+                </flux:sidebar.item>
+
+                <flux:sidebar.group :heading="__('Travel Management')" class="grid">
+                    <flux:sidebar.item icon="calendar-days" :href="route('admin.bookings')" :current="request()->routeIs('admin.bookings')" wire:navigate>
+                        {{ __('Manage Bookings') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="map" :href="route('admin.destinations.index')" :current="request()->routeIs('admin.destinations.*')" wire:navigate>
+                        {{ __('Manage Destinations') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('Content Management')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('admin.pages.home')" :current="request()->routeIs('admin.pages.home')" wire:navigate>
                         {{ __('Edit Home Page') }}
                     </flux:sidebar.item>
@@ -21,26 +34,20 @@
                     <flux:sidebar.item icon="globe-alt" :href="route('admin.pages.edit', 'destinations')" :current="request()->routeIs('admin.pages.edit') && request()->route('page')?->slug === 'destinations'" wire:navigate>
                         {{ __('Edit Destination Header') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="map" :href="route('admin.destinations.index')" :current="request()->routeIs('admin.destinations.*')" wire:navigate>
-                        {{ __('Manage Destinations') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="calendar-days" :href="route('admin.bookings')" :current="request()->routeIs('admin.bookings')" wire:navigate>
-                        {{ __('Manage Bookings') }}
-                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
-                <flux:sidebar.group :heading="__('Settings & Users')" class="grid">
-                    <flux:sidebar.item icon="chart-bar-square" :href="route('admin.dashboard')" :current="request()->routeIs('admin.dashboard') || request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard Overview') }}
-                    </flux:sidebar.item>
+                <flux:sidebar.group :heading="__('System Settings')" class="grid">
                     <flux:sidebar.item icon="cog-6-tooth" :href="route('admin.settings')" :current="request()->routeIs('admin.settings')" wire:navigate>
                         {{ __('General Settings') }}
                     </flux:sidebar.item>
-                    @if(auth()->user()->is_admin)
-                    <flux:sidebar.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
-                        {{ __('User Accounts') }}
+                    <flux:sidebar.item icon="chat-bubble-bottom-center-text" :href="route('admin.communications')" :current="request()->routeIs('admin.communications')" wire:navigate>
+                        {{ __('Communication Templates') }}
                     </flux:sidebar.item>
-                @endif
+                    @if(auth()->user()->is_admin)
+                        <flux:sidebar.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
+                            {{ __('User Accounts') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
