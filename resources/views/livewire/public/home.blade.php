@@ -94,10 +94,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                         <i class="material-icons text-zinc-300" style="font-size: 80px;">landscape</i>
                     </div>
                 @endif
-                <div class="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 bg-secondary p-6 sm:p-8 rounded-xl text-white z-20 max-w-[200px] sm:max-w-[240px]">
-                    <span class="text-3xl sm:text-4xl font-extrabold text-primary block mb-2">{{ $aboutSection['stat_number'] }}</span>
-                    <p class="text-xs sm:text-sm font-medium text-white/70 uppercase tracking-widest leading-relaxed">{{ $aboutSection['stat_text'] }}</p>
-                </div>
+                @if($aboutSection['stat_number'] || $aboutSection['stat_text'])
+                    <div class="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 bg-secondary p-6 sm:p-8 rounded-xl text-white z-20 max-w-[200px] sm:max-w-[240px]">
+                        <span class="text-3xl sm:text-4xl font-extrabold text-primary block mb-2">{{ $aboutSection['stat_number'] }}</span>
+                        <p class="text-xs sm:text-sm font-medium text-white/70 uppercase tracking-widest leading-relaxed">{{ $aboutSection['stat_text'] }}</p>
+                    </div>
+                @endif
             </div>
             <div class="space-y-6 sm:space-y-8">
                 <div class="space-y-4">

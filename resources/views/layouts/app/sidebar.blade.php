@@ -11,34 +11,34 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Content Management')" class="grid">
+                <flux:sidebar.group :heading="__('Website Content')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('admin.pages.home')" :current="request()->routeIs('admin.pages.home')" wire:navigate>
-                        {{ __('Home Page') }}
+                        {{ __('Edit Home Page') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="document-text" :href="route('admin.pages.edit', 'about')" :current="request()->routeIs('admin.pages.edit') && request()->route('page')?->slug === 'about'" wire:navigate>
-                        {{ __('About Page') }}
+                        {{ __('Edit About Page') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="globe-alt" :href="route('admin.pages.edit', 'destinations')" :current="request()->routeIs('admin.pages.edit') && request()->route('page')?->slug === 'destinations'" wire:navigate>
-                        {{ __('Destination Page') }}
+                        {{ __('Edit Destination Header') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="map" :href="route('admin.destinations.index')" :current="request()->routeIs('admin.destinations.*')" wire:navigate>
-                        {{ __('Destinations') }}
+                        {{ __('Manage Destinations') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="calendar-days" :href="route('admin.bookings')" :current="request()->routeIs('admin.bookings')" wire:navigate>
-                        {{ __('Bookings') }}
+                        {{ __('Manage Bookings') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
-                <flux:sidebar.group :heading="__('System')" class="grid">
+                <flux:sidebar.group :heading="__('Settings & Users')" class="grid">
                     <flux:sidebar.item icon="chart-bar-square" :href="route('admin.dashboard')" :current="request()->routeIs('admin.dashboard') || request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
+                        {{ __('Dashboard Overview') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="cog-6-tooth" :href="route('admin.settings')" :current="request()->routeIs('admin.settings')" wire:navigate>
                         {{ __('General Settings') }}
                     </flux:sidebar.item>
                     @if(auth()->user()->is_admin)
                     <flux:sidebar.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
-                        {{ __('Users') }}
+                        {{ __('User Accounts') }}
                     </flux:sidebar.item>
                 @endif
                 </flux:sidebar.group>
@@ -108,6 +108,26 @@
         </flux:header>
 
         {{ $slot }}
+
+        <!-- Alpine Toast Notification -->
+        <div
+            x-data="{ show: false, message: '' }"
+            x-on:notify.window="show = true; message = $event.detail.message; setTimeout(() => show = false, 3000)"
+            x-show="show"
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 sm:scale-100"
+            x-transition:leave-end="opacity-0 sm:scale-95"
+            style="display: none;"
+            class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-lg bg-zinc-900 px-4 py-3 text-white shadow-xl dark:bg-white dark:text-zinc-900"
+        >
+            <svg class="h-5 w-5 text-green-400 dark:text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm font-medium" x-text="message"></p>
+        </div>
 
         @fluxScripts
     </body>

@@ -23,8 +23,10 @@ new class extends Component {
     public array $about_label = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_stat_number = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_stat_text = ['en' => '', 'id' => '', 'es' => ''];
+   
     public $about_image;
     public $existing_about_image;
+
 
     // Experience Tiers Section (How We Travel)
     public array $experience_tiers_title = ['en' => '', 'id' => '', 'es' => ''];
@@ -56,8 +58,10 @@ new class extends Component {
         $this->about_content = $this->decodeSetting($settings, 'about_content', ['en' => 'Founded on the principle that travel should be as unique as the traveler.']);
         $this->about_label = $this->decodeSetting($settings, 'about_label', ['en' => 'Since 2008']);
         $this->about_stat_number = $this->decodeSetting($settings, 'about_stat_number', ['en' => '15+']);
+       
         $this->about_stat_text = $this->decodeSetting($settings, 'about_stat_text', ['en' => 'Years of Crafting Bespoke Experiences']);
         $this->existing_about_image = $settings['about_image'] ?? null;
+
 
         // Experience Tiers
         $this->experience_tiers_title = $this->decodeSetting($settings, 'experience_tiers_title', ['en' => 'How We Travel']);
@@ -127,7 +131,9 @@ new class extends Component {
             'about_label.en' => 'nullable|string|max:100',
             'about_stat_number.en' => 'nullable|string|max:20',
             'about_stat_text.en' => 'nullable|string|max:255',
+           
             'about_image' => 'nullable|image|max:4096',
+
             'experience_tiers_title.en' => 'required|string|max:255',
             'experience_tiers_label.en' => 'nullable|string|max:100',
             'cta_title.en' => 'nullable|string|max:255',
@@ -169,6 +175,7 @@ new class extends Component {
             $this->hero_bg_image = null;
         }
 
+       
         if ($this->about_image) {
             if ($this->existing_about_image) {
                 Storage::disk('public')->delete($this->existing_about_image);
@@ -179,6 +186,7 @@ new class extends Component {
             $this->about_image = null;
         }
 
+
         if ($this->cta_bg_image) {
             if ($this->existing_cta_bg_image) {
                 Storage::disk('public')->delete($this->existing_cta_bg_image);
@@ -188,7 +196,8 @@ new class extends Component {
             $this->existing_cta_bg_image = $path;
             $this->cta_bg_image = null;
         }
-
+        
+                $this->dispatch('notify', message: __('Changes saved successfully.'));
         $this->dispatch('settings-saved');
     }
 };
@@ -216,11 +225,11 @@ new class extends Component {
         <section class="space-y-4">
             <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Hero Section</h3>
             <p class="text-sm text-zinc-500">Configure the full-screen banner at the top of your homepage for {{ strtoupper($activeTab) }}.</p>
-            <flux:input label="{{ __('Label') }}" wire:model="hero_label.{{ $activeTab }}" description="Small text above the title, e.g. 'The Future of Exploration'" />
-            <flux:textarea label="{{ __('Title') }}" wire:model="hero_title.{{ $activeTab }}" rows="2" description="Use new lines to add line breaks." />
-            <flux:textarea label="{{ __('Subtitle') }}" wire:model="hero_subtitle.{{ $activeTab }}" rows="2" />
+            <flux:input label="{{ __('Label') }}" wire:key="hero_label_activeTab-{{ $activeTab }}" wire:model="hero_label.{{ $activeTab }}" description="Small text above the title, e.g. 'The Future of Exploration'" />
+            <flux:textarea label="{{ __('Title') }}" wire:key="hero_title_activeTab-{{ $activeTab }}" wire:model="hero_title.{{ $activeTab }}" rows="2" description="Use new lines to add line breaks." />
+            <flux:textarea label="{{ __('Subtitle') }}" wire:key="hero_subtitle_activeTab-{{ $activeTab }}" wire:model="hero_subtitle.{{ $activeTab }}" rows="2" />
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('CTA Button Text') }}" wire:model="hero_cta_text.{{ $activeTab }}" />
+                <flux:input label="{{ __('CTA Button Text') }}" wire:key="hero_cta_text_activeTab-{{ $activeTab }}" wire:model="hero_cta_text.{{ $activeTab }}" />
                 <flux:input label="{{ __('CTA Button Link') }}" wire:model="hero_cta_link" />
             </div>
             <flux:field>
@@ -242,12 +251,12 @@ new class extends Component {
         <section class="space-y-4">
             <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Our Story Section</h3>
             <p class="text-sm text-zinc-500">The two-column About section with image and stats badge for {{ strtoupper($activeTab) }}.</p>
-            <flux:input label="{{ __('Label') }}" wire:model="about_label.{{ $activeTab }}" description="Small label, e.g. 'Since 2008'" />
-            <flux:textarea label="{{ __('Title') }}" wire:model="about_title.{{ $activeTab }}" rows="2" description="Use new lines for line breaks." />
-            <flux:textarea label="{{ __('Content') }}" wire:model="about_content.{{ $activeTab }}" rows="4" />
+            <flux:input label="{{ __('Label') }}" wire:key="about_label_activeTab-{{ $activeTab }}" wire:model="about_label.{{ $activeTab }}" description="Small label, e.g. 'Since 2008'" />
+            <flux:textarea label="{{ __('Title') }}" wire:key="about_title_activeTab-{{ $activeTab }}" wire:model="about_title.{{ $activeTab }}" rows="2" description="Use new lines for line breaks." />
+            <flux:textarea label="{{ __('Content') }}" wire:key="about_content_activeTab-{{ $activeTab }}" wire:model="about_content.{{ $activeTab }}" rows="4" />
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Stat Number') }}" wire:model="about_stat_number.{{ $activeTab }}" description="e.g. '15+'" />
-                <flux:input label="{{ __('Stat Description') }}" wire:model="about_stat_text.{{ $activeTab }}" description="e.g. 'Years of Crafting Bespoke Experiences'" />
+                <flux:input label="{{ __('Stat Number') }}" wire:key="about_stat_number_activeTab-{{ $activeTab }}" wire:model="about_stat_number.{{ $activeTab }}" description="e.g. '15+'" />
+                <flux:input label="{{ __('Stat Description') }}" wire:key="about_stat_text_activeTab-{{ $activeTab }}" wire:model="about_stat_text.{{ $activeTab }}" description="e.g. 'Years of Crafting Bespoke Experiences'" />
             </div>
             <flux:field>
                 <flux:label>{{ __('Image') }}</flux:label>
@@ -258,8 +267,10 @@ new class extends Component {
                     <img src="{{ Storage::url($existing_about_image) }}" class="mt-2 h-40 w-full object-cover rounded-lg" />
                 @endif
                 <flux:description>Recommended: 800×600px.</flux:description>
+
                 <flux:error name="about_image" />
             </flux:field>
+
         </section>
 
         <flux:separator />
@@ -269,8 +280,8 @@ new class extends Component {
             <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Experience Tiers</h3>
             <p class="text-sm text-zinc-500">The "How We Travel" cards section for {{ strtoupper($activeTab) }}.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Section Label') }}" wire:model="experience_tiers_label.{{ $activeTab }}" />
-                <flux:input label="{{ __('Section Title') }}" wire:model="experience_tiers_title.{{ $activeTab }}" />
+                <flux:input label="{{ __('Section Label') }}" wire:key="experience_tiers_label_activeTab-{{ $activeTab }}" wire:model="experience_tiers_label.{{ $activeTab }}" />
+                <flux:input label="{{ __('Section Title') }}" wire:key="experience_tiers_title_activeTab-{{ $activeTab }}" wire:model="experience_tiers_title.{{ $activeTab }}" />
             </div>
 
             <!-- Dynamic Tier Points -->
@@ -283,10 +294,15 @@ new class extends Component {
                             <flux:button icon="trash" variant="danger" size="sm" wire:click.prevent="removePoint('{{ $activeTab }}', {{ $index }})" />
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <flux:input label="{{ __('Material Icon Name') }}" wire:model="experience_tiers_points.{{ $activeTab }}.{{ $index }}.icon" description="e.g. diamond, map, verified_user" />
-                            <flux:input label="{{ __('Title') }}" wire:model="experience_tiers_points.{{ $activeTab }}.{{ $index }}.title" />
+                            <div>
+                                <flux:input label="{{ __('Material Icon Name') }}" wire:key="experience_tiers_points_activeTab-{{ $index }}-icon-{{ $activeTab }}" wire:model="experience_tiers_points.{{ $activeTab }}.{{ $index }}.icon" />
+                                <div class="mt-2 text-xs text-zinc-500">
+                                    e.g., diamond, map. <a href="https://fonts.google.com/icons?icon.set=Material+Icons" target="_blank" class="text-primary font-medium hover:underline">Explore icons here &rarr;</a>
+                                </div>
+                            </div>
+                            <flux:input label="{{ __('Title') }}" wire:key="experience_tiers_points_activeTab-{{ $index }}-title-{{ $activeTab }}" wire:model="experience_tiers_points.{{ $activeTab }}.{{ $index }}.title" />
                         </div>
-                        <flux:textarea label="{{ __('Description') }}" wire:model="experience_tiers_points.{{ $activeTab }}.{{ $index }}.description" rows="2" />
+                        <flux:textarea label="{{ __('Description') }}" wire:key="experience_tiers_points_activeTab-{{ $index }}-description-{{ $activeTab }}" wire:model="experience_tiers_points.{{ $activeTab }}.{{ $index }}.description" rows="2" />
                     </div>
                 @endforeach
                 <flux:button icon="plus" size="sm" variant="ghost" wire:click.prevent="addPoint('{{ $activeTab }}')">
@@ -301,8 +317,8 @@ new class extends Component {
         <section class="space-y-4">
             <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Call to Action Section</h3>
             <p class="text-sm text-zinc-500">The dark-background CTA block at the bottom for {{ strtoupper($activeTab) }}.</p>
-            <flux:input label="{{ __('Title') }}" wire:model="cta_title.{{ $activeTab }}" />
-            <flux:textarea label="{{ __('Subtitle') }}" wire:model="cta_subtitle.{{ $activeTab }}" rows="2" />
+            <flux:input label="{{ __('Title') }}" wire:key="cta_title_activeTab-{{ $activeTab }}" wire:model="cta_title.{{ $activeTab }}" />
+            <flux:textarea label="{{ __('Subtitle') }}" wire:key="cta_subtitle_activeTab-{{ $activeTab }}" wire:model="cta_subtitle.{{ $activeTab }}" rows="2" />
             <flux:field>
                 <flux:label>{{ __('Background Image (Optional)') }}</flux:label>
                 <input type="file" wire:model="cta_bg_image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />

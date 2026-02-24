@@ -122,7 +122,8 @@ new class extends Component {
             $this->existing_logo_white = $path;
             $this->logo_white = null;
         }
-
+        
+                $this->dispatch('notify', message: __('Changes saved successfully.'));
         $this->dispatch('settings-saved');
     }
 };
@@ -144,7 +145,9 @@ new class extends Component {
         </div>
     </div>
 
-    <form wire:submit="save" class="space-y-8 max-w-4xl">
+    <form wire:submit="save" class="space-y-8 max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
 
         <!-- Branding -->
         <flux:card class="space-y-6">
@@ -195,23 +198,7 @@ new class extends Component {
             </div>
         </flux:card>
 
-        <!-- Contact Settings -->
-        <flux:card class="space-y-6">
-            <div class="flex items-center gap-2">
-                <flux:icon.phone class="size-5 text-zinc-400" />
-                <flux:heading size="lg">{{ __('Contact Information') }}</flux:heading>
-            </div>
-            <flux:separator />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('WhatsApp Number') }}" description="Format: 628123456789" wire:model="whatsapp_number" placeholder="628123456789" icon="phone" />
-                <flux:input label="{{ __('Admin Email') }}" wire:model="admin_email" type="email" icon="envelope" />
-            </div>
-            
-            <flux:textarea label="{{ __('Footer Description') }} ({{ strtoupper($activeTab) }})" wire:model="footer_text.{{ $activeTab }}" rows="3" />
-        </flux:card>
-
-        <!-- Communication Templates -->
+                <!-- Communication Templates -->
         <flux:card class="space-y-6">
             <div class="flex items-center gap-2">
                 <flux:icon.chat-bubble-left-right class="size-5 text-zinc-400" />
@@ -232,16 +219,34 @@ new class extends Component {
             </div>
 
             <div class="space-y-6">
-                <flux:textarea label="{{ __('WhatsApp Main Template') }} ({{ strtoupper($activeTab) }})" wire:model="whatsapp_template.{{ $activeTab }}" rows="3" />
+                <flux:textarea label="{{ __('WhatsApp Main Template') }} ({{ strtoupper($activeTab) }})" wire:key="whatsapp_template_activeTab-{{ $activeTab }}" wire:model="whatsapp_template.{{ $activeTab }}" rows="3" />
                 
                 <div class="space-y-4">
-                    <flux:input label="{{ __('Email Subject Template') }} ({{ strtoupper($activeTab) }})" wire:model="email_subject_template.{{ $activeTab }}" />
-                    <flux:textarea label="{{ __('Email Body Template') }} ({{ strtoupper($activeTab) }})" wire:model="email_template.{{ $activeTab }}" rows="4" />
+                    <flux:input label="{{ __('Email Subject Template') }} ({{ strtoupper($activeTab) }})" wire:key="email_subject_template_activeTab-{{ $activeTab }}" wire:model="email_subject_template.{{ $activeTab }}" />
+                    <flux:textarea label="{{ __('Email Body Template') }} ({{ strtoupper($activeTab) }})" wire:key="email_template_activeTab-{{ $activeTab }}" wire:model="email_template.{{ $activeTab }}" rows="4" />
                 </div>
             </div>
         </flux:card>
+            </div>
 
-        <!-- Social Media -->
+            <div class="lg:col-span-1 space-y-8">
+                <!-- Contact Settings -->
+        <flux:card class="space-y-6">
+            <div class="flex items-center gap-2">
+                <flux:icon.phone class="size-5 text-zinc-400" />
+                <flux:heading size="lg">{{ __('Contact Information') }}</flux:heading>
+            </div>
+            <flux:separator />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('WhatsApp Number') }}" description="Format: 628123456789" wire:model="whatsapp_number" placeholder="628123456789" icon="phone" />
+                <flux:input label="{{ __('Admin Email') }}" wire:model="admin_email" type="email" icon="envelope" />
+            </div>
+            
+            <flux:textarea label="{{ __('Footer Description') }} ({{ strtoupper($activeTab) }})" wire:key="footer_text_activeTab-{{ $activeTab }}" wire:model="footer_text.{{ $activeTab }}" rows="3" />
+        </flux:card>
+
+                <!-- Social Media -->
         <flux:card class="space-y-6">
             <div class="flex items-center gap-2">
                 <flux:icon.globe-alt class="size-5 text-zinc-400" />
@@ -257,6 +262,8 @@ new class extends Component {
                 <flux:input label="{{ __('TikTok') }}" wire:model="social_tiktok" placeholder="https://tiktok.com/@..." icon="musical-note" />
             </div>
         </flux:card>
+            </div>
+        </div>
 
         <div class="flex justify-end pt-4">
             <flux:button type="submit" variant="primary" class="px-12">{{ __('Save Settings') }}</flux:button>

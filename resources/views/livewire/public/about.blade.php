@@ -32,7 +32,10 @@ new #[Layout('components.layouts.public')] class extends Component {
                 'subtitle' => Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates and private travel insights.'),
                 'bg_image' => Setting::getTranslated('cta_bg_image'),
             ],
-            'whatsapp_number' => Setting::where('key', 'whatsapp_number')->value('value'),
+            'gallery_1' => Setting::where('key', 'about_gallery_1')->value('value'),
+            'gallery_2' => Setting::where('key', 'about_gallery_2')->value('value'),
+            'gallery_3' => Setting::where('key', 'about_gallery_3')->value('value'),
+            'gallery_4' => Setting::where('key', 'about_gallery_4')->value('value'),
         ];
     }
 };
@@ -83,15 +86,27 @@ new #[Layout('components.layouts.public')] class extends Component {
                     </div>
                 </div>
 
-                {{-- Sidebar --}}
-                <div class="lg:col-span-2 space-y-8">
-                    {{-- Stats Card --}}
-                    <div class="bg-secondary p-8 sm:p-10 rounded-xl text-white">
-                        <span class="text-4xl sm:text-5xl font-extrabold text-primary block mb-2">{{ $stat_number }}</span>
-                        <p class="text-sm font-medium text-white/70 uppercase tracking-widest leading-relaxed">{{ $stat_text }}</p>
-                    </div>
+                {{-- Sidebar (Gallery & Stats) --}}
+                <div class="lg:col-span-2 space-y-8 lg:space-y-12">
+                    {{-- Non-overlapping Stats Card --}}
+                    @if($stat_number || $stat_text)
+                        <div class="bg-secondary p-8 sm:p-10 rounded-xl text-white shadow-2xl">
+                            <span class="text-4xl sm:text-5xl font-extrabold text-primary block mb-2">{{ $stat_number }}</span>
+                            <p class="text-sm font-medium text-white/80 uppercase tracking-widest leading-relaxed">{{ $stat_text }}</p>
+                        </div>
+                    @endif
 
-                    {{-- Values Cards - Removed from sidebar and moved to full section below --}}
+                    {{-- Decorative Gallery --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-4">
+                            <img src="{{ $gallery_1 ? Storage::url($gallery_1) : 'https://images.unsplash.com/photo-1542314831-c6a4d14faaf2?q=80&w=600&auto=format&fit=crop' }}" class="w-full h-48 object-cover rounded-xl shadow-lg" alt="Luxury Travel" />
+                            <img src="{{ $gallery_2 ? Storage::url($gallery_2) : 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=600&auto=format&fit=crop' }}" class="w-full h-64 object-cover rounded-xl shadow-lg" alt="Boutique Hotel" />
+                        </div>
+                        <div class="space-y-4 pt-8">
+                            <img src="{{ $gallery_3 ? Storage::url($gallery_3) : 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop' }}" class="w-full h-64 object-cover rounded-xl shadow-lg" alt="Paris" />
+                            <img src="{{ $gallery_4 ? Storage::url($gallery_4) : 'https://images.unsplash.com/photo-1506501139174-099022df5260?q=80&w=600&auto=format&fit=crop' }}" class="w-full h-48 object-cover rounded-xl shadow-lg" alt="Beach" />
+                        </div>
+                    </div>
                 </div>
             </div>
         @else
@@ -139,11 +154,6 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <a href="{{ route('destinations.index') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform shadow-xl shadow-primary/20">
                     {{ __('Explore Destinations') }}
                 </a>
-                @if($whatsapp_number)
-                    <a href="https://wa.me/{{ $whatsapp_number }}" target="_blank" class="border border-white/20 text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:bg-white/10 transition-colors backdrop-blur-sm">
-                        {{ __('Contact Us') }}
-                    </a>
-                @endif
             </div>
         </div>
     </section>

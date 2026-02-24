@@ -236,6 +236,7 @@ new class extends Component {
             }
         }
 
+                $this->dispatch('notify', message: __('Changes saved successfully.'));
         $this->redirect(route('admin.destinations.index'), navigate: true);
     }
 };
@@ -269,16 +270,16 @@ new class extends Component {
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:model="location.{{ $activeTab }}" icon="map-pin" />
-                <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:model="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
+                <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:key="location_activeTab-{{ $activeTab }}" wire:model="location.{{ $activeTab }}" icon="map-pin" />
+                <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:key="duration_activeTab-{{ $activeTab }}" wire:model="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:model="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
+                <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:key="theme_activeTab-{{ $activeTab }}" wire:model="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
                 <flux:input label="{{ __('Person (Pax)') }}" wire:model="person" type="number" min="1" icon="user" />
             </div>
 
-            <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:model="description.{{ $activeTab }}" rows="5" />
+            <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:key="description_activeTab-{{ $activeTab }}" wire:model="description.{{ $activeTab }}" rows="5" />
         </flux:card>
 
         <!-- Pricing & Availability -->
@@ -310,7 +311,7 @@ new class extends Component {
              </div>
              @foreach($highlights[$activeTab] as $index => $highlight)
                 <div class="flex gap-2">
-                    <flux:input wire:model="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
+                    <flux:input wire:key="highlights_activeTab_index-{{ $activeTab }}" wire:model="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
                     <flux:button icon="trash" wire:click="removeHighlight('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
              @endforeach
@@ -325,10 +326,10 @@ new class extends Component {
             @foreach($itinerary[$activeTab] as $index => $day)
                 <div class="flex gap-2 items-start">
                     <div class="w-32 shrink-0">
-                        <flux:input wire:model="itinerary.{{ $activeTab }}.{{ $index }}.day" placeholder="e.g. Day 1" />
+                        <flux:input wire:key="itinerary_activeTab_index_day-{{ $activeTab }}" wire:model="itinerary.{{ $activeTab }}.{{ $index }}.day" placeholder="e.g. Day 1" />
                     </div>
                     <div class="flex-1">
-                        <flux:textarea wire:model="itinerary.{{ $activeTab }}.{{ $index }}.activity" placeholder="e.g. Arrival & Hotel Check-in" rows="2" />
+                        <flux:textarea wire:key="itinerary_activeTab_index_activity-{{ $activeTab }}" wire:model="itinerary.{{ $activeTab }}.{{ $index }}.activity" placeholder="e.g. Arrival & Hotel Check-in" rows="2" />
                     </div>
                     <flux:button icon="trash" wire:click="removeItineraryDay('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
@@ -343,7 +344,7 @@ new class extends Component {
             </div>
             @foreach($includes[$activeTab] as $index => $item)
                 <div class="flex gap-2">
-                    <flux:input wire:model="includes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Airport pickup & drop-off" />
+                    <flux:input wire:key="includes_activeTab_index-{{ $activeTab }}" wire:model="includes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Airport pickup & drop-off" />
                     <flux:button icon="trash" wire:click="removeInclude('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
             @endforeach
@@ -357,7 +358,7 @@ new class extends Component {
             </div>
             @foreach($excludes[$activeTab] as $index => $item)
                 <div class="flex gap-2">
-                    <flux:input wire:model="excludes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. International flights" />
+                    <flux:input wire:key="excludes_activeTab_index-{{ $activeTab }}" wire:model="excludes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. International flights" />
                     <flux:button icon="trash" wire:click="removeExclude('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
             @endforeach
@@ -374,8 +375,8 @@ new class extends Component {
                     <div class="absolute top-2 right-2">
                         <flux:button size="sm" icon="trash" wire:click="removeFaq('{{ $activeTab }}', {{ $index }})" variant="danger" />
                     </div>
-                    <flux:input wire:model="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
-                    <flux:textarea wire:model="faq.{{ $activeTab }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
+                    <flux:input wire:key="faq_activeTab_index_question-{{ $activeTab }}" wire:model="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
+                    <flux:textarea wire:key="faq_activeTab_index_answer-{{ $activeTab }}" wire:model="faq.{{ $activeTab }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
                 </div>
             @endforeach
         </div>
@@ -389,10 +390,10 @@ new class extends Component {
             @foreach($trip_info[$activeTab] as $index => $item)
                 <div class="flex gap-2">
                     <div class="w-48 shrink-0">
-                        <flux:input wire:model="trip_info.{{ $activeTab }}.{{ $index }}.key" placeholder="e.g. Wifi" />
+                        <flux:input wire:key="trip_info_activeTab_index_key-{{ $activeTab }}" wire:model="trip_info.{{ $activeTab }}.{{ $index }}.key" placeholder="e.g. Wifi" />
                     </div>
                     <div class="flex-1">
-                        <flux:input wire:model="trip_info.{{ $activeTab }}.{{ $index }}.value" placeholder="e.g. Yes" />
+                        <flux:input wire:key="trip_info_activeTab_index_value-{{ $activeTab }}" wire:model="trip_info.{{ $activeTab }}.{{ $index }}.value" placeholder="e.g. Yes" />
                     </div>
                     <flux:button icon="trash" wire:click="removeTripInfo('{{ $activeTab }}', {{ $index }})" variant="danger" />
                 </div>
