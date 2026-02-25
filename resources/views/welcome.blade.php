@@ -4,11 +4,21 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Laravel</title>
-
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php
+            $siteName = \App\Models\Setting::where('key', 'site_name')->value('value') ?? config('app.name');
+            $logoImage = \App\Models\Setting::where('key', 'logo_image')->value('value');
+        @endphp
+        <title>{{ $siteName }}</title>
+        @if($logoImage)
+            <link rel="icon" href="{{ Storage::url($logoImage) }}" sizes="any">
+            <link rel="apple-touch-icon" href="{{ Storage::url($logoImage) }}">
+            <meta property="og:image" content="{{ url(Storage::url($logoImage)) }}">
+        @else
+            <link rel="icon" href="/favicon.ico" sizes="any">
+            <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+            <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @endif
+        <meta property="og:title" content="{{ $siteName }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
