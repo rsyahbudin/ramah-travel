@@ -39,6 +39,10 @@ new #[Layout('components.layouts.public')] class extends Component {
                 'subtitle' => \App\Models\Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates, private travel insights, and early access to curated seasonal journeys.'),
                 'bg_image' => \App\Models\Setting::getTranslated('cta_bg_image'),
             ],
+            'destinationSection' => [
+                'title' => \App\Models\Setting::getTranslated('destination_title', 'Destinations Spotlight'),
+                'label' => \App\Models\Setting::getTranslated('destination_label', 'Curated Selection'),
+            ],
             'featuredDestinations' => Destination::where('is_visible', true)
                 ->where('is_featured', true)
                 ->latest()
@@ -149,8 +153,8 @@ new #[Layout('components.layouts.public')] class extends Component {
     <section class="py-16 md:py-24 bg-bg-light">
         <div class="px-4 sm:px-6 md:px-8 max-w-7xl mx-auto mb-10 md:mb-16 flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-8">
             <div class="space-y-3 sm:space-y-4">
-                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ __('Curated Selection') }}</span>
-                <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-secondary tracking-tight">{{ __('Destinations Spotlight') }}</h2>
+                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ $destinationSection['label'] }}</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-secondary tracking-tight">{!! nl2br(e($destinationSection['title'])) !!}</h2>
             </div>
             <a href="{{ route('destinations.index') }}" wire:navigate class="text-secondary/60 hover:text-primary transition-colors font-medium flex items-center gap-2 text-sm max-sm:hidden">
                 {{ __('View All') }} <i class="material-icons text-sm">arrow_forward</i>
@@ -160,7 +164,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         <div class="px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 @foreach($featuredDestinations as $destination)
-                   <div class="group relative aspect-[3/4] overflow-hidden rounded-2xl cursor-pointer">
+                   <div class="group relative aspect-3/4 overflow-hidden rounded-2xl cursor-pointer">
                         <a href="{{ route('destinations.show', $destination) }}" wire:navigate class="block w-full h-full">
                             @if($destination->image_path)
                                 <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

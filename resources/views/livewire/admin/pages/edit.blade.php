@@ -14,6 +14,7 @@ new class extends Component {
     public array $about_hero_title = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_hero_subtitle = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_hero_label = ['en' => '', 'id' => '', 'es' => ''];
+    public array $destinations_hero_label = ['en' => '', 'id' => '', 'es' => ''];
     public $image;
     public ?string $existing_image = null;
     
@@ -70,6 +71,14 @@ new class extends Component {
                 if (!isset($this->about_hero_subtitle[$locale])) $this->about_hero_subtitle[$locale] = '';
                 if (!isset($this->about_hero_label[$locale])) $this->about_hero_label[$locale] = '';
                 if (!isset($this->about_who_we_are_label[$locale])) $this->about_who_we_are_label[$locale] = '';
+            }
+        } elseif ($page->slug === 'destinations') {
+            $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
+            $this->destinations_hero_label = $this->decodeSetting($settings, 'destinations_hero_label', [
+                'en' => 'Curated Selection', 'id' => '', 'es' => ''
+            ]);
+            foreach (['en', 'id', 'es'] as $locale) {
+                if (!isset($this->destinations_hero_label[$locale])) $this->destinations_hero_label[$locale] = '';
             }
         }
     }
@@ -151,6 +160,13 @@ new class extends Component {
                 }
             }
 
+        } elseif ($this->page->slug === 'destinations') {
+            $this->validate([
+                'destinations_hero_label.en' => 'nullable|string|max:50',
+                'destinations_hero_label.id' => 'nullable|string|max:50',
+                'destinations_hero_label.es' => 'nullable|string|max:50',
+            ]);
+            \App\Models\Setting::updateOrCreate(['key' => 'destinations_hero_label'], ['value' => json_encode($this->destinations_hero_label)]);
         }
         
                 $this->dispatch('notify', message: __('Changes saved successfully.'));
@@ -160,7 +176,7 @@ new class extends Component {
 ?>
 
 <div>
-    <div class="flex justify-between items-center mb-6">
+    <div class="sticky top-0 z-50 bg-white dark:bg-zinc-800 py-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-700 mb-6">
         <flux:heading size="xl">{{ __('Edit Page') }}: {{ $page->getTranslation('title', 'en') }}</flux:heading>
 
         <div class="flex gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
@@ -232,6 +248,9 @@ new class extends Component {
                         </div>
                         <flux:separator />
                         <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:key="title_activeTab-{{ $activeTab }}" wire:model="title.{{ $activeTab }}" />
+                        @if($page->slug === 'destinations')
+                            <flux:input label="{{ __('Hero Label') }} ({{ strtoupper($activeTab) }})" wire:key="destinations_hero_label_activeTab-{{ $activeTab }}" wire:model="destinations_hero_label.{{ $activeTab }}" description="Small label displayed above the title (e.g., 'Curated Selection')." />
+                        @endif
                     </flux:card>
 
                     <flux:card class="space-y-6">

@@ -24,6 +24,7 @@ new #[Layout('components.layouts.public')] class extends Component {
             // //     'bg_image' => Setting::getTranslated('cta_bg_image'),
             // ],
             'whatsapp_number' => Setting::where('key', 'whatsapp_number')->value('value'),
+            'hero_label' => Setting::getTranslated('destinations_hero_label', 'Curated Selection'),
         ];
     }
 };
@@ -42,7 +43,7 @@ new #[Layout('components.layouts.public')] class extends Component {
         <div class="relative z-10 text-center px-4 max-w-4xl">
             <div class="flex items-center justify-center gap-4 mb-6">
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
-                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ __('Curated Selection') }}</span>
+                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ $hero_label }}</span>
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
             </div>
             <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">

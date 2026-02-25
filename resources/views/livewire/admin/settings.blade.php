@@ -110,7 +110,7 @@ new class extends Component {
 ?>
 
 <div>
-    <div class="flex justify-between items-center mb-6">
+    <div class="sticky top-0 z-50 bg-white dark:bg-zinc-800 py-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-700 mb-6">
         <flux:heading size="xl">{{ __('General Settings') }}</flux:heading>
 
         <div class="flex gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">

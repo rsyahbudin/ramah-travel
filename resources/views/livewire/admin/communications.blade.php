@@ -64,9 +64,15 @@ new class extends Component {
 
         $translatable = ['whatsapp_general_template', 'whatsapp_template', 'email_subject_template', 'email_template'];
 
-        foreach ($validated as $key => $value) {
-            $saveValue = in_array($key, $translatable) ? json_encode($value) : ($value ?? '');
-            Setting::updateOrCreate(['key' => $key], ['value' => $saveValue]);
+        foreach ($translatable as $key) {
+            Setting::updateOrCreate(['key' => $key], ['value' => json_encode($this->$key)]);
+        }
+
+        if (array_key_exists('whatsapp_number', $validated)) {
+            Setting::updateOrCreate(['key' => 'whatsapp_number'], ['value' => $this->whatsapp_number]);
+        }
+        if (array_key_exists('admin_email', $validated)) {
+            Setting::updateOrCreate(['key' => 'admin_email'], ['value' => $this->admin_email]);
         }
 
         $this->dispatch('notify', message: __('Communication templates saved successfully!'));
@@ -78,7 +84,7 @@ new class extends Component {
         <flux:card>
             <div class="space-y-6">
                 <div>
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="sticky top-0 z-50 bg-white dark:bg-zinc-800 py-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-700 mb-6">
                         <div>
                             <flux:heading size="lg">{{ __('WhatsApp Communication Templates') }}</flux:heading>
                             <flux:subheading>{{ __('Set the default pre-filled message that users will send when clicking WhatsApp links.') }}</flux:subheading>

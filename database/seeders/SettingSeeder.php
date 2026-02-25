@@ -70,6 +70,18 @@ class SettingSeeder extends Seeder
                 'es' => 'Años creando experiencias a medida',
             ],
 
+            // Destinations Spotlight
+            'destination_title' => [
+                'en' => 'Destinations Spotlight',
+                'id' => 'Sorotan Destinasi',
+                'es' => 'Destinos en Foco',
+            ],
+            'destination_label' => [
+                'en' => 'Curated Selection',
+                'id' => 'Pilihan Terkurasi',
+                'es' => 'Selección Curada',
+            ],
+
             // Experience Tiers
             'experience_tiers_title' => [
                 'en' => 'How We Travel',
@@ -127,6 +139,11 @@ class SettingSeeder extends Seeder
                 'id' => 'Siapa Kami',
                 'es' => 'Quiénes somos',
             ],
+            'destinations_hero_label' => [
+                'en' => 'Curated Selection',
+                'id' => 'Pilihan Terkurasi',
+                'es' => 'Selección Curada',
+            ],
 
             // Templates
             'whatsapp_template' => [
@@ -146,9 +163,9 @@ class SettingSeeder extends Seeder
             ],
 
             'whatsapp_general_template' => [
-                'en' => "Hello, I am interested in booking a trip. Could you provide more information?",
-                'id' => "Halo, saya tertarik untuk memesan perjalanan. Bisakah Anda memberikan informasi lebih lanjut?",
-                'es' => "Hola, estoy interesado en reservar un viaje. ¿Podría darme más información?",
+                'en' => 'Hello, I am interested in booking a trip. Could you provide more information?',
+                'id' => 'Halo, saya tertarik untuk memesan perjalanan. Bisakah Anda memberikan informasi lebih lanjut?',
+                'es' => 'Hola, estoy interesado en reservar un viaje. ¿Podría darme más información?',
             ],
         ];
 

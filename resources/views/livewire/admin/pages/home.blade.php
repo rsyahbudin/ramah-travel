@@ -27,6 +27,9 @@ new class extends Component {
     public $about_image;
     public $existing_about_image;
 
+    // Destinations Section
+    public array $destination_title = ['en' => '', 'id' => '', 'es' => ''];
+    public array $destination_label = ['en' => '', 'id' => '', 'es' => ''];
 
     // Experience Tiers Section (How We Travel)
     public array $experience_tiers_title = ['en' => '', 'id' => '', 'es' => ''];
@@ -62,6 +65,10 @@ new class extends Component {
         $this->about_stat_text = $this->decodeSetting($settings, 'about_stat_text', ['en' => 'Years of Crafting Bespoke Experiences']);
         $this->existing_about_image = $settings['about_image'] ?? null;
 
+
+        // Destinations
+        $this->destination_title = $this->decodeSetting($settings, 'destination_title', ['en' => 'Destinations Spotlight']);
+        $this->destination_label = $this->decodeSetting($settings, 'destination_label', ['en' => 'Curated Selection']);
 
         // Experience Tiers
         $this->experience_tiers_title = $this->decodeSetting($settings, 'experience_tiers_title', ['en' => 'How We Travel']);
@@ -134,6 +141,9 @@ new class extends Component {
            
             'about_image' => 'nullable|image|max:4096',
 
+            'destination_title.en' => 'required|string|max:255',
+            'destination_label.en' => 'nullable|string|max:100',
+
             'experience_tiers_title.en' => 'required|string|max:255',
             'experience_tiers_label.en' => 'nullable|string|max:100',
             'cta_title.en' => 'nullable|string|max:255',
@@ -151,6 +161,8 @@ new class extends Component {
             'about_label' => $this->about_label,
             'about_stat_number' => $this->about_stat_number,
             'about_stat_text' => $this->about_stat_text,
+            'destination_title' => $this->destination_title,
+            'destination_label' => $this->destination_label,
             'experience_tiers_title' => $this->experience_tiers_title,
             'experience_tiers_label' => $this->experience_tiers_label,
             'experience_tiers_points' => $this->experience_tiers_points,
@@ -204,7 +216,7 @@ new class extends Component {
 ?>
 
 <div>
-    <div class="flex justify-between items-center mb-6">
+    <div class="sticky top-0 z-50 bg-white dark:bg-zinc-800 py-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-700 mb-6">
         <flux:heading size="xl">{{ __('Home Page Settings') }}</flux:heading>
 
         <div class="flex gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
@@ -271,6 +283,18 @@ new class extends Component {
                 <flux:error name="about_image" />
             </flux:field>
 
+        </section>
+
+        <flux:separator />
+
+        <!-- Destinations Section -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-200">Destinations Section</h3>
+            <p class="text-sm text-zinc-500">The title and label for the featured destinations section for {{ strtoupper($activeTab) }}.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('Section Label') }}" wire:key="destination_label_activeTab-{{ $activeTab }}" wire:model="destination_label.{{ $activeTab }}" />
+                <flux:input label="{{ __('Section Title') }}" wire:key="destination_title_activeTab-{{ $activeTab }}" wire:model="destination_title.{{ $activeTab }}" />
+            </div>
         </section>
 
         <flux:separator />
