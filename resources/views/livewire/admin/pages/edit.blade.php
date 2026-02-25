@@ -11,6 +11,7 @@ new class extends Component {
     public Page $page;
     public array $title = ['en' => '', 'id' => '', 'es' => ''];
     public array $content = ['en' => '', 'id' => '', 'es' => ''];
+    public array $about_hero_title = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_hero_subtitle = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_hero_label = ['en' => '', 'id' => '', 'es' => ''];
     public $image;
@@ -44,6 +45,9 @@ new class extends Component {
 
         if ($page->slug === 'about') {
             $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
+            $this->about_hero_title = $this->decodeSetting($settings, 'about_hero_title', $page->getTranslations('title') ?: [
+                'en' => 'The Journey Behind Our Legacy.', 'id' => '', 'es' => ''
+            ]);
             $this->about_hero_subtitle = $this->decodeSetting($settings, 'about_hero_subtitle', [
                 'en' => 'The journey behind our legacy and the passion that drives us.', 'id' => '', 'es' => ''
             ]);
@@ -62,6 +66,7 @@ new class extends Component {
             ]);
 
             foreach (['en', 'id', 'es'] as $locale) {
+                if (!isset($this->about_hero_title[$locale])) $this->about_hero_title[$locale] = '';
                 if (!isset($this->about_hero_subtitle[$locale])) $this->about_hero_subtitle[$locale] = '';
                 if (!isset($this->about_hero_label[$locale])) $this->about_hero_label[$locale] = '';
                 if (!isset($this->about_who_we_are_label[$locale])) $this->about_who_we_are_label[$locale] = '';
@@ -112,12 +117,14 @@ new class extends Component {
 
         if ($this->page->slug === 'about') {
             $this->validate([
+                'about_hero_title.en' => 'nullable|string|max:255',
+                'about_hero_title.id' => 'nullable|string|max:255',
+                'about_hero_title.es' => 'nullable|string|max:255',
                 'about_hero_subtitle.en' => 'nullable|string',
                 'about_hero_subtitle.id' => 'nullable|string',
                 'about_hero_subtitle.es' => 'nullable|string',
                 'about_hero_label.en' => 'nullable|string|max:50',
                 'about_hero_label.id' => 'nullable|string|max:50',
-
                 'about_hero_label.es' => 'nullable|string|max:50',
                 'about_gallery_1' => 'nullable|image|max:4096',
                 'about_gallery_2' => 'nullable|image|max:4096',
@@ -125,6 +132,7 @@ new class extends Component {
                 'about_gallery_4' => 'nullable|image|max:4096',
 
             ]);
+            \App\Models\Setting::updateOrCreate(['key' => 'about_hero_title'], ['value' => json_encode($this->about_hero_title)]);
             \App\Models\Setting::updateOrCreate(['key' => 'about_hero_subtitle'], ['value' => json_encode($this->about_hero_subtitle)]);
             \App\Models\Setting::updateOrCreate(['key' => 'about_hero_label'], ['value' => json_encode($this->about_hero_label)]);
             \App\Models\Setting::updateOrCreate(['key' => 'about_who_we_are_label'], ['value' => json_encode($this->about_who_we_are_label)]);
@@ -195,6 +203,7 @@ new class extends Component {
 
                             <div class="space-y-6">
                                 <flux:input label="{{ __('Hero Label') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_label_activeTab-{{ $activeTab }}" wire:model="about_hero_label.{{ $activeTab }}" />
+                                <flux:input label="{{ __('Hero Title') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_title_activeTab-{{ $activeTab }}" wire:model="about_hero_title.{{ $activeTab }}" />
                                 <flux:textarea label="{{ __('Hero Subtitle') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_subtitle_activeTab-{{ $activeTab }}" wire:model="about_hero_subtitle.{{ $activeTab }}" rows="4" />
                             </div>
                         </div>

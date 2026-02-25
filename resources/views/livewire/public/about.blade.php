@@ -10,9 +10,10 @@ new #[Layout('components.layouts.public')] class extends Component {
     public function with(): array
     {
         return [
-            'page' => Page::where('slug', 'about')->first(),
+            'page' => $page = Page::where('slug', 'about')->first(),
             'hero' => [
                 'label' => Setting::getTranslated('about_hero_label', 'Our Story'),
+                'title' => Setting::getTranslated('about_hero_title', $page?->title),
                 'subtitle' => Setting::getTranslated('about_hero_subtitle', 'The journey behind our legacy and the passion that drives us.'),
             ],
             'who_we_are_label' => Setting::getTranslated('about_who_we_are_label', 'Who We Are'),
@@ -58,7 +59,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
             </div>
             <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
-                {{ $page?->title ?? __('About Us') }}
+                {{ $hero['title'] ?? __('About Us') }}
             </h1>
             <p class="text-white/70 text-base sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
                 {{ $hero['subtitle'] }}
