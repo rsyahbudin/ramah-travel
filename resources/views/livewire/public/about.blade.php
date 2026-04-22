@@ -9,29 +9,52 @@ use Illuminate\Support\Facades\Storage;
 new #[Layout('components.layouts.public')] class extends Component {
     public function with(): array
     {
+        $page = Page::with(['sections.translations.language'])->where('slug', 'about')->first();
+        $homePage = Page::with(['sections.translations.language', 'sections.features.translations.language'])->where('slug', 'home')->first();
+        
+        $heroSection = $page?->sections->where('key', 'about_hero')->first();
+        $whoWeAreSection = $page?->sections->where('key', 'about_who_we_are')->first();
+
+        // Shared sections from Home page
+        $homeAbout = $homePage?->sections->where('key', 'home_about')->first();
+        $tiers = $homePage?->sections->where('key', 'home_experience_tiers')->first();
+        $ctaSection = $homePage?->sections->where('key', 'home_cta')->first();
+
+        $locale = app()->getLocale();
+        $experiencePoints = [];
+        if ($tiers) {
+            foreach ($tiers->features as $feature) {
+                $experiencePoints[] = [
+                    'icon' => $feature->icon,
+                    'title' => $feature->getTranslation('title'),
+                    'description' => $feature->getTranslation('description'),
+                ];
+            }
+        }
+
         return [
-            'page' => $page = Page::where('slug', 'about')->first(),
+            'page' => $page,
             'hero' => [
-                'label' => Setting::getTranslated('about_hero_label', 'Our Story'),
-                'title' => Setting::getTranslated('about_hero_title', $page?->title),
-                'subtitle' => Setting::getTranslated('about_hero_subtitle', 'The journey behind our legacy and the passion that drives us.'),
+                'label' => $heroSection?->meta['label'][$locale] ?? ($heroSection?->meta['label']['en'] ?? 'Our Story'),
+                'title' => $heroSection?->getTranslation('heading') ?? $page?->getTranslation('title'),
+                'subtitle' => $heroSection?->getTranslation('body') ?? 'The journey behind our legacy and the passion that drives us.',
             ],
-            'who_we_are_label' => Setting::getTranslated('about_who_we_are_label', 'Who We Are'),
-            'stat_number' => Setting::getTranslated('about_stat_number', '15+'),
-            'stat_text' => Setting::getTranslated('about_stat_text', 'Years of Crafting Bespoke Experiences'),
+            'who_we_are' => [
+                'label' => $whoWeAreSection?->meta['label'][$locale] ?? ($whoWeAreSection?->meta['label']['en'] ?? 'Who We Are'),
+                'title' => $whoWeAreSection?->getTranslation('heading') ?? $page?->getTranslation('title'),
+                'content' => $whoWeAreSection?->getTranslation('body') ?? '',
+            ],
+            'stat_number' => $homeAbout?->meta['stat_number'][$locale] ?? ($homeAbout?->meta['stat_number']['en'] ?? '15+'),
+            'stat_text' => $homeAbout?->meta['stat_text'][$locale] ?? ($homeAbout?->meta['stat_text']['en'] ?? 'Years of Crafting Bespoke Experiences'),
             'experienceSection' => [
-                'title' => Setting::getTranslated('experience_tiers_title', 'How We Travel'),
-                'label' => Setting::getTranslated('experience_tiers_label', 'Tailored For You'),
-                'points' => Setting::getTranslated('experience_tiers_points') ?: [
-                    ['icon' => 'diamond', 'title' => 'Elite Concierge', 'description' => '24/7 dedicated support for every whim.'],
-                    ['icon' => 'map', 'title' => 'Bespoke Itineraries', 'description' => 'Every journey is custom-built from the ground up.'],
-                    ['icon' => 'verified_user', 'title' => 'Insider Access', 'description' => 'Gain entry to private estates and hidden gems.'],
-                ],
+                'title' => $tiers?->getTranslation('heading') ?? 'How We Travel',
+                'label' => $tiers?->meta['label'][$locale] ?? ($tiers?->meta['label']['en'] ?? 'Tailored For You'),
+                'points' => $experiencePoints,
             ],
             'cta' => [
-                'title' => Setting::getTranslated('cta_title', 'Stay Inspired.'),
-                'subtitle' => Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates and private travel insights.'),
-                'bg_image' => Setting::getTranslated('cta_bg_image'),
+                'title' => $ctaSection?->getTranslation('heading') ?? 'Stay Inspired.',
+                'subtitle' => $ctaSection?->getTranslation('body') ?? 'Join our inner circle for exclusive updates and private travel insights.',
+                'bg_image' => $ctaSection?->meta['bg_image'] ?? null,
             ],
             'gallery_1' => Setting::where('key', 'about_gallery_1')->value('value'),
             'gallery_2' => Setting::where('key', 'about_gallery_2')->value('value'),
@@ -46,7 +69,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     {{-- Hero Header --}}
     <section class="relative h-[50vh] min-h-[350px] overflow-hidden flex items-center justify-center">
         @if($page && $page->image_path)
-            <img src="{{ Storage::url($page->image_path) }}" alt="{{ $page->title ?? 'About Us' }}" class="absolute inset-0 w-full h-full object-cover" />
+            <img src="{{ Storage::url($page->image_path) }}" alt="{{ $page->getTranslation('title') ?? 'About Us' }}" class="absolute inset-0 w-full h-full object-cover" />
         @else
             <div class="absolute inset-0 bg-secondary"></div>
         @endif
@@ -76,14 +99,14 @@ new #[Layout('components.layouts.public')] class extends Component {
                     <div class="space-y-4 mb-10">
                         <div class="flex items-center gap-4">
                             <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
-                            <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ $who_we_are_label }}</span>
+                            <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ $who_we_are['label'] }}</span>
                         </div>
                         <h2 class="text-3xl sm:text-4xl font-extrabold text-secondary leading-tight">
-                            {!! nl2br(e($page->title)) !!}
+                            {!! nl2br(e($who_we_are['title'])) !!}
                         </h2>
                     </div>
                     <div class="text-secondary/70 text-base sm:text-lg leading-relaxed font-light space-y-6">
-                        {!! nl2br(e($page->content)) !!}
+                        {!! nl2br(e($who_we_are['content'])) !!}
                     </div>
                 </div>
 
@@ -133,8 +156,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                     <div class="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6 sm:mb-8 group-hover:bg-primary group-hover:text-white transition-colors">
                         <i class="material-icons text-2xl sm:text-3xl">{{ $tier['icon'] ?? 'star' }}</i>
                     </div>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-secondary mb-3 sm:mb-4">{{ $tier['title'] }}</h3>
-                    <p class="text-secondary/60 leading-relaxed font-light text-sm sm:text-base">{{ $tier['description'] }}</p>
+                    <h3 class="text-lg sm:text-xl font-extrabold text-secondary mb-3 sm:mb-4">{{ $tier['title_key'] ?? $tier['title'] ?? '' }}</h3>
+                    <p class="text-secondary/60 leading-relaxed font-light text-sm sm:text-base">{{ $tier['description_key'] ?? $tier['description'] ?? '' }}</p>
                 </div>
             @endforeach
         </div>

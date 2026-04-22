@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Destination;
+use App\Models\Page;
 use Livewire\Volt\Component;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\Storage;
@@ -8,43 +9,65 @@ use Illuminate\Support\Facades\Storage;
 new #[Layout('components.layouts.public')] class extends Component {
     public function with(): array
     {
+        $page = Page::with(['sections.translations.language', 'sections.features.translations.language'])->where('slug', 'home')->first();
+        if (!$page) {
+            abort(404, 'Home page not found. Did you forget to seed the database?');
+        }
+
+        $hero = $page->sections->where('key', 'home_hero')->first();
+        $about = $page->sections->where('key', 'home_about')->first();
+        $destinations = $page->sections->where('key', 'home_destination')->first();
+        $tiers = $page->sections->where('key', 'home_experience_tiers')->first();
+        $cta = $page->sections->where('key', 'home_cta')->first();
+
+        $locale = app()->getLocale();
+
+        // Convert Features to plain points
+        $experiencePoints = [];
+        if ($tiers) {
+            foreach ($tiers->features as $feature) {
+                $experiencePoints[] = [
+                    'icon' => $feature->icon,
+                    'title' => $feature->getTranslation('title'),
+                    'description' => $feature->getTranslation('description'),
+                ];
+            }
+        }
+
         return [
             'heroSection' => [
-                'title' => \App\Models\Setting::getTranslated('hero_title', "Redefining the\nArt of Travel."),
-                'subtitle' => \App\Models\Setting::getTranslated('hero_subtitle', 'Experience the world\'s most secluded corners through a lens of absolute luxury and curated exclusivity.'),
-                'cta_text' => \App\Models\Setting::getTranslated('hero_cta_text', 'Discover More'),
-                'cta_link' => \App\Models\Setting::getTranslated('hero_cta_link') ?: route('destinations.index'),
-                'label' => \App\Models\Setting::getTranslated('hero_label', 'The Future of Exploration'),
-                'bg_image' => \App\Models\Setting::getTranslated('hero_bg_image'),
+                'title' => $hero?->getTranslation('heading') ?? '',
+                'subtitle' => $hero?->getTranslation('body') ?? '',
+                'cta_text' => $hero?->meta['cta_text'][$locale] ?? ($hero?->meta['cta_text']['en'] ?? 'Discover More'),
+                'cta_link' => $hero?->meta['cta_link'] ?? route('destinations.index'),
+                'label' => $hero?->meta['label'][$locale] ?? ($hero?->meta['label']['en'] ?? 'The Future of Exploration'),
+                'bg_image' => $page->image_path,
             ],
             'aboutSection' => [
-                'title' => \App\Models\Setting::getTranslated('about_title', "The Journey Behind\nOur Legacy."),
-                'content' => \App\Models\Setting::getTranslated('about_content', 'Founded on the principle that travel should be as unique as the traveler.'),
-                'label' => \App\Models\Setting::getTranslated('about_label', 'Since 2008'),
-                'stat_number' => \App\Models\Setting::getTranslated('about_stat_number', '15+'),
-                'stat_text' => \App\Models\Setting::getTranslated('about_stat_text', 'Years of Crafting Bespoke Experiences'),
-                'image' => \App\Models\Setting::getTranslated('about_image'),
+                'title' => $about?->getTranslation('heading') ?? '',
+                'content' => $about?->getTranslation('body') ?? '',
+                'label' => $about?->meta['label'][$locale] ?? ($about?->meta['label']['en'] ?? 'Since 2008'),
+                'stat_number' => $about?->meta['stat_number'][$locale] ?? ($about?->meta['stat_number']['en'] ?? '15+'),
+                'stat_text' => $about?->meta['stat_text'][$locale] ?? ($about?->meta['stat_text']['en'] ?? 'Years of Crafting Bespoke Experiences'),
+                'image' => $about?->meta['about_image'] ?? null,
             ],
             'experienceSection' => [
-                'title' => \App\Models\Setting::getTranslated('experience_tiers_title', 'How We Travel'),
-                'label' => \App\Models\Setting::getTranslated('experience_tiers_label', 'Tailored For You'),
-                'points' => \App\Models\Setting::getTranslated('experience_tiers_points') ?: [
-                    ['icon' => 'diamond', 'title' => 'Elite Concierge', 'description' => '24/7 dedicated support for every whim, from private jet charters to exclusive dinner reservations.'],
-                    ['icon' => 'map', 'title' => 'Bespoke Itineraries', 'description' => 'Every journey is custom-built from the ground up, ensuring no two travelers ever have the same experience.'],
-                    ['icon' => 'verified_user', 'title' => 'Insider Access', 'description' => 'Gain entry to private estates, closed museum collections, and hidden gems closed to the general public.'],
-                ],
+                'title' => $tiers?->getTranslation('heading') ?? '',
+                'label' => $tiers?->meta['label'][$locale] ?? ($tiers?->meta['label']['en'] ?? 'Tailored For You'),
+                'points' => $experiencePoints,
             ],
             'ctaSection' => [
-                'title' => \App\Models\Setting::getTranslated('cta_title', 'Stay Inspired.'),
-                'subtitle' => \App\Models\Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates, private travel insights, and early access to curated seasonal journeys.'),
-                'bg_image' => \App\Models\Setting::getTranslated('cta_bg_image'),
+                'title' => $cta?->getTranslation('heading') ?? '',
+                'subtitle' => $cta?->getTranslation('body') ?? '',
+                'bg_image' => $cta?->meta['bg_image'] ?? null,
             ],
             'destinationSection' => [
-                'title' => \App\Models\Setting::getTranslated('destination_title', 'Destinations Spotlight'),
-                'label' => \App\Models\Setting::getTranslated('destination_label', 'Curated Selection'),
+                'title' => $destinations?->getTranslation('heading') ?? '',
+                'label' => $destinations?->meta['label'][$locale] ?? ($destinations?->meta['label']['en'] ?? 'Curated Selection'),
             ],
             'featuredDestinations' => Destination::where('is_visible', true)
                 ->where('is_featured', true)
+                ->with(['translations.language'])
                 ->latest()
                 ->take(6)
                 ->get(),
@@ -142,8 +165,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                     <div class="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6 sm:mb-8 group-hover:bg-primary group-hover:text-white transition-colors">
                         <i class="material-icons text-2xl sm:text-3xl">{{ $tier['icon'] ?? 'star' }}</i>
                     </div>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-secondary mb-3 sm:mb-4">{{ $tier['title'] }}</h3>
-                    <p class="text-secondary/60 leading-relaxed font-light text-sm sm:text-base">{{ $tier['description'] }}</p>
+                    <h3 class="text-lg sm:text-xl font-extrabold text-secondary mb-3 sm:mb-4">{{ $tier['title'] ?? '' }}</h3>
+                    <p class="text-secondary/60 leading-relaxed font-light text-sm sm:text-base">{{ $tier['description'] ?? '' }}</p>
                 </div>
             @endforeach
         </div>
@@ -178,12 +201,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                             <div class="absolute inset-x-0 bottom-0 p-6 sm:p-8 flex flex-col justify-end h-full pointer-events-none">
                                 <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                                     <div class="flex items-center gap-2 text-primary uppercase tracking-[0.2em] text-[10px] font-bold mb-3 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
-                                        <i class="material-icons text-xs">location_on</i> {{ $destination->location }}
+                                        <i class="material-icons text-xs">location_on</i> {{ $destination->getTranslation('location') }}
                                     </div>
-                                    <h3 class="text-2xl sm:text-3xl font-extrabold text-white mb-3 leading-tight">{{ $destination->title }}</h3>
+                                    <h3 class="text-2xl sm:text-3xl font-extrabold text-white mb-3 leading-tight">{{ $destination->getTranslation('title') }}</h3>
                                     <div class="flex items-center gap-4 text-white/70 text-sm font-medium">
-                                        @if($destination->duration)
-                                            <span class="flex items-center gap-1"><i class="material-icons text-xs">schedule</i> {{ $destination->duration }}</span>
+                                        @if($destination->getTranslation('duration'))
+                                            <span class="flex items-center gap-1"><i class="material-icons text-xs">schedule</i> {{ $destination->getTranslation('duration') }}</span>
                                         @endif
                                         <span class="px-3 py-1 bg-white/10 backdrop-blur rounded-full text-white text-xs font-bold border border-white/10">{{ $destination->price_range }}</span>
                                     </div>
@@ -221,8 +244,5 @@ new #[Layout('components.layouts.public')] class extends Component {
                 </a>
             </div>
         </div>
-        
     </section>
-    
 </div>
-

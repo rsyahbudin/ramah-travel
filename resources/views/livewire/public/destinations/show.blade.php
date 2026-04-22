@@ -34,9 +34,16 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function mount(Destination $destination): void
     {
-        $this->destination = $destination;
-        $this->bookingForm['destination'] = $destination->title;
-        $this->bookingForm['person'] = $destination->person ?? 1;
+        $this->destination = $destination->load([
+            'translations.language',
+            'itineraryItems.translations.language',
+            'includeItems.translations.language',
+            'excludeItems.translations.language',
+            'faqs.translations.language',
+            'tripInfos.translations.language',
+        ]);
+        $this->bookingForm['destination'] = $destination->getTranslation('title');
+        $this->bookingForm['person'] = 1;
         $this->bookingForm['travel_date'] = now()->addDay()->format('Y-m-d');
 
         $settings = Setting::whereIn('key', [
@@ -54,11 +61,24 @@ new #[Layout('components.layouts.public')] class extends Component {
         if ($whatsappNumber) $this->whatsappUrl = "https://wa.me/{$whatsappNumber}";
         if ($adminEmail) $this->emailUrl = "mailto:{$adminEmail}";
 
-        $this->benefits = Setting::getTranslated('experience_tiers_points') ?: [
-            ['icon' => 'diamond', 'title' => 'Elite Concierge'],
-            ['icon' => 'map', 'title' => 'Bespoke Itineraries'],
-            ['icon' => 'verified_user', 'title' => 'Insider Access'],
-        ];
+        $homePage = Page::with(['sections.features.translations.language'])->where('slug', 'home')->first();
+        $tiers = $homePage?->sections->where('key', 'home_experience_tiers')->first();
+        
+        $this->benefits = [];
+        if ($tiers && $tiers->features->isNotEmpty()) {
+            foreach ($tiers->features as $feature) {
+                $this->benefits[] = [
+                    'icon' => $feature->icon,
+                    'title' => $feature->getTranslation('title'),
+                ];
+            }
+        } else {
+            $this->benefits = [
+                ['icon' => 'diamond', 'title' => 'Elite Concierge'],
+                ['icon' => 'map', 'title' => 'Bespoke Itineraries'],
+                ['icon' => 'verified_user', 'title' => 'Insider Access'],
+            ];
+        }
     }
 
     public function initiateBooking(string $type): void
@@ -87,12 +107,12 @@ new #[Layout('components.layouts.public')] class extends Component {
         $emailTemplate = Setting::getTranslated('email_template', "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nMessage: {message}\n\nURL: {url}");
 
         $placeholders = [
-            '{title}' => $this->destination->title,
-            '{destination}' => $this->destination->title,
+            '{title}' => $this->destination->getTranslation('title'),
+            '{destination}' => $this->destination->getTranslation('title'),
             '{url}' => route('destinations.show', $this->destination),
             '{price}' => $this->destination->price_range,
-            '{location}' => $this->destination->location,
-            '{duration}' => $this->destination->duration ?? '',
+            '{location}' => $this->destination->getTranslation('location'),
+            '{duration}' => $this->destination->getTranslation('duration') ?? '',
             '{name}' => $this->bookingForm['name'],
             '{email}' => $this->bookingForm['email'],
             '{phone}' => $this->bookingForm['phone'],
@@ -147,18 +167,6 @@ new #[Layout('components.layouts.public')] class extends Component {
             $this->redirect($url, navigate: false);
         }
     }
-
-    // public function with(): array
-    // {
-    //     return [
-    //         'ctaSection' => [
-    //             'title' => Setting::getTranslated('cta_title', 'Stay Inspired.'),
-    //             'subtitle' => Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates and private travel insights.'),
-    //             'bg_image' => Setting::getTranslated('cta_bg_image'),
-    //         ],
-    //         'whatsapp_number' => Setting::where('key', 'whatsapp_number')->value('value'),
-    //     ];
-    // }
 };
 ?>
 
@@ -166,7 +174,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     {{-- Hero Section --}}
     <div class="relative h-[60vh] min-h-[400px] overflow-hidden">
         @if($destination->image_path)
-            <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="absolute inset-0 w-full h-full object-cover">
+            <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->getTranslation('title') }}" class="absolute inset-0 w-full h-full object-cover">
         @else
             <div class="absolute inset-0 bg-secondary"></div>
         @endif
@@ -176,10 +184,10 @@ new #[Layout('components.layouts.public')] class extends Component {
         <div class="container mx-auto px-4 md:px-6 relative z-10 h-full flex flex-col justify-end pb-12 sm:pb-20">
             <div class="flex items-center gap-2 text-primary font-bold uppercase tracking-[0.2em] text-xs sm:text-sm mb-4">
                 <i class="material-icons text-base">location_on</i>
-                {{ $destination->location }}
+                {{ $destination->getTranslation('location') }}
             </div>
             <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight leading-tight">
-                {{ $destination->title }}
+                {{ $destination->getTranslation('title') }}
             </h1>
             <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-white">
                 <div class="text-2xl sm:text-3xl font-extrabold text-primary">
@@ -189,22 +197,16 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
                 
                 <div class="flex flex-wrap gap-3">
-                    @if($destination->person)
-                        <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/10">
-                            <i class="material-icons text-sm">group</i>
-                            <span class="font-bold text-sm">{{ $destination->person }} {{ __('Pax') }}</span>
-                        </div>
-                    @endif
-                    @if($destination->duration)
+                    @if($destination->getTranslation('duration'))
                         <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/10">
                             <i class="material-icons text-sm">schedule</i>
-                            <span class="font-bold text-sm">{{ $destination->duration }}</span>
+                            <span class="font-bold text-sm">{{ $destination->getTranslation('duration') }}</span>
                         </div>
                     @endif
-                    @if($destination->theme)
+                    @if($destination->getTranslation('theme'))
                         <div class="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full border border-white/10">
                             <i class="material-icons text-sm">style</i>
-                            <span class="font-bold text-sm">{{ $destination->theme }}</span>
+                            <span class="font-bold text-sm">{{ $destination->getTranslation('theme') }}</span>
                         </div>
                     @endif
                 </div>
@@ -217,14 +219,13 @@ new #[Layout('components.layouts.public')] class extends Component {
             {{-- Main Content --}}
             <div class="lg:col-span-2 space-y-12 md:space-y-16">
                 
-                <!-- Trip Info (Visual Guide) - MOVED TO TOP -->
-                @php $tripInfo = is_array($destination->trip_info) ? $destination->trip_info : []; @endphp
-                @if(!empty($tripInfo))
+                <!-- Trip Info (Visual Guide) -->
+                @if($destination->tripInfos->count() > 0)
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        @foreach($tripInfo as $info)
+                        @foreach($destination->tripInfos as $info)
                             <div class="p-4 rounded-xl bg-secondary/5 text-center hover:bg-secondary/10 transition-colors">
-                                 <p class="text-[10px] sm:text-xs uppercase tracking-widest text-secondary/60 mb-1.5">{{ $info['key'] ?? '' }}</p>
-                                 <p class="font-bold text-secondary text-base sm:text-lg leading-tight">{{ $info['value'] ?? '' }}</p>
+                                 <p class="text-[10px] sm:text-xs uppercase tracking-widest text-secondary/60 mb-1.5">{{ $info->getTranslation('key') }}</p>
+                                 <p class="font-bold text-secondary text-base sm:text-lg leading-tight">{{ $info->getTranslation('value') }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -238,13 +239,17 @@ new #[Layout('components.layouts.public')] class extends Component {
                     </div>
                     <h2 class="text-3xl sm:text-4xl font-extrabold text-secondary mb-6 leading-tight">{{ __('About this Journey') }}</h2>
                     <div class="prose prose-lg max-w-none text-secondary/70 font-light leading-relaxed">
-                        {!! nl2br(e($destination->description)) !!}
+                        {!! nl2br(e($destination->getTranslation('description'))) !!}
                     </div>
                 </div>
 
-                <!-- Highlights - SIMPLIFIED -->
+                <!-- Highlights -->
                 @php
-                    $highlights = is_array($destination->highlights) ? $destination->highlights : (is_string($destination->highlights) && !empty(trim($destination->highlights)) ? [$destination->highlights] : []);
+                    $rawHighlights = $destination->getTranslation('highlights');
+                    $highlights = [];
+                    if ($rawHighlights) {
+                        $highlights = array_filter(array_map('trim', explode("\n", str_replace('•', '', $rawHighlights))));
+                    }
                 @endphp
                 @if(!empty($highlights))
                     <div>
@@ -260,27 +265,23 @@ new #[Layout('components.layouts.public')] class extends Component {
                     </div>
                 @endif
 
-                <!-- Itinerary - CLEAN TIMELINE LAYOUT -->
-                @php $itinerary = is_array($destination->itinerary) ? $destination->itinerary : []; @endphp
-                @if(!empty($itinerary))
+                <!-- Itinerary -->
+                @if($destination->itineraryItems->count() > 0)
                     <div>
                          <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-8">{{ __('Itinerary') }}</h2>
                          <div class="relative border-l border-secondary/20 ml-3 md:ml-4 my-8 md:my-10 space-y-0">
-                            @foreach($itinerary as $index => $day)
+                            @foreach($destination->itineraryItems as $index => $day)
                                 <div class="relative pl-8 md:pl-10 py-6 group first:pt-0 last:pb-0">
-                                    <!-- Dot -->
                                     <span class="absolute -left-[5px] top-8 first:top-2 w-2.5 h-2.5 rounded-full bg-secondary group-hover:bg-primary group-hover:scale-150 transition-all duration-300 ring-4 ring-bg-light"></span>
                                     
-                                    <!-- Day Badge -->
                                     <div class="mb-3">
                                         <span class="inline-block px-3 py-1 text-xs font-bold uppercase tracking-widest text-secondary/60 bg-secondary/5 rounded-md group-hover:text-primary group-hover:bg-primary/5 transition-colors">
-                                            {{ $day['day'] ?? __('Day') . " " . ($index + 1) }}
+                                            {{ $day->getTranslation('title') ?? __('Day') . " " . $day->day_number }}
                                         </span>
                                     </div>
                                     
-                                    <!-- Activity Content -->
                                     <div class="prose prose-zinc max-w-none text-secondary/70 leading-relaxed group-hover:text-secondary/90 transition-colors">
-                                        {{ $day['activity'] ?? '' }}
+                                        {{ $day->getTranslation('description') }}
                                     </div>
                                 </div>
                             @endforeach
@@ -289,37 +290,33 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @endif
 
                 <!-- Includes / Excludes -->
-                @php
-                    $includes = is_array($destination->includes) ? $destination->includes : (is_string($destination->includes) && !empty(trim($destination->includes)) ? [$destination->includes] : []);
-                    $excludes = is_array($destination->excludes) ? $destination->excludes : (is_string($destination->excludes) && !empty(trim($destination->excludes)) ? [$destination->excludes] : []);
-                @endphp
-                @if(!empty($includes) || !empty($excludes))
+                @if($destination->includeItems->count() > 0 || $destination->excludeItems->count() > 0)
                     <div class="grid sm:grid-cols-2 gap-8">
-                        @if(!empty($includes))
+                        @if($destination->includeItems->count() > 0)
                             <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
                                 <h3 class="text-lg font-bold text-travel-green mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
                                     <i class="material-icons text-lg">check_circle</i> {{ __("What's Included") }}
                                 </h3>
                                 <ul class="space-y-4">
-                                    @foreach($includes as $item)
+                                    @foreach($destination->includeItems as $item)
                                         <li class="flex items-start gap-3 text-secondary/70 text-sm">
                                             <i class="material-icons text-travel-green text-sm mt-0.5">check</i>
-                                            <span>{{ $item }}</span>
+                                            <span>{{ $item->getTranslation('name') }}</span>
                                         </li>
                                     @endforeach
                                 </ul>
                             </div>
                         @endif
-                        @if(!empty($excludes))
+                        @if($destination->excludeItems->count() > 0)
                             <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
                                 <h3 class="text-lg font-bold text-red-500 mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
                                     <i class="material-icons text-lg">cancel</i> {{ __("What's Excluded") }}
                                 </h3>
                                 <ul class="space-y-4">
-                                    @foreach($excludes as $item)
+                                    @foreach($destination->excludeItems as $item)
                                         <li class="flex items-start gap-3 text-secondary/70 text-sm">
                                             <i class="material-icons text-red-500 text-sm mt-0.5">close</i>
-                                            <span>{{ $item }}</span>
+                                            <span>{{ $item->getTranslation('name') }}</span>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -329,22 +326,21 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @endif
 
                 <!-- FAQ -->
-                @php $faq = is_array($destination->faq) ? $destination->faq : []; @endphp
-                @if(!empty($faq))
+                @if($destination->faqs->count() > 0)
                     <div>
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Common Questions') }}</h2>
                         <div class="space-y-4" x-data="{ openFaq: null }">
-                            @foreach($faq as $index => $item)
+                            @foreach($destination->faqs as $index => $item)
                                 <div class="bg-white rounded-xl border border-secondary/5 overflow-hidden transition-all duration-300" :class="{ 'shadow-lg border-primary/20': openFaq === {{ $index }} }">
                                     <button type="button" @click="openFaq = openFaq === {{ $index }} ? null : {{ $index }}" class="w-full flex items-center justify-between p-5 text-left group">
-                                        <span class="font-bold text-secondary group-hover:text-primary transition-colors pr-4">{{ $item['question'] ?? '' }}</span>
+                                        <span class="font-bold text-secondary group-hover:text-primary transition-colors pr-4">{{ $item->getTranslation('question') }}</span>
                                         <div class="w-8 h-8 rounded-full bg-secondary/5 flex items-center justify-center text-secondary/50 group-hover:bg-primary group-hover:text-white transition-all shrink-0">
                                             <i class="material-icons transition-transform duration-300" :class="{ 'rotate-180': openFaq === {{ $index }} }">keyboard_arrow_down</i>
                                         </div>
                                     </button>
                                     <div x-show="openFaq === {{ $index }}" x-collapse>
                                         <div class="px-5 pb-5 text-secondary/70 leading-relaxed border-t border-secondary/5 pt-4">
-                                            {{ $item['answer'] ?? '' }}
+                                            {!! nl2br(e($item->getTranslation('answer'))) !!}
                                         </div>
                                     </div>
                                 </div>
@@ -427,7 +423,6 @@ new #[Layout('components.layouts.public')] class extends Component {
                                      class="max-w-full max-h-full object-contain rounded-lg shadow-2xl select-none animate-in fade-in zoom-in duration-300 pointer-events-auto" 
                                      alt="Full size gallery image">
                                 
-                                <!-- Image Counter -->
                                 <div class="absolute bottom-0 left-1/2 -translate-x-1/2 mb-4 bg-black/50 text-white px-4 py-1 rounded-full text-xs font-bold tracking-widest uppercase">
                                     <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
                                 </div>
@@ -470,14 +465,12 @@ new #[Layout('components.layouts.public')] class extends Component {
                                 @foreach($benefits as $benefit)
                                    <li class="flex gap-3">
                                        <i class="material-icons text-primary text-sm">{{ $benefit['icon'] ?? 'check_circle' }}</i> 
-                                       {{ __($benefit['title'] ?? '') }}
+                                       {{ __($benefit['title'] ?? $benefit['title_key'] ?? '') }}
                                    </li>
                                 @endforeach
                             </ul>
                         </div>
                     </div>
-
-                    
                 </div>
             </div>
         </div>

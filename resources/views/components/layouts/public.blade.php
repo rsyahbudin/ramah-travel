@@ -1,11 +1,12 @@
 @php
-    $siteSettings = \App\Models\Setting::all()->pluck('value', 'key')->toArray();
-    $siteName = \App\Models\Setting::getTranslated('site_name', 'TravelApp');
-    $logoImage = $siteSettings['logo_image'] ?? null;
-    $logoWhite = $siteSettings['logo_white'] ?? null;
-    $whatsappNumber = $siteSettings['whatsapp_number'] ?? null;
-    $whatsappGeneralTemplate = \App\Models\Setting::getTranslated('whatsapp_general_template', '');
-    $footerText = \App\Models\Setting::getTranslated('footer_text', 'Crafting extraordinary journeys for the world\'s most discerning travelers.');
+    use App\Models\Setting;
+    
+    $siteName = Setting::get('site_name', 'TravelApp');
+    $logoImage = Setting::get('logo_image');
+    $logoWhite = Setting::get('logo_white');
+    $whatsappNumber = Setting::get('whatsapp_number');
+    $whatsappGeneralTemplate = Setting::get('whatsapp_general_template', '');
+    $footerText = Setting::get('footer_text', 'Crafting extraordinary journeys for the world\'s most discerning travelers.');
     $isHome = request()->routeIs('home');
 @endphp
 <!DOCTYPE html>

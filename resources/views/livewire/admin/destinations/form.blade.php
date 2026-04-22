@@ -25,6 +25,7 @@ new class extends Component {
     public $image;
     public $existingImage;
 
+    // Relational attributes managed as parallel arrays per locale
     public array $highlights = ['en' => [], 'id' => [], 'es' => []];
     public array $itinerary = ['en' => [], 'id' => [], 'es' => []];
     public ?string $person = '';
@@ -32,48 +33,106 @@ new class extends Component {
     public array $excludes = ['en' => [], 'id' => [], 'es' => []];
     public array $faq = ['en' => [], 'id' => [], 'es' => []];
     public array $trip_info = ['en' => [], 'id' => [], 'es' => []];
+    
     public $gallery = [];
     public $existingGallery = [];
     public string $activeTab = 'en';
 
     public function mount(?Destination $destination = null): void
     {
+        $locales = ['en', 'id', 'es'];
+
         if ($destination && $destination->exists) {
             $this->destination = $destination;
-            $this->title = $destination->getTranslations('title') ?: ['en' => $destination->getRawOriginal('title')];
+            
+            // Standard translatable fields
+            $this->title = $destination->getTranslations('title');
+            $this->location = $destination->getTranslations('location');
+            $this->duration = $destination->getTranslations('duration');
+            $this->theme = $destination->getTranslations('theme');
+            $this->description = $destination->getTranslations('description');
+            
+            // Highlights (stored as text with newlines in DB, split to array for UI)
+            $dbHighlights = $destination->getTranslations('highlights');
+            foreach ($locales as $locale) {
+                $this->highlights[$locale] = array_filter(
+                    array_map('trim', explode("\n", str_replace('•', '', $dbHighlights[$locale] ?? '')))
+                );
+            }
+
             $this->slug = $destination->slug;
-            $this->location = $destination->getTranslations('location') ?: ['en' => $destination->getRawOriginal('location')];
-            $this->duration = $destination->getTranslations('duration') ?: ['en' => $destination->getRawOriginal('duration') ?? ''];
-            $this->theme = $destination->getTranslations('theme') ?: ['en' => $destination->getRawOriginal('theme') ?? ''];
             $this->price = (string) $destination->price;
             $this->price_max = $destination->price_max ? (string) $destination->price_max : '';
-            $this->description = $destination->getTranslations('description') ?: ['en' => $destination->getRawOriginal('description')];
             $this->is_featured = $destination->is_featured;
             $this->is_visible = $destination->is_visible;
+            // $this->person = $destination->person ? (string) $destination->person : ''; // person was dropped or not exist
             $this->existingImage = $destination->image_path;
-
-            $this->highlights = $destination->getTranslations('highlights') ?: ['en' => $destination->highlights ?? [], 'id' => [], 'es' => []];
-            $this->itinerary = $destination->getTranslations('itinerary') ?: ['en' => $destination->itinerary ?? [], 'id' => [], 'es' => []];
-            $this->person = $destination->person ? (string) $destination->person : '';
-            $this->includes = $destination->getTranslations('includes') ?: ['en' => $destination->includes ?? [], 'id' => [], 'es' => []];
-            $this->excludes = $destination->getTranslations('excludes') ?: ['en' => $destination->excludes ?? [], 'id' => [], 'es' => []];
-            $this->faq = $destination->getTranslations('faq') ?: ['en' => $destination->faq ?? [], 'id' => [], 'es' => []];
-            $this->trip_info = $destination->getTranslations('trip_info') ?: ['en' => $destination->trip_info ?? [], 'id' => [], 'es' => []];
             $this->existingGallery = $destination->images()->get();
 
-            // Ensure all locales are present
-            foreach (['en', 'id', 'es'] as $locale) {
+            // Setup blank parallel arrays for relational data
+            foreach ($locales as $locale) {
+                $this->itinerary[$locale] = [];
+                $this->includes[$locale] = [];
+                $this->excludes[$locale] = [];
+                $this->faq[$locale] = [];
+                $this->trip_info[$locale] = [];
+            }
+
+            // Sync relational items into parallel arrays
+            foreach ($destination->itineraryItems as $item) {
+                $titles = $item->getTranslations('title');
+                $descriptions = $item->getTranslations('description');
+                foreach ($locales as $locale) {
+                    $this->itinerary[$locale][] = [
+                        'day' => $titles[$locale] ?? '',
+                        'activity' => $descriptions[$locale] ?? '',
+                    ];
+                }
+            }
+
+            foreach ($destination->includeItems as $item) {
+                $labels = $item->getTranslations('label');
+                foreach ($locales as $locale) {
+                    $this->includes[$locale][] = $labels[$locale] ?? '';
+                }
+            }
+
+            foreach ($destination->excludeItems as $item) {
+                $labels = $item->getTranslations('label');
+                foreach ($locales as $locale) {
+                    $this->excludes[$locale][] = $labels[$locale] ?? '';
+                }
+            }
+
+            foreach ($destination->faqs as $item) {
+                $questions = $item->getTranslations('question');
+                $answers = $item->getTranslations('answer');
+                foreach ($locales as $locale) {
+                    $this->faq[$locale][] = [
+                        'question' => $questions[$locale] ?? '',
+                        'answer' => $answers[$locale] ?? '',
+                    ];
+                }
+            }
+
+            foreach ($destination->tripInfos as $item) {
+                $labels = $item->getTranslations('label');
+                $values = $item->getTranslations('value');
+                foreach ($locales as $locale) {
+                    $this->trip_info[$locale][] = [
+                        'key' => $labels[$locale] ?? '',
+                        'value' => $values[$locale] ?? '',
+                    ];
+                }
+            }
+
+            // Fill empty strings for missing locales on basic fields
+            foreach ($locales as $locale) {
                 if (!isset($this->title[$locale])) $this->title[$locale] = '';
                 if (!isset($this->location[$locale])) $this->location[$locale] = '';
                 if (!isset($this->duration[$locale])) $this->duration[$locale] = '';
                 if (!isset($this->theme[$locale])) $this->theme[$locale] = '';
                 if (!isset($this->description[$locale])) $this->description[$locale] = '';
-                if (!isset($this->highlights[$locale])) $this->highlights[$locale] = [];
-                if (!isset($this->itinerary[$locale])) $this->itinerary[$locale] = [];
-                if (!isset($this->includes[$locale])) $this->includes[$locale] = [];
-                if (!isset($this->excludes[$locale])) $this->excludes[$locale] = [];
-                if (!isset($this->faq[$locale])) $this->faq[$locale] = [];
-                if (!isset($this->trip_info[$locale])) $this->trip_info[$locale] = [];
             }
         }
     }
@@ -85,70 +144,83 @@ new class extends Component {
         }
     }
 
-    public function addHighlight($locale): void
+    // Dynamic List Methods (Synchronized across locales)
+    public function addHighlight(): void
     {
-        $this->highlights[$locale][] = '';
+        foreach (['en', 'id', 'es'] as $locale) $this->highlights[$locale][] = '';
     }
 
-    public function removeHighlight($locale, $index): void
+    public function removeHighlight($index): void
     {
-        unset($this->highlights[$locale][$index]);
-        $this->highlights[$locale] = array_values($this->highlights[$locale]);
+        foreach (['en', 'id', 'es'] as $locale) {
+            unset($this->highlights[$locale][$index]);
+            $this->highlights[$locale] = array_values($this->highlights[$locale]);
+        }
     }
 
-    public function addItineraryDay($locale): void
+    public function addItineraryDay(): void
     {
-        $this->itinerary[$locale][] = ['day' => '', 'activity' => ''];
+        foreach (['en', 'id', 'es'] as $locale) $this->itinerary[$locale][] = ['day' => '', 'activity' => ''];
     }
 
-    public function removeItineraryDay($locale, $index): void
+    public function removeItineraryDay($index): void
     {
-        unset($this->itinerary[$locale][$index]);
-        $this->itinerary[$locale] = array_values($this->itinerary[$locale]);
+        foreach (['en', 'id', 'es'] as $locale) {
+            unset($this->itinerary[$locale][$index]);
+            $this->itinerary[$locale] = array_values($this->itinerary[$locale]);
+        }
     }
 
-    public function addInclude($locale): void
+    public function addInclude(): void
     {
-        $this->includes[$locale][] = '';
+        foreach (['en', 'id', 'es'] as $locale) $this->includes[$locale][] = '';
     }
 
-    public function removeInclude($locale, $index): void
+    public function removeInclude($index): void
     {
-        unset($this->includes[$locale][$index]);
-        $this->includes[$locale] = array_values($this->includes[$locale]);
+        foreach (['en', 'id', 'es'] as $locale) {
+            unset($this->includes[$locale][$index]);
+            $this->includes[$locale] = array_values($this->includes[$locale]);
+        }
     }
 
-    public function addExclude($locale): void
+    public function addExclude(): void
     {
-        $this->excludes[$locale][] = '';
+        foreach (['en', 'id', 'es'] as $locale) $this->excludes[$locale][] = '';
     }
 
-    public function removeExclude($locale, $index): void
+    public function removeExclude($index): void
     {
-        unset($this->excludes[$locale][$index]);
-        $this->excludes[$locale] = array_values($this->excludes[$locale]);
+        foreach (['en', 'id', 'es'] as $locale) {
+            unset($this->excludes[$locale][$index]);
+            $this->excludes[$locale] = array_values($this->excludes[$locale]);
+        }
     }
 
-    public function addFaq($locale): void
+    public function addFaq(): void
     {
-        $this->faq[$locale][] = ['question' => '', 'answer' => ''];
+        foreach (['en', 'id', 'es'] as $locale) $this->faq[$locale][] = ['question' => '', 'answer' => ''];
     }
 
-    public function removeFaq($locale, $index): void
+    public function removeFaq($index): void
     {
-        unset($this->faq[$locale][$index]);
-        $this->faq[$locale] = array_values($this->faq[$locale]);
+        foreach (['en', 'id', 'es'] as $locale) {
+            unset($this->faq[$locale][$index]);
+            $this->faq[$locale] = array_values($this->faq[$locale]);
+        }
     }
 
-    public function addTripInfo($locale): void
+    public function addTripInfo(): void
     {
-        $this->trip_info[$locale][] = ['key' => '', 'value' => ''];
+        foreach (['en', 'id', 'es'] as $locale) $this->trip_info[$locale][] = ['key' => '', 'value' => ''];
     }
 
-    public function removeTripInfo($locale, $index): void
+    public function removeTripInfo($index): void
     {
-        unset($this->trip_info[$locale][$index]);
-        $this->trip_info[$locale] = array_values($this->trip_info[$locale]);
+        foreach (['en', 'id', 'es'] as $locale) {
+            unset($this->trip_info[$locale][$index]);
+            $this->trip_info[$locale] = array_values($this->trip_info[$locale]);
+        }
     }
 
     public function deleteGalleryImage($id): void
@@ -185,28 +257,29 @@ new class extends Component {
             'is_featured' => 'boolean',
             'is_visible' => 'boolean',
             'image' => 'nullable|image|max:2048',
-            'person' => 'nullable|integer|min:1',
             'gallery.*' => 'image|max:2048',
         ]);
 
+        $locales = ['en', 'id', 'es'];
+
+        // Re-construct highlights text from arrays
+        $highlightsTranslations = [];
+        foreach ($locales as $locale) {
+            if (!empty($this->highlights[$locale])) {
+                $filtered = array_filter($this->highlights[$locale], fn($v) => !empty(trim($v)));
+                if (!empty($filtered)) {
+                    $highlightsTranslations[$locale] = implode("\n", array_map(fn($v) => '• ' . $v, $filtered));
+                }
+            }
+        }
+
+        // Base Data
         $data = [
-            'title' => $this->title,
             'slug' => $this->slug,
-            'location' => $this->location,
-            'duration' => $this->duration,
-            'theme' => $this->theme,
             'price' => $this->price,
             'price_max' => $this->price_max,
-            'description' => $this->description,
             'is_featured' => $this->is_featured,
             'is_visible' => $this->is_visible,
-            'person' => $this->person !== '' ? (int) $this->person : null,
-            'highlights' => $this->highlights,
-            'itinerary' => $this->itinerary,
-            'includes' => $this->includes,
-            'excludes' => $this->excludes,
-            'faq' => $this->faq,
-            'trip_info' => $this->trip_info,
         ];
 
         // Handle Main Image
@@ -219,12 +292,118 @@ new class extends Component {
             $this->image = null;
         }
 
-        // Create or Update Destination
+        // Create or Update Main Destination Record
         if ($this->destination?->exists) {
             $this->destination->update($data);
         } else {
             $this->destination = Destination::create($data);
         }
+
+        // Sync Base Translations (title, location, duration, theme, description, highlights)
+        $translationsToSync = [];
+        foreach ($locales as $locale) {
+            if (!empty($this->title[$locale])) { // Require at least a title
+                $translationsToSync[$locale] = [
+                    'title'       => $this->title[$locale],
+                    'location'    => $this->location[$locale] ?? '',
+                    'duration'    => $this->duration[$locale] ?? null,
+                    'theme'       => $this->theme[$locale] ?? null,
+                    'description' => $this->description[$locale] ?? '',
+                    'highlights'  => $highlightsTranslations[$locale] ?? null,
+                ];
+            }
+        }
+        $this->destination->syncTranslations($translationsToSync);
+
+        // Sync Relational Data: Itinerary
+        $this->destination->itineraryItems()->delete();
+        $count = count($this->itinerary['en'] ?? []);
+        for ($i = 0; $i < $count; $i++) {
+            $itineraryData = [];
+            foreach ($locales as $locale) {
+                if (!empty($this->itinerary[$locale][$i]['day'])) {
+                    $itineraryData[$locale] = [
+                        'title' => $this->itinerary[$locale][$i]['day'],
+                        'description' => $this->itinerary[$locale][$i]['activity'] ?? null,
+                    ];
+                }
+            }
+            if (!empty($itineraryData)) {
+                $item = $this->destination->itineraryItems()->create(['day_number' => $i + 1, 'sort_order' => $i + 1]);
+                $item->syncTranslations($itineraryData);
+            }
+        }
+
+        // Sync Relational Data: Includes
+        $this->destination->includeItems()->delete();
+        $count = count($this->includes['en'] ?? []);
+        for ($i = 0; $i < $count; $i++) {
+            $includesData = [];
+            foreach ($locales as $locale) {
+                if (!empty($this->includes[$locale][$i])) {
+                    $includesData[$locale] = ['label' => $this->includes[$locale][$i]];
+                }
+            }
+            if (!empty($includesData)) {
+                $item = $this->destination->includeItems()->create(['type' => 'include', 'sort_order' => $i + 1]);
+                $item->syncTranslations($includesData);
+            }
+        }
+
+        // Sync Relational Data: Excludes
+        $this->destination->excludeItems()->delete();
+        $count = count($this->excludes['en'] ?? []);
+        for ($i = 0; $i < $count; $i++) {
+            $excludesData = [];
+            foreach ($locales as $locale) {
+                if (!empty($this->excludes[$locale][$i])) {
+                    $excludesData[$locale] = ['label' => $this->excludes[$locale][$i]];
+                }
+            }
+            if (!empty($excludesData)) {
+                $item = $this->destination->excludeItems()->create(['type' => 'exclude', 'sort_order' => $i + 1]);
+                $item->syncTranslations($excludesData);
+            }
+        }
+
+        // Sync Relational Data: FAQs
+        $this->destination->faqs()->delete();
+        $count = count($this->faq['en'] ?? []);
+        for ($i = 0; $i < $count; $i++) {
+            $faqData = [];
+            foreach ($locales as $locale) {
+                if (!empty($this->faq[$locale][$i]['question'])) {
+                    $faqData[$locale] = [
+                        'question' => $this->faq[$locale][$i]['question'],
+                        'answer' => $this->faq[$locale][$i]['answer'] ?? '',
+                    ];
+                }
+            }
+            if (!empty($faqData)) {
+                $item = $this->destination->faqs()->create(['sort_order' => $i + 1]);
+                $item->syncTranslations($faqData);
+            }
+        }
+
+        // Sync Relational Data: Trip Info
+        $this->destination->tripInfos()->delete();
+        $count = count($this->trip_info['en'] ?? []);
+        for ($i = 0; $i < $count; $i++) {
+            $infoData = [];
+            foreach ($locales as $locale) {
+                if (!empty($this->trip_info[$locale][$i]['key'])) {
+                    $infoData[$locale] = [
+                        'label' => $this->trip_info[$locale][$i]['key'],
+                        'value' => $this->trip_info[$locale][$i]['value'] ?? '',
+                    ];
+                }
+            }
+            if (!empty($infoData)) {
+                $item = $this->destination->tripInfos()->create(['sort_order' => $i + 1]);
+                $item->syncTranslations($infoData);
+            }
+        }
+
 
         // Handle Gallery
         if (!empty($this->gallery)) {
@@ -236,7 +415,7 @@ new class extends Component {
             }
         }
 
-                $this->dispatch('notify', message: __('Changes saved successfully.'));
+        $this->dispatch('notify', message: __('Changes saved successfully.'));
         $this->redirect(route('admin.destinations.index'), navigate: true);
     }
 };
@@ -274,10 +453,7 @@ new class extends Component {
                 <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:key="duration_activeTab-{{ $activeTab }}" wire:model="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:key="theme_activeTab-{{ $activeTab }}" wire:model="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
-                <flux:input label="{{ __('Person (Pax)') }}" wire:model="person" type="number" min="1" icon="user" />
-            </div>
+            <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:key="theme_activeTab-{{ $activeTab }}" wire:model="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
 
             <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:key="description_activeTab-{{ $activeTab }}" wire:model="description.{{ $activeTab }}" rows="5" />
         </flux:card>
@@ -307,12 +483,12 @@ new class extends Component {
         <div class="space-y-3">
              <div class="flex justify-between items-center">
                 <flux:label>{{ __('Highlights') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addHighlight('{{ $activeTab }}')">{{ __('Add Highlight') }}</flux:button>
+                <flux:button size="sm" icon="plus" wire:click="addHighlight">{{ __('Add Highlight') }}</flux:button>
              </div>
-             @foreach($highlights[$activeTab] as $index => $highlight)
+             @foreach($highlights['en'] as $index => $_)
                 <div class="flex gap-2">
-                    <flux:input wire:key="highlights_activeTab_index-{{ $activeTab }}" wire:model="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
-                    <flux:button icon="trash" wire:click="removeHighlight('{{ $activeTab }}', {{ $index }})" variant="danger" />
+                    <flux:input wire:key="highlights_activeTab_index-{{ $activeTab }}-{{ $index }}" wire:model="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
+                    <flux:button icon="trash" wire:click="removeHighlight({{ $index }})" variant="danger" />
                 </div>
              @endforeach
         </div>
@@ -321,17 +497,17 @@ new class extends Component {
         <div class="space-y-3">
             <div class="flex justify-between items-center">
                 <flux:label>{{ __('Itinerary') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addItineraryDay('{{ $activeTab }}')">{{ __('Add Day') }}</flux:button>
+                <flux:button size="sm" icon="plus" wire:click="addItineraryDay">{{ __('Add Day') }}</flux:button>
             </div>
-            @foreach($itinerary[$activeTab] as $index => $day)
+            @foreach($itinerary['en'] as $index => $_)
                 <div class="flex gap-2 items-start">
                     <div class="w-32 shrink-0">
-                        <flux:input wire:key="itinerary_activeTab_index_day-{{ $activeTab }}" wire:model="itinerary.{{ $activeTab }}.{{ $index }}.day" placeholder="e.g. Day 1" />
+                        <flux:input wire:key="itinerary_activeTab_index_day-{{ $activeTab }}-{{ $index }}" wire:model="itinerary.{{ $activeTab }}.{{ $index }}.day" placeholder="e.g. Day 1" />
                     </div>
                     <div class="flex-1">
-                        <flux:textarea wire:key="itinerary_activeTab_index_activity-{{ $activeTab }}" wire:model="itinerary.{{ $activeTab }}.{{ $index }}.activity" placeholder="e.g. Arrival & Hotel Check-in" rows="2" />
+                        <flux:textarea wire:key="itinerary_activeTab_index_activity-{{ $activeTab }}-{{ $index }}" wire:model="itinerary.{{ $activeTab }}.{{ $index }}.activity" placeholder="e.g. Arrival & Hotel Check-in" rows="2" />
                     </div>
-                    <flux:button icon="trash" wire:click="removeItineraryDay('{{ $activeTab }}', {{ $index }})" variant="danger" />
+                    <flux:button icon="trash" wire:click="removeItineraryDay({{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>
@@ -340,12 +516,12 @@ new class extends Component {
         <div class="space-y-3">
             <div class="flex justify-between items-center">
                 <flux:label>{{ __('Includes') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addInclude('{{ $activeTab }}')">{{ __('Add Include') }}</flux:button>
+                <flux:button size="sm" icon="plus" wire:click="addInclude">{{ __('Add Include') }}</flux:button>
             </div>
-            @foreach($includes[$activeTab] as $index => $item)
+            @foreach($includes['en'] as $index => $_)
                 <div class="flex gap-2">
-                    <flux:input wire:key="includes_activeTab_index-{{ $activeTab }}" wire:model="includes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Airport pickup & drop-off" />
-                    <flux:button icon="trash" wire:click="removeInclude('{{ $activeTab }}', {{ $index }})" variant="danger" />
+                    <flux:input wire:key="includes_activeTab_index-{{ $activeTab }}-{{ $index }}" wire:model="includes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Airport pickup & drop-off" />
+                    <flux:button icon="trash" wire:click="removeInclude({{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>
@@ -354,12 +530,12 @@ new class extends Component {
         <div class="space-y-3">
             <div class="flex justify-between items-center">
                 <flux:label>{{ __('Excludes') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addExclude('{{ $activeTab }}')">{{ __('Add Exclude') }}</flux:button>
+                <flux:button size="sm" icon="plus" wire:click="addExclude">{{ __('Add Exclude') }}</flux:button>
             </div>
-            @foreach($excludes[$activeTab] as $index => $item)
+            @foreach($excludes['en'] as $index => $_)
                 <div class="flex gap-2">
-                    <flux:input wire:key="excludes_activeTab_index-{{ $activeTab }}" wire:model="excludes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. International flights" />
-                    <flux:button icon="trash" wire:click="removeExclude('{{ $activeTab }}', {{ $index }})" variant="danger" />
+                    <flux:input wire:key="excludes_activeTab_index-{{ $activeTab }}-{{ $index }}" wire:model="excludes.{{ $activeTab }}.{{ $index }}" placeholder="e.g. International flights" />
+                    <flux:button icon="trash" wire:click="removeExclude({{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>
@@ -368,15 +544,15 @@ new class extends Component {
         <div class="space-y-3">
             <div class="flex justify-between items-center">
                 <flux:label>{{ __('FAQ') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addFaq('{{ $activeTab }}')">{{ __('Add FAQ') }}</flux:button>
+                <flux:button size="sm" icon="plus" wire:click="addFaq">{{ __('Add FAQ') }}</flux:button>
             </div>
-            @foreach($faq[$activeTab] as $index => $item)
+            @foreach($faq['en'] as $index => $_)
                 <div class="space-y-2 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg relative">
                     <div class="absolute top-2 right-2">
-                        <flux:button size="sm" icon="trash" wire:click="removeFaq('{{ $activeTab }}', {{ $index }})" variant="danger" />
+                        <flux:button size="sm" icon="trash" wire:click="removeFaq({{ $index }})" variant="danger" />
                     </div>
-                    <flux:input wire:key="faq_activeTab_index_question-{{ $activeTab }}" wire:model="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
-                    <flux:textarea wire:key="faq_activeTab_index_answer-{{ $activeTab }}" wire:model="faq.{{ $activeTab }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
+                    <flux:input wire:key="faq_activeTab_index_question-{{ $activeTab }}-{{ $index }}" wire:model="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
+                    <flux:textarea wire:key="faq_activeTab_index_answer-{{ $activeTab }}-{{ $index }}" wire:model="faq.{{ $activeTab }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
                 </div>
             @endforeach
         </div>
@@ -385,17 +561,17 @@ new class extends Component {
         <div class="space-y-3">
             <div class="flex justify-between items-center">
                 <flux:label>{{ __('Trip Info') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addTripInfo('{{ $activeTab }}')">{{ __('Add Info') }}</flux:button>
+                <flux:button size="sm" icon="plus" wire:click="addTripInfo">{{ __('Add Info') }}</flux:button>
             </div>
-            @foreach($trip_info[$activeTab] as $index => $item)
+            @foreach($trip_info['en'] as $index => $_)
                 <div class="flex gap-2">
                     <div class="w-48 shrink-0">
-                        <flux:input wire:key="trip_info_activeTab_index_key-{{ $activeTab }}" wire:model="trip_info.{{ $activeTab }}.{{ $index }}.key" placeholder="e.g. Wifi" />
+                        <flux:input wire:key="trip_info_activeTab_index_key-{{ $activeTab }}-{{ $index }}" wire:model="trip_info.{{ $activeTab }}.{{ $index }}.key" placeholder="e.g. Wifi" />
                     </div>
                     <div class="flex-1">
-                        <flux:input wire:key="trip_info_activeTab_index_value-{{ $activeTab }}" wire:model="trip_info.{{ $activeTab }}.{{ $index }}.value" placeholder="e.g. Yes" />
+                        <flux:input wire:key="trip_info_activeTab_index_value-{{ $activeTab }}-{{ $index }}" wire:model="trip_info.{{ $activeTab }}.{{ $index }}.value" placeholder="e.g. Yes" />
                     </div>
-                    <flux:button icon="trash" wire:click="removeTripInfo('{{ $activeTab }}', {{ $index }})" variant="danger" />
+                    <flux:button icon="trash" wire:click="removeTripInfo({{ $index }})" variant="danger" />
                 </div>
             @endforeach
         </div>

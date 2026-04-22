@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Page;
+use App\Models\Setting;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
@@ -10,15 +11,13 @@ new class extends Component {
 
     public Page $page;
     public array $title = ['en' => '', 'id' => '', 'es' => ''];
-    public array $content = ['en' => '', 'id' => '', 'es' => ''];
-    public array $about_hero_title = ['en' => '', 'id' => '', 'es' => ''];
-    public array $about_hero_subtitle = ['en' => '', 'id' => '', 'es' => ''];
-    public array $about_hero_label = ['en' => '', 'id' => '', 'es' => ''];
-    public array $destinations_hero_label = ['en' => '', 'id' => '', 'es' => ''];
     public $image;
     public ?string $existing_image = null;
     
-    // About Gallery (Used in the About Page Sidebar)
+    // Dynamic page sections
+    public array $sections = [];
+
+    // About Gallery (Used in the About Page Sidebar) - stored safely in settings
     public $about_gallery_1;
     public $about_gallery_2;
     public $about_gallery_3;
@@ -28,72 +27,47 @@ new class extends Component {
     public $existing_about_gallery_3;
     public $existing_about_gallery_4;
 
-    public array $about_who_we_are_label = ['en' => '', 'id' => '', 'es' => ''];
-
     public string $activeTab = 'en';
 
     public function mount(Page $page): void
     {
         $this->page = $page;
-        $this->title = $page->getTranslations('title') ?: ['en' => $page->getRawOriginal('title')];
-        $this->content = $page->getTranslations('content') ?: ['en' => $page->getRawOriginal('content') ?? ''];
+        $this->title = $page->getTranslations('title');
         $this->existing_image = $page->image_path;
 
         foreach (['en', 'id', 'es'] as $locale) {
             if (!isset($this->title[$locale])) $this->title[$locale] = '';
-            if (!isset($this->content[$locale])) $this->content[$locale] = '';
         }
 
+        // Load Sections
+        foreach ($page->sections as $section) {
+            $data = [
+                'id' => $section->id,
+                'key' => $section->key,
+                'type' => $section->type,
+                'is_visible' => $section->is_visible,
+                'translations' => [],
+            ];
+            
+            $headings = $section->getTranslations('heading');
+            $bodies = $section->getTranslations('body');
+            
+            foreach (['en', 'id', 'es'] as $locale) {
+                 $data['translations'][$locale] = [
+                      'heading' => $headings[$locale] ?? '',
+                      'body'    => $bodies[$locale] ?? '',
+                 ];
+            }
+            $this->sections[] = $data;
+        }
+
+        // Load Gallery array from settings for About page
         if ($page->slug === 'about') {
-            $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
-            $this->about_hero_title = $this->decodeSetting($settings, 'about_hero_title', $page->getTranslations('title') ?: [
-                'en' => 'The Journey Behind Our Legacy.', 'id' => '', 'es' => ''
-            ]);
-            $this->about_hero_subtitle = $this->decodeSetting($settings, 'about_hero_subtitle', [
-                'en' => 'The journey behind our legacy and the passion that drives us.', 'id' => '', 'es' => ''
-            ]);
-            $this->about_hero_label = $this->decodeSetting($settings, 'about_hero_label', [
-                'en' => 'Our Story', 'id' => '', 'es' => ''
-            ]);
-
-
-            $this->existing_about_gallery_1 = $settings['about_gallery_1'] ?? null;
-            $this->existing_about_gallery_2 = $settings['about_gallery_2'] ?? null;
-            $this->existing_about_gallery_3 = $settings['about_gallery_3'] ?? null;
-            $this->existing_about_gallery_4 = $settings['about_gallery_4'] ?? null;
-
-            $this->about_who_we_are_label = $this->decodeSetting($settings, 'about_who_we_are_label', [
-                'en' => 'Who We Are', 'id' => '', 'es' => ''
-            ]);
-
-            foreach (['en', 'id', 'es'] as $locale) {
-                if (!isset($this->about_hero_title[$locale])) $this->about_hero_title[$locale] = '';
-                if (!isset($this->about_hero_subtitle[$locale])) $this->about_hero_subtitle[$locale] = '';
-                if (!isset($this->about_hero_label[$locale])) $this->about_hero_label[$locale] = '';
-                if (!isset($this->about_who_we_are_label[$locale])) $this->about_who_we_are_label[$locale] = '';
-            }
-        } elseif ($page->slug === 'destinations') {
-            $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
-            $this->destinations_hero_label = $this->decodeSetting($settings, 'destinations_hero_label', [
-                'en' => 'Curated Selection', 'id' => '', 'es' => ''
-            ]);
-            foreach (['en', 'id', 'es'] as $locale) {
-                if (!isset($this->destinations_hero_label[$locale])) $this->destinations_hero_label[$locale] = '';
-            }
+            $this->existing_about_gallery_1 = Setting::get('about_gallery_1');
+            $this->existing_about_gallery_2 = Setting::get('about_gallery_2');
+            $this->existing_about_gallery_3 = Setting::get('about_gallery_3');
+            $this->existing_about_gallery_4 = Setting::get('about_gallery_4');
         }
-    }
-
-    protected function decodeSetting(array $settings, string $key, array $defaults = []): array
-    {
-        $value = $settings[$key] ?? null;
-        if (!$value) return $defaults;
-
-        $decoded = json_decode($value, true);
-        if (!is_array($decoded)) {
-            return array_merge($defaults, ['en' => $value]);
-        }
-
-        return array_merge($defaults, $decoded);
     }
 
     public function save(): void
@@ -102,50 +76,58 @@ new class extends Component {
             'title.en' => 'required|string|max:255',
             'title.id' => 'nullable|string|max:255',
             'title.es' => 'nullable|string|max:255',
-            'content.en' => 'required|string',
-            'content.id' => 'nullable|string',
-            'content.es' => 'nullable|string',
             'image' => 'nullable|image|max:4096',
+            'about_gallery_1' => 'nullable|image|max:4096',
+            'about_gallery_2' => 'nullable|image|max:4096',
+            'about_gallery_3' => 'nullable|image|max:4096',
+            'about_gallery_4' => 'nullable|image|max:4096',
         ]);
 
-        $data = [
-            'title' => $this->title,
-            'content' => $this->content,
-        ];
+        $locales = ['en', 'id', 'es'];
 
+        // Sync Base Page Data
         if ($this->image) {
             if ($this->existing_image) {
                 Storage::disk('public')->delete($this->existing_image);
             }
-            $data['image_path'] = $this->image->store('pages', 'public');
-            $this->existing_image = $data['image_path'];
+            $imagePath = $this->image->store('pages', 'public');
+            $this->page->update(['image_path' => $imagePath]);
+            $this->existing_image = $imagePath;
             $this->image = null;
         }
 
-        $this->page->update($data);
+        $titleTranslations = [];
+        foreach ($locales as $locale) {
+            if (!empty($this->title[$locale])) {
+                $titleTranslations[$locale] = ['title' => $this->title[$locale]];
+            }
+        }
+        $this->page->syncTranslations($titleTranslations);
 
+        // Sync Sections
+        foreach ($this->sections as $sectionData) {
+            $section = \App\Models\PageSection::find($sectionData['id']);
+            if ($section) {
+                $section->update([
+                    'is_visible' => $sectionData['is_visible'],
+                ]);
+                
+                $sectionTranslations = [];
+                foreach ($locales as $locale) {
+                    // Always try to update both heading and body if the language has anything
+                    if (!empty($sectionData['translations'][$locale]['heading']) || !empty($sectionData['translations'][$locale]['body'])) {
+                        $sectionTranslations[$locale] = [
+                            'heading' => $sectionData['translations'][$locale]['heading'] ?? '',
+                            'body' => $sectionData['translations'][$locale]['body'] ?? '',
+                        ];
+                    }
+                }
+                $section->syncTranslations($sectionTranslations);
+            }
+        }
+
+        // Sync Gallery Images (About Page)
         if ($this->page->slug === 'about') {
-            $this->validate([
-                'about_hero_title.en' => 'nullable|string|max:255',
-                'about_hero_title.id' => 'nullable|string|max:255',
-                'about_hero_title.es' => 'nullable|string|max:255',
-                'about_hero_subtitle.en' => 'nullable|string',
-                'about_hero_subtitle.id' => 'nullable|string',
-                'about_hero_subtitle.es' => 'nullable|string',
-                'about_hero_label.en' => 'nullable|string|max:50',
-                'about_hero_label.id' => 'nullable|string|max:50',
-                'about_hero_label.es' => 'nullable|string|max:50',
-                'about_gallery_1' => 'nullable|image|max:4096',
-                'about_gallery_2' => 'nullable|image|max:4096',
-                'about_gallery_3' => 'nullable|image|max:4096',
-                'about_gallery_4' => 'nullable|image|max:4096',
-
-            ]);
-            \App\Models\Setting::updateOrCreate(['key' => 'about_hero_title'], ['value' => json_encode($this->about_hero_title)]);
-            \App\Models\Setting::updateOrCreate(['key' => 'about_hero_subtitle'], ['value' => json_encode($this->about_hero_subtitle)]);
-            \App\Models\Setting::updateOrCreate(['key' => 'about_hero_label'], ['value' => json_encode($this->about_hero_label)]);
-            \App\Models\Setting::updateOrCreate(['key' => 'about_who_we_are_label'], ['value' => json_encode($this->about_who_we_are_label)]);
-
             foreach (['1', '2', '3', '4'] as $i) {
                 $field = "about_gallery_$i";
                 $existingField = "existing_about_gallery_$i";
@@ -154,22 +136,17 @@ new class extends Component {
                         Storage::disk('public')->delete($this->$existingField);
                     }
                     $path = $this->$field->store('settings', 'public');
-                    \App\Models\Setting::updateOrCreate(['key' => $field], ['value' => $path]);
+                    \App\Models\Setting::updateOrCreate(
+                        ['key' => $field], 
+                        ['type' => 'text', 'value' => $path]
+                    );
                     $this->$existingField = $path;
                     $this->$field = null;
                 }
             }
-
-        } elseif ($this->page->slug === 'destinations') {
-            $this->validate([
-                'destinations_hero_label.en' => 'nullable|string|max:50',
-                'destinations_hero_label.id' => 'nullable|string|max:50',
-                'destinations_hero_label.es' => 'nullable|string|max:50',
-            ]);
-            \App\Models\Setting::updateOrCreate(['key' => 'destinations_hero_label'], ['value' => json_encode($this->destinations_hero_label)]);
         }
-        
-                $this->dispatch('notify', message: __('Changes saved successfully.'));
+
+        $this->dispatch('notify', message: __('Changes saved successfully.'));
         $this->dispatch('page-saved');
     }
 };
@@ -194,102 +171,63 @@ new class extends Component {
     <form wire:submit="save" class="space-y-8 max-w-7xl">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
-                @if($page->slug === 'about')
-                    <!-- About Hero Section -->
+                
+                <flux:card class="space-y-6">
+                    <div class="flex items-center gap-2">
+                        <flux:icon.identification class="size-5 text-zinc-400" />
+                        <flux:heading size="lg">{{ __('Page Identity') }}</flux:heading>
+                    </div>
+                    <flux:separator />
+                    <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:key="title_activeTab-{{ $activeTab }}" wire:model="title.{{ $activeTab }}" />
+                </flux:card>
+
+                @foreach($sections as $index => $section)
                     <flux:card class="space-y-6">
-                        <div class="flex items-center gap-2">
-                            <flux:icon.star class="size-5 text-zinc-400" />
-                            <flux:heading size="lg">{{ __('Hero Section') }}</flux:heading>
-                        </div>
-                        <flux:separator />
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <flux:field>
-                                <flux:label>{{ __('Hero Image') }}</flux:label>
-                                <div class="flex flex-col gap-4">
-                                    @if ($image)
-                                        <img src="{{ $image->temporaryUrl() }}" class="h-32 w-full object-cover rounded-lg border border-zinc-200" />
-                                    @elseif ($existing_image)
-                                        <img src="{{ Storage::url($existing_image) }}" class="h-32 w-full object-cover rounded-lg border border-zinc-200" />
-                                    @endif
-                                    <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
-                                </div>
-                                <flux:error name="image" />
-                            </flux:field>
-
-                            <div class="space-y-6">
-                                <flux:input label="{{ __('Hero Label') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_label_activeTab-{{ $activeTab }}" wire:model="about_hero_label.{{ $activeTab }}" />
-                                <flux:input label="{{ __('Hero Title') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_title_activeTab-{{ $activeTab }}" wire:model="about_hero_title.{{ $activeTab }}" />
-                                <flux:textarea label="{{ __('Hero Subtitle') }} ({{ strtoupper($activeTab) }})" wire:key="about_hero_subtitle_activeTab-{{ $activeTab }}" wire:model="about_hero_subtitle.{{ $activeTab }}" rows="4" />
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <flux:icon.document-text class="size-5 text-zinc-400" />
+                                <flux:heading size="lg">Section: {{ Str::title(str_replace('_', ' ', $section['key'])) }}</flux:heading>
                             </div>
-                        </div>
-                    </flux:card>
-
-                    <!-- About Our Story Section -->
-                    <flux:card class="space-y-6">
-                        <div class="flex items-center gap-2">
-                            <flux:icon.book-open class="size-5 text-zinc-400" />
-                            <flux:heading size="lg">{{ __('Our Story Section') }}</flux:heading>
+                            <flux:switch wire:model="sections.{{ $index }}.is_visible" label="Visible" />
                         </div>
                         <flux:separator />
-
+                        
                         <div class="space-y-6">
-                            <flux:input label="{{ __('Section Label') }} ({{ strtoupper($activeTab) }})" wire:key="about_who_we_are_label_activeTab-{{ $activeTab }}" wire:model="about_who_we_are_label.{{ $activeTab }}" description="e.g. 'Who We Are'" />
-                            <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:key="title_activeTab-{{ $activeTab }}" wire:model="title.{{ $activeTab }}" />
-                            <flux:textarea label="{{ __('Main Body Content') }} ({{ strtoupper($activeTab) }})" wire:key="content_activeTab-{{ $activeTab }}" wire:model="content.{{ $activeTab }}" rows="15" />
+                            <flux:input label="{{ __('Section Heading') }} ({{ strtoupper($activeTab) }})" wire:model="sections.{{ $index }}.translations.{{ $activeTab }}.heading" />
+                            
+                            @if($section['type'] === 'text' || $section['type'] === 'hero')
+                                <flux:textarea label="{{ __('Section Content') }} ({{ strtoupper($activeTab) }})" wire:model="sections.{{ $index }}.translations.{{ $activeTab }}.body" rows="{{ $section['type'] === 'hero' ? 4 : 10 }}" />
+                            @endif
                         </div>
                     </flux:card>
-                @else
-                    <!-- Standard Page Layout -->
-                    <flux:card class="space-y-6">
-                        <div class="flex items-center gap-2">
-                            <flux:icon.identification class="size-5 text-zinc-400" />
-                            <flux:heading size="lg">{{ __('Page Identity') }}</flux:heading>
-                        </div>
-                        <flux:separator />
-                        <flux:input label="{{ __('Page Title') }} ({{ strtoupper($activeTab) }})" wire:key="title_activeTab-{{ $activeTab }}" wire:model="title.{{ $activeTab }}" />
-                        @if($page->slug === 'destinations')
-                            <flux:input label="{{ __('Hero Label') }} ({{ strtoupper($activeTab) }})" wire:key="destinations_hero_label_activeTab-{{ $activeTab }}" wire:model="destinations_hero_label.{{ $activeTab }}" description="Small label displayed above the title (e.g., 'Curated Selection')." />
-                        @endif
-                    </flux:card>
+                @endforeach
 
-                    <flux:card class="space-y-6">
-                        <div class="flex items-center gap-2">
-                            <flux:icon.document-text class="size-5 text-zinc-400" />
-                            <flux:heading size="lg">{{ __('Page Content') }}</flux:heading>
-                        </div>
-                        <flux:separator />
-                        <flux:textarea label="{{ __('Main Body Content') }} ({{ strtoupper($activeTab) }})" wire:key="content_activeTab-{{ $activeTab }}" wire:model="content.{{ $activeTab }}" rows="20" />
-                    </flux:card>
-                @endif
             </div>
 
             <div class="lg:col-span-1 space-y-8">
-                @if($page->slug !== 'about')
-                    <flux:card class="space-y-6">
-                        <div class="flex items-center gap-2">
-                            <flux:icon.photo class="size-5 text-zinc-400" />
-                            <flux:heading size="lg">{{ __('Cover Image') }}</flux:heading>
-                        </div>
-                        <flux:separator />
+                <flux:card class="space-y-6">
+                    <div class="flex items-center gap-2">
+                        <flux:icon.photo class="size-5 text-zinc-400" />
+                        <flux:heading size="lg">{{ __('Cover Image') }}</flux:heading>
+                    </div>
+                    <flux:separator />
 
-                        <flux:field>
-                            <div class="flex flex-col gap-4">
-                                @if ($image)
-                                    <img src="{{ $image->temporaryUrl() }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
-                                @elseif ($existing_image)
-                                    <img src="{{ Storage::url($existing_image) }}" class="h-32 w-64 object-cover rounded-lg border border-zinc-200" />
-                                @else
-                                    <div class="h-32 w-64 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200 text-zinc-400">
-                                        {{ __('No Image') }}
-                                    </div>
-                                @endif
-                                <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
-                            </div>
-                            <flux:error name="image" />
-                        </flux:field>
-                    </flux:card>
-                @endif
+                    <flux:field>
+                        <div class="flex flex-col gap-4">
+                            @if ($image)
+                                <img src="{{ $image->temporaryUrl() }}" class="h-32 w-full object-cover rounded-lg border border-zinc-200" />
+                            @elseif ($existing_image)
+                                <img src="{{ Storage::url($existing_image) }}" class="h-32 w-full object-cover rounded-lg border border-zinc-200" />
+                            @else
+                                <div class="h-32 w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200 text-zinc-400">
+                                    {{ __('No Image') }}
+                                </div>
+                            @endif
+                            <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                        </div>
+                        <flux:error name="image" />
+                    </flux:field>
+                </flux:card>
 
                 @if($page->slug === 'about')
                     <!-- About Page Sidebar Gallery -->

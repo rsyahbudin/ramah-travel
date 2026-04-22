@@ -1,12 +1,16 @@
 <?php
 
-use App\Models\Setting;
+use App\Models\Page;
+use App\Models\PageSection;
+use App\Models\PageSectionFeature;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
 
 new class extends Component {
     use WithFileUploads;
+
+    public Page $page;
 
     // Hero Section
     public array $hero_title = ['en' => '', 'id' => '', 'es' => ''];
@@ -23,7 +27,6 @@ new class extends Component {
     public array $about_label = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_stat_number = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_stat_text = ['en' => '', 'id' => '', 'es' => ''];
-   
     public $about_image;
     public $existing_about_image;
 
@@ -31,7 +34,7 @@ new class extends Component {
     public array $destination_title = ['en' => '', 'id' => '', 'es' => ''];
     public array $destination_label = ['en' => '', 'id' => '', 'es' => ''];
 
-    // Experience Tiers Section (How We Travel)
+    // Experience Tiers Section
     public array $experience_tiers_title = ['en' => '', 'id' => '', 'es' => ''];
     public array $experience_tiers_label = ['en' => '', 'id' => '', 'es' => ''];
     public array $experience_tiers_points = ['en' => [], 'id' => [], 'es' => []];
@@ -46,170 +49,174 @@ new class extends Component {
 
     public function mount(): void
     {
-        $settings = Setting::pluck('value', 'key')->toArray();
+        $this->page = Page::with(['sections.translations', 'sections.features.translations'])->where('slug', 'home')->firstOrFail();
 
-        // Hero
-        $this->hero_title = $this->decodeSetting($settings, 'hero_title', ['en' => "Redefining the\nArt of Travel."]);
-        $this->hero_subtitle = $this->decodeSetting($settings, 'hero_subtitle', ['en' => 'Experience the world\'s most secluded corners through a lens of absolute luxury and curated exclusivity.']);
-        $this->hero_label = $this->decodeSetting($settings, 'hero_label', ['en' => 'The Future of Exploration']);
-        $this->hero_cta_text = $this->decodeSetting($settings, 'hero_cta_text', ['en' => 'Discover More']);
-        $this->hero_cta_link = $settings['hero_cta_link'] ?? '/destinations';
-        $this->existing_hero_bg_image = $settings['hero_bg_image'] ?? null;
+        $hero = $this->page->sections->where('key', 'home_hero')->first();
+        $about = $this->page->sections->where('key', 'home_about')->first();
+        $destinations = $this->page->sections->where('key', 'home_destination')->first();
+        $tiers = $this->page->sections->where('key', 'home_experience_tiers')->first();
+        $cta = $this->page->sections->where('key', 'home_cta')->first();
 
-        // About / Our Story
-        $this->about_title = $this->decodeSetting($settings, 'about_title', ['en' => "The Journey Behind\nOur Legacy."]);
-        $this->about_content = $this->decodeSetting($settings, 'about_content', ['en' => 'Founded on the principle that travel should be as unique as the traveler.']);
-        $this->about_label = $this->decodeSetting($settings, 'about_label', ['en' => 'Since 2008']);
-        $this->about_stat_number = $this->decodeSetting($settings, 'about_stat_number', ['en' => '15+']);
-       
-        $this->about_stat_text = $this->decodeSetting($settings, 'about_stat_text', ['en' => 'Years of Crafting Bespoke Experiences']);
-        $this->existing_about_image = $settings['about_image'] ?? null;
+        $this->hero_cta_link = $hero?->meta['cta_link'] ?? '/destinations';
+        $this->existing_hero_bg_image = $this->page->image_path;
+        $this->existing_about_image = $about?->meta['about_image'] ?? null;
+        $this->existing_cta_bg_image = $cta?->meta['bg_image'] ?? null;
 
-
-        // Destinations
-        $this->destination_title = $this->decodeSetting($settings, 'destination_title', ['en' => 'Destinations Spotlight']);
-        $this->destination_label = $this->decodeSetting($settings, 'destination_label', ['en' => 'Curated Selection']);
-
-        // Experience Tiers
-        $this->experience_tiers_title = $this->decodeSetting($settings, 'experience_tiers_title', ['en' => 'How We Travel']);
-        $this->experience_tiers_label = $this->decodeSetting($settings, 'experience_tiers_label', ['en' => 'Tailored For You']);
-        
-        $points = $this->decodeSetting($settings, 'experience_tiers_points', [
-            'en' => [
-                ['icon' => 'diamond', 'title' => 'Elite Concierge', 'description' => '24/7 dedicated support for every whim, from private jet charters to exclusive dinner reservations.'],
-                ['icon' => 'map', 'title' => 'Bespoke Itineraries', 'description' => 'Every journey is custom-built from the ground up, ensuring no two travelers have the same experience.'],
-                ['icon' => 'verified_user', 'title' => 'Insider Access', 'description' => 'Gain entry to private estates, closed museum collections, and hidden gems closed to the general public.'],
-            ]
-        ]);
-        
-        // Ensure all locales have the structure
         foreach (['en', 'id', 'es'] as $locale) {
-            if (!isset($points[$locale]) || empty($points[$locale])) {
-                $points[$locale] = array_map(function($p) {
-                    $p['title'] = $p['title'] ?? '';
-                    $p['description'] = $p['description'] ?? '';
-                    return $p;
-                }, $points['en'] ?? []);
+            $this->hero_title[$locale] = $hero?->getTranslation('heading', $locale) ?? '';
+            $this->hero_subtitle[$locale] = $hero?->getTranslation('body', $locale) ?? '';
+            $this->hero_label[$locale] = $hero?->meta['label'][$locale] ?? '';
+            $this->hero_cta_text[$locale] = $hero?->meta['cta_text'][$locale] ?? '';
+
+            $this->about_title[$locale] = $about?->getTranslation('heading', $locale) ?? '';
+            $this->about_content[$locale] = $about?->getTranslation('body', $locale) ?? '';
+            $this->about_label[$locale] = $about?->meta['label'][$locale] ?? '';
+            $this->about_stat_number[$locale] = $about?->meta['stat_number'][$locale] ?? '';
+            $this->about_stat_text[$locale] = $about?->meta['stat_text'][$locale] ?? '';
+
+            $this->destination_title[$locale] = $destinations?->getTranslation('heading', $locale) ?? '';
+            $this->destination_label[$locale] = $destinations?->meta['label'][$locale] ?? '';
+
+            $this->experience_tiers_title[$locale] = $tiers?->getTranslation('heading', $locale) ?? '';
+            $this->experience_tiers_label[$locale] = $tiers?->meta['label'][$locale] ?? '';
+
+            $this->cta_title[$locale] = $cta?->getTranslation('heading', $locale) ?? '';
+            $this->cta_subtitle[$locale] = $cta?->getTranslation('body', $locale) ?? '';
+
+            $this->experience_tiers_points[$locale] = [];
+        }
+
+        if ($tiers) {
+            foreach ($tiers->features as $index => $feature) {
+                // Ensure all locales have entries so form inputs bind properly
+                foreach (['en', 'id', 'es'] as $locale) {
+                    $this->experience_tiers_points[$locale][] = [
+                        'id' => $feature->id, // store DB ID for updating
+                        'icon' => $feature->icon,
+                        'title' => $feature->getTranslation('title', $locale) ?? '',
+                        'description' => $feature->getTranslation('description', $locale) ?? ''
+                    ];
+                }
             }
         }
-        $this->experience_tiers_points = $points;
-
-        // CTA
-        $this->cta_title = $this->decodeSetting($settings, 'cta_title', ['en' => 'Stay Inspired.']);
-        $this->cta_subtitle = $this->decodeSetting($settings, 'cta_subtitle', ['en' => 'Join our inner circle for exclusive updates.']);
-        $this->existing_cta_bg_image = $settings['cta_bg_image'] ?? null;
-    }
-
-    protected function decodeSetting(array $settings, string $key, array $defaults = []): array
-    {
-        $value = $settings[$key] ?? null;
-        if (!$value) return $defaults;
-
-        $decoded = json_decode($value, true);
-        if (!is_array($decoded)) {
-            return array_merge($defaults, ['en' => $value]);
-        }
-
-        return array_merge($defaults, $decoded);
     }
 
     public function addPoint(string $locale): void
     {
-        $this->experience_tiers_points[$locale][] = ['icon' => 'star', 'title' => '', 'description' => ''];
+        // Add globally across all locales to keep array length synchronized
+        foreach (['en', 'id', 'es'] as $l) {
+            $this->experience_tiers_points[$l][] = ['icon' => 'star', 'title' => '', 'description' => '', 'id' => null];
+        }
     }
 
     public function removePoint(string $locale, int $index): void
     {
-        unset($this->experience_tiers_points[$locale][$index]);
-        $this->experience_tiers_points[$locale] = array_values($this->experience_tiers_points[$locale]);
+        // Must remove across all locales
+        $idToRemove = $this->experience_tiers_points[$locale][$index]['id'] ?? null;
+        if ($idToRemove) {
+            PageSectionFeature::destroy($idToRemove);
+        }
+
+        foreach (['en', 'id', 'es'] as $l) {
+            unset($this->experience_tiers_points[$l][$index]);
+            $this->experience_tiers_points[$l] = array_values($this->experience_tiers_points[$l]);
+        }
     }
 
     public function save(): void
     {
-        $this->validate([
-            'hero_title.en' => 'required|string|max:255',
-            'hero_subtitle.en' => 'required|string|max:500',
-            'hero_label.en' => 'nullable|string|max:100',
-            'hero_cta_text.en' => 'required|string|max:100',
-            'hero_cta_link' => 'required|string|max:255',
-            'hero_bg_image' => 'nullable|image|max:4096',
-            'about_title.en' => 'required|string|max:255',
-            'about_content.en' => 'required|string',
-            'about_label.en' => 'nullable|string|max:100',
-            'about_stat_number.en' => 'nullable|string|max:20',
-            'about_stat_text.en' => 'nullable|string|max:255',
-           
-            'about_image' => 'nullable|image|max:4096',
-
-            'destination_title.en' => 'required|string|max:255',
-            'destination_label.en' => 'nullable|string|max:100',
-
-            'experience_tiers_title.en' => 'required|string|max:255',
-            'experience_tiers_label.en' => 'nullable|string|max:100',
-            'cta_title.en' => 'nullable|string|max:255',
-            'cta_subtitle.en' => 'nullable|string|max:500',
-            'cta_bg_image' => 'nullable|image|max:4096',
-        ]);
-
-        $translatable = [
-            'hero_title' => $this->hero_title,
-            'hero_subtitle' => $this->hero_subtitle,
-            'hero_label' => $this->hero_label,
-            'hero_cta_text' => $this->hero_cta_text,
-            'about_title' => $this->about_title,
-            'about_content' => $this->about_content,
-            'about_label' => $this->about_label,
-            'about_stat_number' => $this->about_stat_number,
-            'about_stat_text' => $this->about_stat_text,
-            'destination_title' => $this->destination_title,
-            'destination_label' => $this->destination_label,
-            'experience_tiers_title' => $this->experience_tiers_title,
-            'experience_tiers_label' => $this->experience_tiers_label,
-            'experience_tiers_points' => $this->experience_tiers_points,
-            'cta_title' => $this->cta_title,
-            'cta_subtitle' => $this->cta_subtitle,
-        ];
-
-        foreach ($translatable as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => json_encode($value)]);
-        }
-
-        Setting::updateOrCreate(['key' => 'hero_cta_link'], ['value' => $this->hero_cta_link]);
-
-        // Handle File Uploads
+        // Handle images
         if ($this->hero_bg_image) {
-            if ($this->existing_hero_bg_image) {
-                Storage::disk('public')->delete($this->existing_hero_bg_image);
-            }
-            $path = $this->hero_bg_image->store('settings', 'public');
-            Setting::updateOrCreate(['key' => 'hero_bg_image'], ['value' => $path]);
-            $this->existing_hero_bg_image = $path;
-            $this->hero_bg_image = null;
+            if ($this->page->image_path) Storage::disk('public')->delete($this->page->image_path);
+            $this->page->update(['image_path' => $this->hero_bg_image->store('settings', 'public')]);
         }
 
-       
-        if ($this->about_image) {
-            if ($this->existing_about_image) {
-                Storage::disk('public')->delete($this->existing_about_image);
-            }
-            $path = $this->about_image->store('settings', 'public');
-            Setting::updateOrCreate(['key' => 'about_image'], ['value' => $path]);
-            $this->existing_about_image = $path;
-            $this->about_image = null;
+        $hero = $this->page->sections()->where('key', 'home_hero')->first();
+        if ($hero) {
+            $meta = $hero->meta ?? [];
+            $meta['cta_link'] = $this->hero_cta_link;
+            $meta['label'] = $this->hero_label;
+            $meta['cta_text'] = $this->hero_cta_text;
+            $hero->meta = $meta;
+            $hero->save();
+            $hero->syncTranslations(['en' => ['heading' => $this->hero_title['en'], 'body' => $this->hero_subtitle['en']], 'id' => ['heading' => $this->hero_title['id'], 'body' => $this->hero_subtitle['id']], 'es' => ['heading' => $this->hero_title['es'], 'body' => $this->hero_subtitle['es']]]);
         }
 
-
-        if ($this->cta_bg_image) {
-            if ($this->existing_cta_bg_image) {
-                Storage::disk('public')->delete($this->existing_cta_bg_image);
+        $about = $this->page->sections()->where('key', 'home_about')->first();
+        if ($about) {
+            $meta = $about->meta ?? [];
+            if ($this->about_image) {
+                if ($this->existing_about_image) Storage::disk('public')->delete($this->existing_about_image);
+                $meta['about_image'] = $this->about_image->store('settings', 'public');
             }
-            $path = $this->cta_bg_image->store('settings', 'public');
-            Setting::updateOrCreate(['key' => 'cta_bg_image'], ['value' => $path]);
-            $this->existing_cta_bg_image = $path;
-            $this->cta_bg_image = null;
+            $meta['label'] = $this->about_label;
+            $meta['stat_number'] = $this->about_stat_number;
+            $meta['stat_text'] = $this->about_stat_text;
+            $about->meta = $meta;
+            $about->save();
+            $about->syncTranslations(['en' => ['heading' => $this->about_title['en'], 'body' => $this->about_content['en']], 'id' => ['heading' => $this->about_title['id'], 'body' => $this->about_content['id']], 'es' => ['heading' => $this->about_title['es'], 'body' => $this->about_content['es']]]);
         }
-        
-                $this->dispatch('notify', message: __('Changes saved successfully.'));
+
+        $dest = $this->page->sections()->where('key', 'home_destination')->first();
+        if ($dest) {
+            $meta = $dest->meta ?? [];
+            $meta['label'] = $this->destination_label;
+            $dest->meta = $meta;
+            $dest->save();
+            $dest->syncTranslations(['en' => ['heading' => $this->destination_title['en'], 'body' => ''], 'id' => ['heading' => $this->destination_title['id'], 'body' => ''], 'es' => ['heading' => $this->destination_title['es'], 'body' => '']]);
+        }
+
+        $cta = $this->page->sections()->where('key', 'home_cta')->first();
+        if ($cta) {
+            $meta = $cta->meta ?? [];
+            if ($this->cta_bg_image) {
+                if ($this->existing_cta_bg_image) Storage::disk('public')->delete($this->existing_cta_bg_image);
+                $meta['bg_image'] = $this->cta_bg_image->store('settings', 'public');
+            }
+            $cta->meta = $meta;
+            $cta->save();
+            $cta->syncTranslations(['en' => ['heading' => $this->cta_title['en'], 'body' => $this->cta_subtitle['en']], 'id' => ['heading' => $this->cta_title['id'], 'body' => $this->cta_subtitle['id']], 'es' => ['heading' => $this->cta_title['es'], 'body' => $this->cta_subtitle['es']]]);
+        }
+
+        $tiers = $this->page->sections()->where('key', 'home_experience_tiers')->first();
+        if ($tiers) {
+            $meta = $tiers->meta ?? [];
+            $meta['label'] = $this->experience_tiers_label;
+            $tiers->meta = $meta;
+            $tiers->save();
+            $tiers->syncTranslations(['en' => ['heading' => $this->experience_tiers_title['en'], 'body' => ''], 'id' => ['heading' => $this->experience_tiers_title['id'], 'body' => ''], 'es' => ['heading' => $this->experience_tiers_title['es'], 'body' => '']]);
+
+            // Sync features
+            foreach ($this->experience_tiers_points['en'] as $index => $point) {
+                $feature = null;
+                if (!empty($point['id'])) {
+                    $feature = PageSectionFeature::find($point['id']);
+                }
+                if (!$feature) {
+                    $feature = new PageSectionFeature();
+                    $feature->page_section_id = $tiers->id;
+                }
+                
+                // Usually the icon is identical across locales, so grab from 'en'
+                $feature->icon = $point['icon'] ?? 'star';
+                $feature->sort_order = $index + 1;
+                $feature->save();
+
+                // Save translations
+                $feature->syncTranslations([
+                    'en' => ['title' => $this->experience_tiers_points['en'][$index]['title'], 'description' => $this->experience_tiers_points['en'][$index]['description']],
+                    'id' => ['title' => $this->experience_tiers_points['id'][$index]['title'], 'description' => $this->experience_tiers_points['id'][$index]['description']],
+                    'es' => ['title' => $this->experience_tiers_points['es'][$index]['title'], 'description' => $this->experience_tiers_points['es'][$index]['description']],
+                ]);
+
+                // update the ID so subsequent saves know it exists
+                foreach (['en', 'id', 'es'] as $l) {
+                    $this->experience_tiers_points[$l][$index]['id'] = $feature->id;
+                }
+            }
+        }
+
+        $this->dispatch('notify', message: __('Changes saved successfully.'));
         $this->dispatch('settings-saved');
     }
 };

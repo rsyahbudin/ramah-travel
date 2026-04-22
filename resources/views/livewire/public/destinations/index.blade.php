@@ -13,18 +13,21 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function with(): array
     {
+        $page = Page::with(['sections.translations', 'sections.translations.language'])->where('slug', 'destinations')->first();
+        $heroSection = $page?->sections->where('key', 'destinations_hero')->first();
+        $locale = app()->getLocale();
+
         return [
-            'page' => Page::where('slug', 'destinations')->first(),
-            'destinations' => Destination::where('is_visible', true)
+            'page' => $page,
+            'destinations' => Destination::with(['translations.language'])->where('is_visible', true)
                 ->orderBy('created_at', 'desc')
                 ->paginate(9),
-            // // 'ctaSection' => [
-            // //     'title' => Setting::getTranslated('cta_title', 'Stay Inspired.'),
-            // //     'subtitle' => Setting::getTranslated('cta_subtitle', 'Join our inner circle for exclusive updates and private travel insights.'),
-            // //     'bg_image' => Setting::getTranslated('cta_bg_image'),
-            // ],
             'whatsapp_number' => Setting::where('key', 'whatsapp_number')->value('value'),
-            'hero_label' => Setting::getTranslated('destinations_hero_label', 'Curated Selection'),
+            'hero' => [
+                'label' => $heroSection?->meta['label'][$locale] ?? ($heroSection?->meta['label']['en'] ?? 'Curated Selection'),
+                'title' => $heroSection?->getTranslation('heading') ?? $page?->getTranslation('title') ?? __('Our Destinations'),
+                'subtitle' => $heroSection?->getTranslation('body') ?? __("Discover handpicked journeys crafted for the world's most discerning travelers."),
+            ]
         ];
     }
 };
@@ -34,7 +37,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     {{-- Hero Header --}}
     <section class="relative h-[50vh] min-h-[350px] overflow-hidden flex items-center justify-center">
         @if($page && $page->image_path)
-            <img src="{{ Storage::url($page->image_path) }}" alt="{{ $page->title ?? __('Our Destinations') }}" class="absolute inset-0 w-full h-full object-cover" />
+            <img src="{{ Storage::url($page->image_path) }}" alt="{{ $hero['title'] }}" class="absolute inset-0 w-full h-full object-cover" />
         @else
             <div class="absolute inset-0 bg-secondary"></div>
         @endif
@@ -43,14 +46,14 @@ new #[Layout('components.layouts.public')] class extends Component {
         <div class="relative z-10 text-center px-4 max-w-4xl">
             <div class="flex items-center justify-center gap-4 mb-6">
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
-                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ $hero_label }}</span>
+                <span class="text-primary font-bold uppercase tracking-[0.3em] text-xs">{{ $hero['label'] }}</span>
                 <div class="w-8 sm:w-12 h-[2px] bg-primary"></div>
             </div>
             <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
-                {{ $page?->title ?? __('Our Destinations') }}
+                {{ $hero['title'] }}
             </h1>
             <p class="text-white/70 text-base sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                {{ $page?->content ?? __("Discover handpicked journeys crafted for the world's most discerning travelers.") }}
+                {{ $hero['subtitle'] }}
             </p>
         </div>
     </section>
@@ -63,7 +66,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                     <a href="{{ route('destinations.show', $destination) }}" wire:navigate class="block">
                         <div class="relative h-[320px] sm:h-[380px] overflow-hidden rounded-xl mb-5">
                             @if($destination->image_path)
-                                <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->title }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->getTranslation('title') }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                             @else
                                 <div class="w-full h-full bg-secondary/10 flex items-center justify-center">
                                     <i class="material-icons text-secondary/20" style="font-size: 80px;">photo</i>
@@ -82,39 +85,35 @@ new #[Layout('components.layouts.public')] class extends Component {
                     <div class="space-y-2">
                         <div class="flex justify-between items-start gap-2">
                             <div>
-                                <h3 class="text-xl sm:text-2xl font-extrabold text-secondary mb-1 group-hover:text-primary transition-colors">{{ $destination->title }}</h3>
+                                <h3 class="text-xl sm:text-2xl font-extrabold text-secondary mb-1 group-hover:text-primary transition-colors">{{ $destination->getTranslation('title') }}</h3>
                                 <p class="text-secondary/50 font-medium uppercase tracking-widest text-xs flex items-center gap-1">
                                     <i class="material-icons" style="font-size: 14px;">location_on</i>
-                                    {{ $destination->location }}
+                                    {{ $destination->getTranslation('location') }}
                                 </p>
                             </div>
                         </div>
 
-                        @if($destination->duration || $destination->theme)
-                            <div class="flex flex-wrap items-center gap-2 mt-1">
-                                @if($destination->duration)
-                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-secondary/60 bg-secondary/5 px-2.5 py-1 rounded-full">
-                                        <i class="material-icons" style="font-size: 14px;">schedule</i>
-                                        {{ $destination->duration }}
-                                    </span>
-                                @endif
-                                @if($destination->theme)
-                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                                        <i class="material-icons" style="font-size: 14px;">style</i>
-                                        {{ $destination->theme }}
-                                    </span>
-                                @endif
-                                @if($destination->person)
-                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-travel-green bg-travel-green/10 px-2.5 py-1 rounded-full">
-                                        <i class="material-icons" style="font-size: 14px;">group</i>
-                                        {{ $destination->person }} {{ __('Pax') }}
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
+                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                            @if($destination->getTranslation('duration'))
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-secondary/60 bg-secondary/5 px-2.5 py-1 rounded-full">
+                                    <i class="material-icons" style="font-size: 14px;">schedule</i>
+                                    {{ $destination->getTranslation('duration') }}
+                                </span>
+                            @endif
+                            @if($destination->getTranslation('theme'))
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                                    <i class="material-icons" style="font-size: 14px;">style</i>
+                                    {{ $destination->getTranslation('theme') }}
+                                </span>
+                            @endif
+                        </div>
 
                         @php
-                            $highlights = is_array($destination->highlights) ? $destination->highlights : (is_string($destination->highlights) && !empty(trim($destination->highlights)) ? [$destination->highlights] : []);
+                            $rawHighlights = $destination->getTranslation('highlights');
+                            $highlights = [];
+                            if ($rawHighlights) {
+                                $highlights = array_filter(array_map('trim', explode("\n", str_replace('•', '', $rawHighlights))));
+                            }
                         @endphp
                         @if(!empty($highlights))
                             <div class="flex flex-wrap gap-1.5 mt-1">
@@ -127,7 +126,7 @@ new #[Layout('components.layouts.public')] class extends Component {
                             </div>
                         @endif
 
-                        <p class="text-secondary/60 font-light text-sm line-clamp-2 mt-1">{{ $destination->description }}</p>
+                        <p class="text-secondary/60 font-light text-sm line-clamp-2 mt-1">{{ $destination->getTranslation('description') }}</p>
                     </div>
                 </div>
             @endforeach

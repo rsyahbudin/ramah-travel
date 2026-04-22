@@ -27,41 +27,37 @@ new class extends Component {
 
     public function mount(): void
     {
-        $settings = Setting::pluck('value', 'key')->toArray();
+        // Load simple text settings
+        $this->site_name = Setting::get('site_name', 'Ramah Indonesia');
+        $this->whatsapp_number = Setting::get('whatsapp_number', '');
+        $this->admin_email = Setting::get('admin_email', '');
+        $this->existing_logo_image = Setting::get('logo_image');
+        $this->existing_logo_white = Setting::get('logo_white');
 
-        $siteNameValue = $settings['site_name'] ?? 'Ramah Indonesia';
-        $decodedSiteName = json_decode($siteNameValue, true);
-        $this->site_name = is_array($decodedSiteName) ? ($decodedSiteName['en'] ?? reset($decodedSiteName)) : $siteNameValue;
-        $this->existing_logo_image = $settings['logo_image'] ?? null;
-        $this->existing_logo_white = $settings['logo_white'] ?? null;
+        $this->social_instagram = Setting::get('social_instagram', '');
+        $this->social_facebook = Setting::get('social_facebook', '');
+        $this->social_twitter = Setting::get('social_twitter', '');
+        $this->social_youtube = Setting::get('social_youtube', '');
+        $this->social_tiktok = Setting::get('social_tiktok', '');
 
-        $this->footer_text = $this->decodeSetting($settings, 'footer_text', ['en' => 'Discover the world with us. Unforgettable journeys await.', 'id' => '', 'es' => '']);
-        $this->social_instagram = $settings['social_instagram'] ?? '';
-        $this->social_facebook = $settings['social_facebook'] ?? '';
-        $this->social_twitter = $settings['social_twitter'] ?? '';
-        $this->social_youtube = $settings['social_youtube'] ?? '';
-        $this->social_tiktok = $settings['social_tiktok'] ?? '';
-    }
-
-    protected function decodeSetting(array $settings, string $key, array $defaults = []): array
-    {
-        $value = $settings[$key] ?? null;
-        if (!$value) return $defaults;
-
-        $decoded = json_decode($value, true);
-        if (!is_array($decoded)) {
-            return array_merge($defaults, ['en' => $value]);
+        // Load translatable settings
+        $footerTextSetting = Setting::where('key', 'footer_text')->first();
+        if ($footerTextSetting) {
+            $this->footer_text = array_merge(
+                ['en' => '', 'id' => '', 'es' => ''], 
+                $footerTextSetting->getAllTranslations()
+            );
         }
-
-        return array_merge($defaults, $decoded);
     }
 
     public function save(): void
     {
-        $validated = $this->validate([
+        $this->validate([
             'site_name' => 'required|string|max:100',
             'logo_image' => 'nullable|image|max:2048',
             'logo_white' => 'nullable|image|max:2048',
+            'whatsapp_number' => 'nullable|string|max:20',
+            'admin_email' => 'nullable|email|max:255',
             'footer_text.en' => 'nullable|string|max:500',
             'footer_text.id' => 'nullable|string|max:500',
             'footer_text.es' => 'nullable|string|max:500',
@@ -72,23 +68,40 @@ new class extends Component {
             'social_tiktok' => 'nullable|url|max:255',
         ]);
 
-        $translatable = [
-            'footer_text'
+        // Save simple text settings
+        $simpleSettings = [
+            'site_name' => $this->site_name,
+            'whatsapp_number' => $this->whatsapp_number,
+            'admin_email' => $this->admin_email,
+            'social_instagram' => $this->social_instagram,
+            'social_facebook' => $this->social_facebook,
+            'social_twitter' => $this->social_twitter,
+            'social_youtube' => $this->social_youtube,
+            'social_tiktok' => $this->social_tiktok,
         ];
 
-        foreach ($validated as $key => $value) {
-            if (in_array($key, ['logo_image', 'logo_white'])) continue;
-
-            $saveValue = in_array($key, $translatable) ? json_encode($value) : ($value ?? '');
-            Setting::updateOrCreate(['key' => $key], ['value' => $saveValue]);
+        foreach ($simpleSettings as $key => $value) {
+            Setting::updateOrCreate(['key' => $key], ['type' => 'text', 'value' => $value ?? '']);
         }
 
+        // Save translatable settings
+        $footerTextSetting = Setting::firstOrCreate(['key' => 'footer_text'], ['type' => 'translatable']);
+        
+        $footerTranslations = [];
+        foreach (['en', 'id', 'es'] as $locale) {
+            if (trim((string) ($this->footer_text[$locale] ?? '')) !== '') {
+                $footerTranslations[$locale] = $this->footer_text[$locale];
+            }
+        }
+        $footerTextSetting->syncTranslations($footerTranslations);
+
+        // Save images
         if ($this->logo_image) {
             if ($this->existing_logo_image) {
                 Storage::disk('public')->delete($this->existing_logo_image);
             }
             $path = $this->logo_image->store('settings', 'public');
-            Setting::updateOrCreate(['key' => 'logo_image'], ['value' => $path]);
+            Setting::updateOrCreate(['key' => 'logo_image'], ['type' => 'text', 'value' => $path]);
             $this->existing_logo_image = $path;
             $this->logo_image = null;
         }
@@ -98,12 +111,12 @@ new class extends Component {
                 Storage::disk('public')->delete($this->existing_logo_white);
             }
             $path = $this->logo_white->store('settings', 'public');
-            Setting::updateOrCreate(['key' => 'logo_white'], ['value' => $path]);
+            Setting::updateOrCreate(['key' => 'logo_white'], ['type' => 'text', 'value' => $path]);
             $this->existing_logo_white = $path;
             $this->logo_white = null;
         }
         
-                $this->dispatch('notify', message: __('Changes saved successfully.'));
+        $this->dispatch('notify', message: __('Changes saved successfully.'));
         $this->dispatch('settings-saved');
     }
 };
@@ -188,6 +201,9 @@ new class extends Component {
             </div>
             <flux:separator />
             
+            <flux:input label="{{ __('WhatsApp Number') }}" wire:model="whatsapp_number" placeholder="6281234..." />
+            <flux:input label="{{ __('Admin Email') }}" wire:model="admin_email" placeholder="admin@..." />
+
             <flux:textarea label="{{ __('Footer Description') }} ({{ strtoupper($activeTab) }})" wire:key="footer_text_activeTab-{{ $activeTab }}" wire:model="footer_text.{{ $activeTab }}" rows="3" />
         </flux:card>
 
@@ -199,7 +215,7 @@ new class extends Component {
             </div>
             <flux:separator />
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 gap-6">
                 <flux:input label="{{ __('Instagram') }}" wire:model="social_instagram" placeholder="https://instagram.com/..." icon="at-symbol" />
                 <flux:input label="{{ __('Facebook') }}" wire:model="social_facebook" placeholder="https://facebook.com/..." icon="camera" />
                 <flux:input label="{{ __('Twitter / X') }}" wire:model="social_twitter" placeholder="https://x.com/..." icon="hashtag" />
