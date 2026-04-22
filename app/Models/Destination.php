@@ -26,6 +26,11 @@ class Destination extends Model
     ];
 
     protected $casts = [
+        'title' => 'json',
+        'location' => 'json',
+        'duration' => 'json',
+        'theme' => 'json',
+        'description' => 'json',
         'price' => 'decimal:2',
         'price_max' => 'decimal:2',
         'is_featured' => 'boolean',

@@ -26,16 +26,25 @@ trait HasTranslations
         $locale = $locale ?: App::getLocale();
         $translations = parent::getAttribute($key);
 
-        if (is_string($translations)) {
-            $translations = json_decode($translations, true) ?: [];
-        }
-
         if (! is_array($translations)) {
-            return $translations;
+            // Handle case where it might be a string (e.g. not yet cast or empty)
+            if (is_string($translations) && $translations !== '') {
+                $decoded = json_decode($translations, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $translations = $decoded;
+                } else {
+                    return $translations;
+                }
+            } else {
+                return $translations;
+            }
         }
 
-        // Return the requested locale, or fallback to English, or return the first available translation
-        return $translations[$locale] ?? $translations['en'] ?? (count($translations) > 0 ? reset($translations) : null);
+        // Return translation for requested locale, or fall back to English,
+        // or finally the first available translation.
+        return $translations[$locale]
+            ?? $translations['en']
+            ?? (count($translations) > 0 ? reset($translations) : '');
     }
 
     /**
@@ -49,6 +58,6 @@ trait HasTranslations
             return json_decode($translations, true) ?: [];
         }
 
-        return is_array($translations) ? $translations : [];
+        return $translations ?: [];
     }
 }

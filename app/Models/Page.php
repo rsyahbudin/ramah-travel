@@ -15,4 +15,9 @@ class Page extends Model
         'title',
         'content',
     ];
+
+    protected $casts = [
+        'title' => 'json',
+        'content' => 'json',
+    ];
 }
