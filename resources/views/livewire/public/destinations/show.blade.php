@@ -1,20 +1,23 @@
 <?php
 
 use App\Models\Destination;
+use App\Models\Page;
 use App\Models\Setting;
-use Livewire\Volt\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Volt\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Storage;
 
-new #[Layout('components.layouts.public')] class extends Component {
+new #[Layout('components.layouts.public')] class extends Component
+{
     use WithPagination;
 
     public Destination $destination;
-    
+
     // Booking Form State
     public bool $showBookingForm = false;
+
     public string $bookingType = ''; // 'whatsapp' or 'email'
+
     public array $bookingForm = [
         'name' => '',
         'email' => '',
@@ -28,6 +31,7 @@ new #[Layout('components.layouts.public')] class extends Component {
     ];
 
     public string $whatsappUrl = '';
+
     public string $emailUrl = '';
 
     public array $benefits = [];
@@ -47,23 +51,27 @@ new #[Layout('components.layouts.public')] class extends Component {
         $this->bookingForm['travel_date'] = now()->addDay()->format('Y-m-d');
 
         $settings = Setting::whereIn('key', [
-            'whatsapp_number', 
-            'admin_email', 
-            'whatsapp_template', 
+            'whatsapp_number',
+            'admin_email',
+            'whatsapp_template',
             'email_subject_template',
-            'email_template'
+            'email_template',
         ])->pluck('value', 'key');
-        
+
         $whatsappNumber = $settings['whatsapp_number'] ?? null;
         $adminEmail = $settings['admin_email'] ?? null;
 
         // Visual checks only - actual URL generation happens on submit
-        if ($whatsappNumber) $this->whatsappUrl = "https://wa.me/{$whatsappNumber}";
-        if ($adminEmail) $this->emailUrl = "mailto:{$adminEmail}";
+        if ($whatsappNumber) {
+            $this->whatsappUrl = "https://wa.me/{$whatsappNumber}";
+        }
+        if ($adminEmail) {
+            $this->emailUrl = "mailto:{$adminEmail}";
+        }
 
         $homePage = Page::with(['sections.features.translations.language'])->where('slug', 'home')->first();
         $tiers = $homePage?->sections->where('key', 'home_experience_tiers')->first();
-        
+
         $this->benefits = [];
         if ($tiers && $tiers->features->isNotEmpty()) {
             foreach ($tiers->features as $feature) {
@@ -89,82 +97,88 @@ new #[Layout('components.layouts.public')] class extends Component {
 
     public function submitBooking(): void
     {
-        $this->validate([
-            'bookingForm.name' => 'required|string|max:255',
-            'bookingForm.email' => 'required|email|max:255',
-            'bookingForm.phone' => 'required|string|max:50',
-            'bookingForm.travel_date' => 'required|date|after_or_equal:today',
-            'bookingForm.person' => 'required|integer|min:1',
-            'bookingForm.city' => 'required|string|max:100',
-            'bookingForm.country' => 'required|string|max:100',
-        ]);
+        try {
+            $this->validate([
+                'bookingForm.name' => 'required|string|max:255',
+                'bookingForm.email' => 'required|email|max:255',
+                'bookingForm.phone' => 'required|string|regex:/^[0-9+]+$/|max:50',
+                'bookingForm.travel_date' => 'required|date|after_or_equal:today',
+                'bookingForm.person' => 'required|integer|min:1',
+                'bookingForm.city' => 'required|string|max:100',
+                'bookingForm.country' => 'required|string|max:100',
+            ]);
 
-        $whatsappNumber = Setting::where('key', 'whatsapp_number')->value('value');
-        $adminEmail = Setting::where('key', 'admin_email')->value('value');
+            $whatsappNumber = Setting::where('key', 'whatsapp_number')->value('value');
+            $adminEmail = Setting::where('key', 'admin_email')->value('value');
 
-        $waTemplate = Setting::getTranslated('whatsapp_template', "Hello, my name is {name}. I would like to book {destination} for {person} pax on {travel_date}. I am from {city}, {country}. Email: {email}, Phone: {phone}.\n\nMessage: {message}");
-        $subjectTemplate = Setting::getTranslated('email_subject_template', "New Booking: {destination} - {name}");
-        $emailTemplate = Setting::getTranslated('email_template', "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nMessage: {message}\n\nURL: {url}");
+            $waTemplate = Setting::getTranslated('whatsapp_template', "Hello, my name is {name}. I would like to book {destination} for {person} pax on {travel_date}. I am from {city}, {country}. Email: {email}, Phone: {phone}.\n\nMessage: {message}");
+            $subjectTemplate = Setting::getTranslated('email_subject_template', 'New Booking: {destination} - {name}');
+            $emailTemplate = Setting::getTranslated('email_template', "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nMessage: {message}\n\nURL: {url}");
 
-        $placeholders = [
-            '{title}' => $this->destination->getTranslation('title'),
-            '{destination}' => $this->destination->getTranslation('title'),
-            '{url}' => route('destinations.show', $this->destination),
-            '{price}' => $this->destination->price_range,
-            '{location}' => $this->destination->getTranslation('location'),
-            '{duration}' => $this->destination->getTranslation('duration') ?? '',
-            '{name}' => $this->bookingForm['name'],
-            '{email}' => $this->bookingForm['email'],
-            '{phone}' => $this->bookingForm['phone'],
-            '{person}' => $this->bookingForm['person'],
-            '{city}' => $this->bookingForm['city'],
-            '{country}' => $this->bookingForm['country'],
-            '{travel_date}' => $this->bookingForm['travel_date'],
-            '{date}' => $this->bookingForm['travel_date'],
-            '{message}' => $this->bookingForm['message'],
-        ];
+            $placeholders = [
+                '{title}' => $this->destination->getTranslation('title'),
+                '{destination}' => $this->destination->getTranslation('title'),
+                '{url}' => route('destinations.show', $this->destination),
+                '{price}' => $this->destination->price_range,
+                '{location}' => $this->destination->getTranslation('location'),
+                '{duration}' => $this->destination->getTranslation('duration') ?? '',
+                '{name}' => $this->bookingForm['name'],
+                '{email}' => $this->bookingForm['email'],
+                '{phone}' => $this->bookingForm['phone'],
+                '{person}' => $this->bookingForm['person'],
+                '{city}' => $this->bookingForm['city'],
+                '{country}' => $this->bookingForm['country'],
+                '{travel_date}' => $this->bookingForm['travel_date'],
+                '{date}' => $this->bookingForm['travel_date'],
+                '{message}' => $this->bookingForm['message'],
+            ];
 
-        foreach ($placeholders as $key => $value) {
-            $waTemplate = str_replace($key, $value, $waTemplate);
-            $subjectTemplate = str_replace($key, $value, $subjectTemplate);
-            $emailTemplate = str_replace($key, $value, $emailTemplate);
-        }
-
-        $url = null;
-        if ($this->bookingType === 'whatsapp' && $whatsappNumber) {
-            $baseWaTemplate = Setting::getTranslated('whatsapp_template', '');
-            
-            // Apply placeholders to WhatsApp template if not empty
-            if ($baseWaTemplate) {
-                foreach ($placeholders as $key => $value) {
-                    $baseWaTemplate = str_replace($key, $value, $baseWaTemplate);
-                }
-            } else {
-                // Fallback to exactly what the email body has or just standard text
-                $baseWaTemplate = $waTemplate;
+            foreach ($placeholders as $key => $value) {
+                $waTemplate = str_replace($key, $value, $waTemplate);
+                $subjectTemplate = str_replace($key, $value, $subjectTemplate);
+                $emailTemplate = str_replace($key, $value, $emailTemplate);
             }
-            
-            $url = "https://wa.me/{$whatsappNumber}?text=" . urlencode($baseWaTemplate);
-        } elseif ($this->bookingType === 'email' && $adminEmail) {
-            $url = "mailto:{$adminEmail}?subject=" . rawurlencode($subjectTemplate) . "&body=" . rawurlencode($emailTemplate);
-        }
 
-        // Save Booking
-        $this->destination->bookings()->create([
-            'name' => $this->bookingForm['name'],
-            'email' => $this->bookingForm['email'],
-            'phone' => $this->bookingForm['phone'],
-            'travel_date' => $this->bookingForm['travel_date'],
-            'person' => $this->bookingForm['person'],
-            'city' => $this->bookingForm['city'],
-            'country' => $this->bookingForm['country'],
-            'type' => $this->bookingType,
-            'status' => 'pending',
-            'message' => $this->bookingForm['message'],
-        ]);
+            $url = null;
+            if ($this->bookingType === 'whatsapp' && $whatsappNumber) {
+                $baseWaTemplate = Setting::getTranslated('whatsapp_template', '');
 
-        if ($url) {
-            $this->redirect($url, navigate: false);
+                // Apply placeholders to WhatsApp template if not empty
+                if ($baseWaTemplate) {
+                    foreach ($placeholders as $key => $value) {
+                        $baseWaTemplate = str_replace($key, $value, $baseWaTemplate);
+                    }
+                } else {
+                    $baseWaTemplate = $waTemplate;
+                }
+
+                $url = "https://wa.me/{$whatsappNumber}?text=".urlencode($baseWaTemplate);
+            } elseif ($this->bookingType === 'email' && $adminEmail) {
+                $url = "mailto:{$adminEmail}?subject=".rawurlencode($subjectTemplate).'&body='.rawurlencode($emailTemplate);
+            }
+
+            // Save Booking
+            $this->destination->bookings()->create([
+                'name' => $this->bookingForm['name'],
+                'email' => $this->bookingForm['email'],
+                'phone' => $this->bookingForm['phone'],
+                'travel_date' => $this->bookingForm['travel_date'],
+                'person' => $this->bookingForm['person'],
+                'city' => $this->bookingForm['city'],
+                'country' => $this->bookingForm['country'],
+                'type' => $this->bookingType,
+                'status' => 'pending',
+                'message' => $this->bookingForm['message'],
+            ]);
+
+            if ($url) {
+                $this->redirect($url, navigate: false);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('notify', variant: 'error', message: __('Validation failed. Please complete all required fields.'));
+            throw $e;
+        } catch (\Exception $e) {
+            $this->dispatch('notify', variant: 'error', message: __('Could not process inquiry: ').$e->getMessage());
         }
     }
 };
@@ -221,12 +235,18 @@ new #[Layout('components.layouts.public')] class extends Component {
                 
                 <!-- Trip Info (Visual Guide) -->
                 @if($destination->tripInfos->count() > 0)
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                         @foreach($destination->tripInfos as $info)
-                            <div class="p-4 rounded-xl bg-secondary/5 text-center hover:bg-secondary/10 transition-colors">
-                                 <p class="text-[10px] sm:text-xs uppercase tracking-widest text-secondary/60 mb-1.5">{{ $info->getTranslation('key') }}</p>
-                                 <p class="font-bold text-secondary text-base sm:text-lg leading-tight">{{ $info->getTranslation('value') }}</p>
-                            </div>
+                            @php
+                                $label = $info->getTranslation('label', useFallback: false);
+                                $value = $info->getTranslation('value', useFallback: false);
+                            @endphp
+                            @if($label && $value)
+                                <div class="p-4 rounded-2xl bg-secondary/5 border border-secondary/5 flex flex-col items-center text-center hover:bg-white hover:shadow-xl hover:border-primary/20 transition-all duration-300 group">
+                                     <p class="text-[10px] uppercase tracking-widest text-secondary/40 group-hover:text-secondary/60 mb-1 transition-colors">{{ $label }}</p>
+                                     <p class="font-extrabold text-secondary text-sm sm:text-base leading-tight">{{ $value }}</p>
+                                </div>
+                            @endif
                         @endforeach
                     </div>
                 @endif
@@ -269,21 +289,29 @@ new #[Layout('components.layouts.public')] class extends Component {
                 @if($destination->itineraryItems->count() > 0)
                     <div>
                          <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-8">{{ __('Itinerary') }}</h2>
-                         <div class="relative border-l border-secondary/20 ml-3 md:ml-4 my-8 md:my-10 space-y-0">
+                         <div class="relative border-l-2 border-primary/10 ml-3 md:ml-4 my-8 md:my-10 space-y-0">
                             @foreach($destination->itineraryItems as $index => $day)
-                                <div class="relative pl-8 md:pl-10 py-6 group first:pt-0 last:pb-0">
-                                    <span class="absolute -left-[5px] top-8 first:top-2 w-2.5 h-2.5 rounded-full bg-secondary group-hover:bg-primary group-hover:scale-150 transition-all duration-300 ring-4 ring-bg-light"></span>
-                                    
-                                    <div class="mb-3">
-                                        <span class="inline-block px-3 py-1 text-xs font-bold uppercase tracking-widest text-secondary/60 bg-secondary/5 rounded-md group-hover:text-primary group-hover:bg-primary/5 transition-colors">
-                                            {{ $day->getTranslation('title') ?? __('Day') . " " . $day->day_number }}
-                                        </span>
+                                @php
+                                    $title = $day->getTranslation('title', useFallback: false);
+                                    $description = $day->getTranslation('description', useFallback: false);
+                                @endphp
+                                @if($title || $description)
+                                    <div class="relative pl-8 md:pl-10 py-5 group first:pt-0 last:pb-0">
+                                        <span class="absolute -left-[9px] top-7 first:top-1 w-4 h-4 rounded-full bg-white border-2 border-primary/30 group-hover:border-primary group-hover:scale-110 transition-all duration-300 shadow-sm"></span>
+                                        
+                                        <div class="mb-2">
+                                            <span class="inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/5 rounded-full">
+                                                {{ $title ?? __('Day') . " " . $day->day_number }}
+                                            </span>
+                                        </div>
+                                        
+                                        @if($description)
+                                            <div class="text-secondary/70 text-base leading-relaxed group-hover:text-secondary transition-colors font-light">
+                                                {{ $description }}
+                                            </div>
+                                        @endif
                                     </div>
-                                    
-                                    <div class="prose prose-zinc max-w-none text-secondary/70 leading-relaxed group-hover:text-secondary/90 transition-colors">
-                                        {{ $day->getTranslation('description') }}
-                                    </div>
-                                </div>
+                                @endif
                             @endforeach
                         </div>
                     </div>
@@ -291,33 +319,43 @@ new #[Layout('components.layouts.public')] class extends Component {
 
                 <!-- Includes / Excludes -->
                 @if($destination->includeItems->count() > 0 || $destination->excludeItems->count() > 0)
-                    <div class="grid sm:grid-cols-2 gap-8">
+                    <div class="grid sm:grid-cols-2 gap-6 sm:gap-8">
                         @if($destination->includeItems->count() > 0)
-                            <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
-                                <h3 class="text-lg font-bold text-travel-green mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
-                                    <i class="material-icons text-lg">check_circle</i> {{ __("What's Included") }}
+                            <div class="bg-white p-6 rounded-2xl border border-secondary/5 shadow-xs">
+                                <h3 class="text-travel-green mb-5 flex items-center gap-2 uppercase tracking-[0.2em] text-[10px] font-extrabold">
+                                    <div class="w-6 h-6 rounded-full bg-travel-green/10 flex items-center justify-center">
+                                        <i class="material-icons text-xs">check</i>
+                                    </div>
+                                    {{ __("What's Included") }}
                                 </h3>
-                                <ul class="space-y-4">
+                                <ul class="space-y-2">
                                     @foreach($destination->includeItems as $item)
-                                        <li class="flex items-start gap-3 text-secondary/70 text-sm">
-                                            <i class="material-icons text-travel-green text-sm mt-0.5">check</i>
-                                            <span>{{ $item->getTranslation('name') }}</span>
-                                        </li>
+                                        @php $label = $item->getTranslation('label', useFallback: false); @endphp
+                                        @if($label)
+                                            <li class="flex items-start gap-2 text-secondary/60 text-sm font-medium">
+                                                <span class="text-travel-green font-bold">✓</span>
+                                                <span>{{ $label }}</span>
+                                            </li>
+                                        @endif
                                     @endforeach
                                 </ul>
                             </div>
                         @endif
                         @if($destination->excludeItems->count() > 0)
-                            <div class="bg-white p-6 sm:p-8 rounded-xl border border-secondary/5">
-                                <h3 class="text-lg font-bold text-red-500 mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
-                                    <i class="material-icons text-lg">cancel</i> {{ __("What's Excluded") }}
+                            <div class="bg-white p-6 rounded-2xl border border-secondary/5 shadow-xs">
+                                <h3 class="text-red-500 mb-5 flex items-center gap-2 uppercase tracking-[0.2em] text-[10px] font-extrabold">
+                                    <i class="material-icons text-xs">close</i>
+                                    {{ __("What's Excluded") }}
                                 </h3>
-                                <ul class="space-y-4">
+                                <ul class="space-y-2">
                                     @foreach($destination->excludeItems as $item)
-                                        <li class="flex items-start gap-3 text-secondary/70 text-sm">
-                                            <i class="material-icons text-red-500 text-sm mt-0.5">close</i>
-                                            <span>{{ $item->getTranslation('name') }}</span>
-                                        </li>
+                                        @php $label = $item->getTranslation('label', useFallback: false); @endphp
+                                        @if($label)
+                                            <li class="flex items-start gap-2 text-secondary/60 text-sm font-medium">
+                                                <span class="text-red-500/50 font-bold">✕</span>
+                                                <span>{{ $label }}</span>
+                                            </li>
+                                        @endif
                                     @endforeach
                                 </ul>
                             </div>
@@ -331,19 +369,25 @@ new #[Layout('components.layouts.public')] class extends Component {
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-6">{{ __('Common Questions') }}</h2>
                         <div class="space-y-4" x-data="{ openFaq: null }">
                             @foreach($destination->faqs as $index => $item)
-                                <div class="bg-white rounded-xl border border-secondary/5 overflow-hidden transition-all duration-300" :class="{ 'shadow-lg border-primary/20': openFaq === {{ $index }} }">
-                                    <button type="button" @click="openFaq = openFaq === {{ $index }} ? null : {{ $index }}" class="w-full flex items-center justify-between p-5 text-left group">
-                                        <span class="font-bold text-secondary group-hover:text-primary transition-colors pr-4">{{ $item->getTranslation('question') }}</span>
-                                        <div class="w-8 h-8 rounded-full bg-secondary/5 flex items-center justify-center text-secondary/50 group-hover:bg-primary group-hover:text-white transition-all shrink-0">
-                                            <i class="material-icons transition-transform duration-300" :class="{ 'rotate-180': openFaq === {{ $index }} }">keyboard_arrow_down</i>
-                                        </div>
-                                    </button>
-                                    <div x-show="openFaq === {{ $index }}" x-collapse>
-                                        <div class="px-5 pb-5 text-secondary/70 leading-relaxed border-t border-secondary/5 pt-4">
-                                            {!! nl2br(e($item->getTranslation('answer'))) !!}
+                                @php
+                                    $question = $item->getTranslation('question', useFallback: false);
+                                    $answer = $item->getTranslation('answer', useFallback: false);
+                                @endphp
+                                @if($question && $answer)
+                                    <div class="bg-white rounded-xl border border-secondary/5 overflow-hidden transition-all duration-300" :class="{ 'shadow-lg border-primary/20': openFaq === {{ $index }} }">
+                                        <button type="button" @click="openFaq = openFaq === {{ $index }} ? null : {{ $index }}" class="w-full flex items-center justify-between p-5 text-left group">
+                                            <span class="font-bold text-secondary group-hover:text-primary transition-colors pr-4">{{ $question }}</span>
+                                            <div class="w-8 h-8 rounded-full bg-secondary/5 flex items-center justify-center text-secondary/50 group-hover:bg-primary group-hover:text-white transition-all shrink-0">
+                                                <i class="material-icons transition-transform duration-300" :class="{ 'rotate-180': openFaq === {{ $index }} }">keyboard_arrow_down</i>
+                                            </div>
+                                        </button>
+                                        <div x-show="openFaq === {{ $index }}" x-collapse>
+                                            <div class="px-5 pb-5 text-secondary/70 leading-relaxed border-t border-secondary/5 pt-4">
+                                                {!! nl2br(e($answer)) !!}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
                             @endforeach
                         </div>
                     </div>
@@ -479,86 +523,143 @@ new #[Layout('components.layouts.public')] class extends Component {
     {{-- Booking Form Modal --}}
     <div x-data="{ open: @entangle('showBookingForm') }" 
          x-show="open" 
-         x-transition.opacity
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-         style="display: none;">
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[300] flex items-center justify-center p-4 sm:p-6 bg-secondary/40 backdrop-blur-xl"
+         style="display: none;"
+         x-cloak>
          
-        <div @click.away="open = false; $wire.set('showBookingForm', false)" class="bg-slate-50 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <h3 class="text-lg font-bold text-secondary">{{ __('Complete Your Booking') }}</h3>
-                <button type="button" @click="open = false; $wire.set('showBookingForm', false)" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="material-icons">close</i>
-                </button>
+        <div @click.away="open = false; $wire.set('showBookingForm', false)" 
+             class="bg-white rounded-[2.5rem] w-full max-w-xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.4)] relative animate-in fade-in zoom-in duration-300 border border-white/20">
+            
+            {{-- Modal Header --}}
+            <div class="relative px-8 py-10 bg-secondary group overflow-hidden">
+                {{-- Decorative Elements --}}
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-3xl transition-transform duration-700 group-hover:scale-150"></div>
+                <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl transition-transform duration-700 group-hover:scale-150 delay-150"></div>
+                
+                <div class="relative z-10 flex justify-between items-start">
+                    <div class="space-y-1">
+                        <span class="text-primary font-bold uppercase tracking-[0.3em] text-[10px]">{{ __('Plan Your Journey') }}</span>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                            {{ $bookingType === 'whatsapp' ? __('WhatsApp Inquiry') : __('Email Inquiry') }}
+                        </h3>
+                        <p class="text-white/50 text-sm font-medium">For: <span class="text-white">{{ $bookingForm['destination'] }}</span></p>
+                    </div>
+                    <button type="button" @click="open = false; $wire.set('showBookingForm', false)" class="size-10 flex items-center justify-center rounded-full bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all">
+                        <i class="material-icons text-xl">close</i>
+                    </button>
+                </div>
             </div>
             
-            <form wire:submit="submitBooking" class="p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
-                <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Destination') }}</label>
-                    <input type="text" wire:model="bookingForm.destination" readonly class="w-full rounded-xl border-2 border-gray-200 bg-gray-100 text-gray-500 font-bold focus:ring-0 cursor-not-allowed px-4 py-3">
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Full Name') }} <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="bookingForm.name" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="{{ __('E.g. John Doe') }}">
-                        @error('bookingForm.name') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
+            <form wire:submit="submitBooking" class="p-8 sm:p-10 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                {{-- User Details Section --}}
+                <div class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('Full Name') }} <span class="text-primary">*</span></label>
+                            <div class="relative">
+                                <input type="text" wire:model.blur="bookingForm.name" class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold placeholder:text-secondary/20 px-5 py-4 transition-all" placeholder="{{ __('e.g. John Doe') }}">
+                                <i class="material-icons absolute right-5 top-1/2 -translate-y-1/2 text-secondary/20 text-lg">person</i>
+                            </div>
+                            @error('bookingForm.name') <span class="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-1">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('Phone Number') }} <span class="text-primary">*</span></label>
+                            <div class="relative">
+                                <input type="text" 
+                                    wire:model.blur="bookingForm.phone" 
+                                    x-on:input="$el.value = $el.value.replace(/[^0-9+]/g, '')"
+                                    class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold placeholder:text-secondary/20 px-5 py-4 transition-all" 
+                                    placeholder="+62..."
+                                >
+                                <i class="material-icons absolute right-5 top-1/2 -translate-y-1/2 text-secondary/20 text-lg">phone</i>
+                            </div>
+                            @error('bookingForm.phone') <span class="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-1">{{ $message }}</span> @enderror
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Phone Number') }} <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="bookingForm.phone" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="+62...">
-                        @error('bookingForm.phone') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('Email Address') }} <span class="text-primary">*</span></label>
+                        <div class="relative">
+                            <input type="email" wire:model.blur="bookingForm.email" class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold placeholder:text-secondary/20 px-5 py-4 transition-all" placeholder="you@example.com">
+                            <i class="material-icons absolute right-5 top-1/2 -translate-y-1/2 text-secondary/20 text-lg">mail</i>
+                        </div>
+                        @error('bookingForm.email') <span class="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-1">{{ $message }}</span> @enderror
                     </div>
-                </div>
 
-                <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Email Address') }} <span class="text-red-500">*</span></label>
-                    <input type="email" wire:model="bookingForm.email" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="you@example.com">
-                    @error('bookingForm.email') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Travel Date') }} <span class="text-red-500">*</span></label>
-                    <input type="date" wire:model="bookingForm.travel_date" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3">
-                    @error('bookingForm.travel_date') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="grid grid-cols-3 gap-5">
-                    <div class="col-span-1">
-                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Pax') }} <span class="text-red-500">*</span></label>
-                        <input type="number" wire:model="bookingForm.person" min="1" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3">
-                        @error('bookingForm.person') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('Travel Date') }} <span class="text-primary">*</span></label>
+                            <div class="relative">
+                                <input type="date" wire:model.blur="bookingForm.travel_date" class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold px-5 py-4 transition-all">
+                                <i class="material-icons absolute right-5 top-1/2 -translate-y-1/2 text-secondary/20 text-lg">calendar_today</i>
+                            </div>
+                            @error('bookingForm.travel_date') <span class="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-1">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('Guest Count') }} <span class="text-primary">*</span></label>
+                            <div class="relative">
+                                <input type="number" wire:model.blur="bookingForm.person" min="1" class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold px-5 py-4 transition-all">
+                                <i class="material-icons absolute right-5 top-1/2 -translate-y-1/2 text-secondary/20 text-lg">group</i>
+                            </div>
+                            @error('bookingForm.person') <span class="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-1">{{ $message }}</span> @enderror
+                        </div>
                     </div>
-                    <div class="col-span-2">
-                        <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('City') }} <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="bookingForm.city" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="Jakarta">
-                        @error('bookingForm.city') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('City') }} <span class="text-primary">*</span></label>
+                            <input type="text" wire:model.blur="bookingForm.city" class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold placeholder:text-secondary/20 px-5 py-4 transition-all" placeholder="e.g. Jakarta">
+                            @error('bookingForm.city') <span class="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-1">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('Country') }} <span class="text-primary">*</span></label>
+                            <select wire:model.blur="bookingForm.country" class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold px-5 py-4 transition-all appearance-none">
+                                <option value="">{{ __('Select your country') }}</option>
+                                @foreach(config('countries') as $country)
+                                    <option value="{{ $country }}">{{ $country }}</option>
+                                @endforeach
+                            </select>
+                            @error('bookingForm.country') <span class="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-1">{{ $message }}</span> @enderror
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Country') }} <span class="text-red-500">*</span></label>
-                    <select wire:model="bookingForm.country" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold px-4 py-3">
-                        <option value="">{{ __('Select your country') }}</option>
-                        @foreach(config('countries') as $country)
-                            <option value="{{ $country }}">{{ $country }}</option>
-                        @endforeach
-                    </select>
-                    @error('bookingForm.country') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm font-extrabold text-secondary mb-2">{{ __('Special Message') }}</label>
-                    <textarea wire:model="bookingForm.message" rows="3" class="w-full rounded-xl border-2 border-gray-300 focus:border-primary focus:ring-primary/20 bg-white text-secondary font-bold placeholder:text-gray-400 px-4 py-3" placeholder="{{ __('Any special requests or questions?') }}"></textarea>
-                    @error('bookingForm.message') <span class="text-red-600 text-xs mt-1 block font-bold">{{ $message }}</span> @enderror
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-secondary/40 uppercase tracking-widest pl-1">{{ __('Special Requests') }}</label>
+                        <textarea wire:model.blur="bookingForm.message" rows="3" class="w-full rounded-2xl border-secondary/5 bg-secondary/5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 text-secondary font-bold placeholder:text-secondary/20 px-5 py-4 transition-all" placeholder="{{ __('Tell us more about your ideal vacation...') }}"></textarea>
+                    </div>
                 </div>
                 
                 <div class="pt-6">
-                    <button type="submit" class="w-full bg-primary text-white font-bold uppercase tracking-widest py-4 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transform active:scale-95">
-                        <span>{{ __('Proceed to') }}</span>
-                        <span x-text="$wire.bookingType === 'whatsapp' ? 'WhatsApp' : 'Email'"></span>
-                        <i class="material-icons text-sm">arrow_forward</i>
+                    <button type="submit" wire:loading.attr="disabled" class="group relative w-full h-16 sm:h-20 bg-secondary text-white rounded-2xl overflow-hidden transition-all hover:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.2)] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed">
+                        <div class="absolute inset-0 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        {{-- Regular State --}}
+                        <div wire:loading.remove class="relative z-10 flex items-center justify-center gap-3">
+                            <span class="font-bold uppercase tracking-[0.2em] text-xs sm:text-sm">
+                                {{ __('Proceed to') }} <span x-text="$wire.bookingType === 'whatsapp' ? 'WhatsApp' : 'Email'"></span>
+                            </span>
+                            <i class="material-icons group-hover:translate-x-1 transition-transform">arrow_forward</i>
+                        </div>
+
+                        {{-- Loading State --}}
+                        <div wire:loading.flex class="hidden relative z-10 items-center justify-center gap-3">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="font-bold uppercase tracking-[0.2em] text-xs sm:text-sm">{{ __('Processing...') }}</span>
+                        </div>
                     </button>
-                    <p class="text-center text-xs text-secondary/60 mt-4">{{ __('You will be redirected to complete your request securely.') }}</p>
+                    <div class="mt-6 flex items-center justify-center gap-3 text-secondary/40">
+                        <i class="material-icons text-sm">verified_user</i>
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest">{{ __('Your information is secure and private') }}</span>
+                    </div>
                 </div>
             </form>
         </div>

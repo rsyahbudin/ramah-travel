@@ -13,6 +13,8 @@ class DestinationItem extends Model
 
     protected $guarded = ['id'];
 
+    protected array $translatable = ['label'];
+
     /** @return BelongsTo<Destination, $this> */
     public function destination(): BelongsTo
     {

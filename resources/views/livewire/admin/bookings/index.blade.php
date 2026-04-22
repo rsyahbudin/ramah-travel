@@ -33,7 +33,7 @@ new class extends Component {
         $bookings = $this->getFilteredQuery()->get();
         $filename = 'bookings-' . now()->format('Y-m-d-His') . '.csv';
 
-        $columns = ['ID', 'Date', 'Travel Date', 'Customer', 'Email', 'Phone', 'City', 'Country', 'Destination', 'Pax', 'Type', 'Status', 'Message'];
+        $columns = ['ID', 'Date', 'Travel Date', 'Customer', 'Email', 'Phone', 'City', 'Country', 'Destination', 'Pax', 'Type', 'Message'];
 
         $callback = function() use ($bookings, $columns) {
             $file = fopen('php://output', 'w');
@@ -52,7 +52,6 @@ new class extends Component {
                     $booking->destination->title,
                     $booking->person,
                     $booking->type,
-                    $booking->status ?? 'pending',
                     $booking->message,
                 ]);
             }

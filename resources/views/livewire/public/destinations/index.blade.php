@@ -25,8 +25,8 @@ new #[Layout('components.layouts.public')] class extends Component {
             'whatsapp_number' => Setting::where('key', 'whatsapp_number')->value('value'),
             'hero' => [
                 'label' => $heroSection?->meta['label'][$locale] ?? ($heroSection?->meta['label']['en'] ?? 'Curated Selection'),
-                'title' => $heroSection?->getTranslation('heading') ?? $page?->getTranslation('title') ?? __('Our Destinations'),
-                'subtitle' => $heroSection?->getTranslation('body') ?? __("Discover handpicked journeys crafted for the world's most discerning travelers."),
+                'title' => $heroSection?->getTranslation('title') ?? $page?->getTranslation('title') ?? __('Our Destinations'),
+                'subtitle' => $heroSection?->getTranslation('content') ?? __("Discover handpicked journeys crafted for the world's most discerning travelers."),
             ]
         ];
     }

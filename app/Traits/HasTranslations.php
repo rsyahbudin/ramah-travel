@@ -18,6 +18,102 @@ use Illuminate\Support\Facades\App;
 trait HasTranslations
 {
     /**
+     * Buffer for translations to be saved.
+     */
+    protected array $translationBuffer = [];
+
+    /**
+     * Boot the trait and hook into Eloquent events.
+     */
+    /**
+     * Boot the trait and hook into Eloquent events.
+     */
+    protected static function bootHasTranslations(): void
+    {
+        static::saving(function ($model) {
+            foreach ($model->getTranslatableFields() as $field) {
+                if (array_key_exists($field, $model->attributes)) {
+                    $value = $model->attributes[$field];
+
+                    if (is_array($value)) {
+                        // Move from attributes to buffer
+                        foreach ($value as $locale => $translationValue) {
+                            $model->translationBuffer[$locale][$field] = $translationValue;
+                        }
+                        unset($model->attributes[$field]);
+                    }
+                }
+            }
+        });
+
+        static::saved(function ($model) {
+            if (! empty($model->translationBuffer)) {
+                $model->syncTranslations($model->translationBuffer);
+                $model->translationBuffer = [];
+
+                // Clear the relations so they are reloaded from DB
+                $model->refreshTranslations();
+            }
+        });
+    }
+
+    /**
+     * Get translatable fields for the model.
+     */
+    public function getTranslatableFields(): array
+    {
+        return $this->translatable ?? [];
+    }
+
+    /**
+     * Override fill to capture translatable fields that might not be columns.
+     */
+    public function fill(array $attributes)
+    {
+        foreach ($this->getTranslatableFields() as $field) {
+            if (array_key_exists($field, $attributes)) {
+                $this->setAttribute($field, $attributes[$field]);
+                unset($attributes[$field]);
+            }
+        }
+
+        return parent::fill($attributes);
+    }
+
+    /**
+     * Override getAttribute to handle translatable fields.
+     */
+    public function getAttribute($key)
+    {
+        if (in_array($key, $this->getTranslatableFields())) {
+            return $this->getTranslation($key);
+        }
+
+        return parent::getAttribute($key);
+    }
+
+    /**
+     * Override setAttribute to handle translatable fields.
+     */
+    public function setAttribute($key, $value)
+    {
+        if (isset($this->translatable) && in_array($key, $this->translatable)) {
+            if (is_array($value)) {
+                // value is [locale => translation_value]
+                foreach ($value as $locale => $translationValue) {
+                    if (!isset($this->translationBuffer[$locale])) {
+                        $this->translationBuffer[$locale] = [];
+                    }
+                    $this->translationBuffer[$locale][$key] = $translationValue;
+                }
+                return $this;
+            }
+        }
+
+        return parent::setAttribute($key, $value);
+    }
+
+    /**
      * Get all translations for this model.
      *
      * @return HasMany<\Illuminate\Database\Eloquent\Model, $this>
@@ -49,31 +145,39 @@ trait HasTranslations
     }
 
     /**
-     * Get a translated field value for the active locale with fallback.
+     * Get translation for a specific field.
      */
-    public function getTranslation(string $field, ?string $locale = null): ?string
+    public function getTranslation(string $field, ?string $locale = null, bool $useFallback = true)
     {
+        $this->loadMissing('translations.language');
         $locale ??= App::getLocale();
 
-        $translation = $this->translations
-            ->first(fn ($t) => $t->language?->code === $locale);
+        // 1. Try specified locale
+        $translation = $this->translations->first(function ($t) use ($locale) {
+            return $t->language && $t->language->code === $locale;
+        });
 
-        if ($translation && isset($translation->$field)) {
+        if ($translation && isset($translation->$field) && $translation->$field !== '') {
             return $translation->$field;
         }
 
-        // Fallback: try English
-        $fallback = $this->translations
-            ->first(fn ($t) => $t->language?->code === 'en');
-
-        if ($fallback && isset($fallback->$field)) {
-            return $fallback->$field;
+        if (!$useFallback) {
+            return null;
         }
 
-        // Last resort: first available translation
-        $first = $this->translations->first();
+        // 2. Fallback to English
+        if ($locale !== 'en') {
+            $fallback = $this->translations->first(function ($t) {
+                return $t->language && $t->language->code === 'en';
+            });
 
-        return $first?->$field ?? null;
+            if ($fallback && isset($fallback->$field) && $fallback->$field !== '') {
+                return $fallback->$field;
+            }
+        }
+
+        // 3. Last resort: return the first available translation
+        return $this->translations->first()->$field ?? null;
     }
 
     /**
@@ -83,6 +187,8 @@ trait HasTranslations
      */
     public function getTranslations(string $field): array
     {
+        $this->loadMissing('translations.language');
+
         return $this->translations->mapWithKeys(
             fn ($t) => [$t->language?->code ?? $t->language_id => $t->$field]
         )->toArray();
@@ -95,21 +201,37 @@ trait HasTranslations
      */
     public function syncTranslations(array $translationsData): void
     {
-        $languages = Language::whereIn('code', array_keys($translationsData))
-            ->where('is_active', true)
-            ->get()
-            ->keyBy('code');
+        \Illuminate\Support\Facades\DB::transaction(function () use ($translationsData) {
+            foreach ($translationsData as $code => $fields) {
+                // Ensure the language exists
+                $language = Language::where('code', $code)->first();
 
-        foreach ($translationsData as $code => $fields) {
-            if (! isset($languages[$code])) {
-                continue;
+                if (! $language) {
+                    continue;
+                }
+
+                // Security: Filter out any fields that are not explicitly marked as translatable
+                $translatableFields = $this->getTranslatableFields();
+                $dataToSave = array_intersect_key($fields, array_flip($translatableFields));
+
+                if (! empty($dataToSave)) {
+                    $this->translations()->updateOrCreate(
+                        ['language_id' => $language->id],
+                        $dataToSave
+                    );
+                }
             }
+        });
+    }
 
-            $this->translations()->updateOrCreate(
-                ['language_id' => $languages[$code]->id],
-                $fields
-            );
-        }
+    /**
+     * Clear translation relation cache and reload.
+     */
+    public function refreshTranslations(): self
+    {
+        $this->unsetRelation('translations');
+        $this->unsetRelation('translation');
+        return $this;
     }
 
     /**

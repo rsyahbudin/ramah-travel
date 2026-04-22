@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use App\Traits\HasTranslations;
+use App\Traits\HasTranslatedMeta;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PageSection extends Model
 {
-    use HasTranslations;
+    use HasTranslations, HasTranslatedMeta;
 
     protected $guarded = ['id'];
+
+    protected array $translatable = ['title', 'subtitle', 'content', 'cta_text'];
 
     protected function casts(): array
     {

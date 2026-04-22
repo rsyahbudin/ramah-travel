@@ -13,6 +13,8 @@ class Destination extends Model
 
     protected $guarded = ['id'];
 
+    protected array $translatable = ['title', 'location', 'duration', 'theme', 'description', 'highlights'];
+
     protected function casts(): array
     {
         return [

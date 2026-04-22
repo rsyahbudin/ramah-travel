@@ -118,8 +118,18 @@
 
         <!-- Alpine Toast Notification -->
         <div
-            x-data="{ show: false, message: '' }"
-            x-on:notify.window="show = true; message = $event.detail.message; setTimeout(() => show = false, 3000)"
+            x-data="{ 
+                show: false, 
+                message: '', 
+                variant: 'success',
+                showToast(detail) {
+                    this.message = detail.message;
+                    this.variant = detail.variant || 'success';
+                    this.show = true;
+                    setTimeout(() => this.show = false, 5000);
+                }
+            }"
+            x-on:notify.window="showToast($event.detail)"
             x-show="show"
             x-transition:enter="transition ease-out duration-300 transform"
             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -128,13 +138,64 @@
             x-transition:leave-start="opacity-100 sm:scale-100"
             x-transition:leave-end="opacity-0 sm:scale-95"
             style="display: none;"
-            class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-lg bg-zinc-900 px-4 py-3 text-white shadow-xl dark:bg-white dark:text-zinc-900"
+            :class="{
+                'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-zinc-900/10': variant === 'success',
+                'bg-red-600 text-white shadow-red-600/20': variant === 'error',
+                'bg-amber-500 text-white shadow-amber-500/20': variant === 'warning'
+            }"
+            class="fixed bottom-6 right-6 z-[60] flex items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl min-w-[320px] max-w-md border border-white/10"
         >
-            <svg class="h-5 w-5 text-green-400 dark:text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p class="text-sm font-medium" x-text="message"></p>
+            <template x-if="variant === 'success'">
+                <div class="flex items-center justify-center size-8 rounded-full bg-green-500/20 text-green-400">
+                    <i class="material-icons text-xl">check_circle</i>
+                </div>
+            </template>
+            <template x-if="variant === 'error'">
+                <div class="flex items-center justify-center size-8 rounded-full bg-white/20 text-white">
+                    <i class="material-icons text-xl">error</i>
+                </div>
+            </template>
+            <template x-if="variant === 'warning'">
+                <div class="flex items-center justify-center size-8 rounded-full bg-white/20 text-white">
+                    <i class="material-icons text-xl">warning</i>
+                </div>
+            </template>
+
+            <div class="flex-1">
+                <p class="text-sm font-extrabold uppercase tracking-widest opacity-60" x-text="variant === 'error' ? '{{ __('Error') }}' : (variant === 'warning' ? '{{ __('Attention') }}' : '{{ __('Success') }}')"></p>
+                <p class="text-sm font-medium leading-tight mt-0.5" x-text="message"></p>
+            </div>
+            
+            <button @click="show = false" class="size-8 flex items-center justify-center rounded-lg hover:bg-black/10 transition-colors">
+                <i class="material-icons text-lg opacity-50">close</i>
+            </button>
         </div>
+
+        <script>
+            document.addEventListener('livewire:initialized', () => {
+                Livewire.hook('request', ({ fail }) => {
+                    fail(({ status, content, preventDefault }) => {
+                        if (status === 422) {
+                            // Validation error handled internally by components
+                            // but we can also trigger a global simple toast
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    variant: 'error',
+                                    message: '{{ __('Please correct the errors in the form.') }}'
+                                }
+                            }));
+                        } else {
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    variant: 'error',
+                                    message: '{{ __('An unexpected error occurred. Please try again.') }}'
+                                }
+                            }));
+                        }
+                    })
+                })
+            })
+        </script>
 
         @fluxScripts
     </body>

@@ -13,6 +13,8 @@ class DestinationTripInfo extends Model
 
     protected $guarded = ['id'];
 
+    protected array $translatable = ['label', 'value'];
+
     /** @return BelongsTo<Destination, $this> */
     public function destination(): BelongsTo
     {

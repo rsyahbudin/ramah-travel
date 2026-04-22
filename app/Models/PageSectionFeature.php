@@ -13,6 +13,8 @@ class PageSectionFeature extends Model
 
     protected $guarded = ['id'];
 
+    protected array $translatable = ['title', 'description'];
+
     /** @return BelongsTo<PageSection, $this> */
     public function pageSection(): BelongsTo
     {

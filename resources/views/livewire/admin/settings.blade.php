@@ -52,72 +52,80 @@ new class extends Component {
 
     public function save(): void
     {
-        $this->validate([
-            'site_name' => 'required|string|max:100',
-            'logo_image' => 'nullable|image|max:2048',
-            'logo_white' => 'nullable|image|max:2048',
-            'whatsapp_number' => 'nullable|string|max:20',
-            'admin_email' => 'nullable|email|max:255',
-            'footer_text.en' => 'nullable|string|max:500',
-            'footer_text.id' => 'nullable|string|max:500',
-            'footer_text.es' => 'nullable|string|max:500',
-            'social_instagram' => 'nullable|url|max:255',
-            'social_facebook' => 'nullable|url|max:255',
-            'social_twitter' => 'nullable|url|max:255',
-            'social_youtube' => 'nullable|url|max:255',
-            'social_tiktok' => 'nullable|url|max:255',
-        ]);
+        try {
+            $this->validate([
+                'site_name' => 'required|string|max:100',
+                'logo_image' => 'nullable|image|max:2048',
+                'logo_white' => 'nullable|image|max:2048',
+                'whatsapp_number' => 'nullable|string|max:20',
+                'admin_email' => 'nullable|email|max:255',
+                'footer_text.en' => 'nullable|string|max:500',
+                'footer_text.id' => 'nullable|string|max:500',
+                'footer_text.es' => 'nullable|string|max:500',
+                'social_instagram' => 'nullable|url|max:255',
+                'social_facebook' => 'nullable|url|max:255',
+                'social_twitter' => 'nullable|url|max:255',
+                'social_youtube' => 'nullable|url|max:255',
+                'social_tiktok' => 'nullable|url|max:255',
+            ]);
 
-        // Save simple text settings
-        $simpleSettings = [
-            'site_name' => $this->site_name,
-            'whatsapp_number' => $this->whatsapp_number,
-            'admin_email' => $this->admin_email,
-            'social_instagram' => $this->social_instagram,
-            'social_facebook' => $this->social_facebook,
-            'social_twitter' => $this->social_twitter,
-            'social_youtube' => $this->social_youtube,
-            'social_tiktok' => $this->social_tiktok,
-        ];
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                // Save simple text settings
+                $simpleSettings = [
+                    'site_name' => $this->site_name,
+                    'whatsapp_number' => $this->whatsapp_number,
+                    'admin_email' => $this->admin_email,
+                    'social_instagram' => $this->social_instagram,
+                    'social_facebook' => $this->social_facebook,
+                    'social_twitter' => $this->social_twitter,
+                    'social_youtube' => $this->social_youtube,
+                    'social_tiktok' => $this->social_tiktok,
+                ];
 
-        foreach ($simpleSettings as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['type' => 'text', 'value' => $value ?? '']);
+                foreach ($simpleSettings as $key => $value) {
+                    Setting::updateOrCreate(['key' => $key], ['type' => 'text', 'value' => $value ?? '']);
+                }
+
+                // Save translatable settings
+                $footerTextSetting = Setting::firstOrCreate(['key' => 'footer_text'], ['type' => 'translatable']);
+                
+                $footerTranslations = [];
+                foreach (['en', 'id', 'es'] as $locale) {
+                    $footerTranslations[$locale] = ['value' => $this->footer_text[$locale] ?? ''];
+                }
+                $footerTextSetting->syncTranslations($footerTranslations);
+
+                // Save images
+                if ($this->logo_image) {
+                    if ($this->existing_logo_image) {
+                        Storage::disk('public')->delete($this->existing_logo_image);
+                    }
+                    $path = $this->logo_image->store('settings', 'public');
+                    Setting::updateOrCreate(['key' => 'logo_image'], ['type' => 'text', 'value' => $path]);
+                    $this->existing_logo_image = $path;
+                    $this->logo_image = null;
+                }
+
+                if ($this->logo_white) {
+                    if ($this->existing_logo_white) {
+                        Storage::disk('public')->delete($this->existing_logo_white);
+                    }
+                    $path = $this->logo_white->store('settings', 'public');
+                    Setting::updateOrCreate(['key' => 'logo_white'], ['type' => 'text', 'value' => $path]);
+                    $this->existing_logo_white = $path;
+                    $this->logo_white = null;
+                }
+            });
+            
+            $this->dispatch('notify', message: __('Changes saved successfully.'));
+            $this->dispatch('settings-saved');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('notify', variant: 'error', message: __('Validation failed. Please check the fields.'));
+            throw $e;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Settings save error: ' . $e->getMessage());
+            $this->dispatch('notify', variant: 'error', message: __('An error occurred while saving: ') . $e->getMessage());
         }
-
-        // Save translatable settings
-        $footerTextSetting = Setting::firstOrCreate(['key' => 'footer_text'], ['type' => 'translatable']);
-        
-        $footerTranslations = [];
-        foreach (['en', 'id', 'es'] as $locale) {
-            if (trim((string) ($this->footer_text[$locale] ?? '')) !== '') {
-                $footerTranslations[$locale] = $this->footer_text[$locale];
-            }
-        }
-        $footerTextSetting->syncTranslations($footerTranslations);
-
-        // Save images
-        if ($this->logo_image) {
-            if ($this->existing_logo_image) {
-                Storage::disk('public')->delete($this->existing_logo_image);
-            }
-            $path = $this->logo_image->store('settings', 'public');
-            Setting::updateOrCreate(['key' => 'logo_image'], ['type' => 'text', 'value' => $path]);
-            $this->existing_logo_image = $path;
-            $this->logo_image = null;
-        }
-
-        if ($this->logo_white) {
-            if ($this->existing_logo_white) {
-                Storage::disk('public')->delete($this->existing_logo_white);
-            }
-            $path = $this->logo_white->store('settings', 'public');
-            Setting::updateOrCreate(['key' => 'logo_white'], ['type' => 'text', 'value' => $path]);
-            $this->existing_logo_white = $path;
-            $this->logo_white = null;
-        }
-        
-        $this->dispatch('notify', message: __('Changes saved successfully.'));
-        $this->dispatch('settings-saved');
     }
 };
 ?>

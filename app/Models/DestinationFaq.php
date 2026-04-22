@@ -13,6 +13,8 @@ class DestinationFaq extends Model
 
     protected $guarded = ['id'];
 
+    protected array $translatable = ['question', 'answer'];
+
     /** @return BelongsTo<Destination, $this> */
     public function destination(): BelongsTo
     {

@@ -9,7 +9,13 @@ new class extends Component {
 
     public function delete(Destination $destination)
     {
-        $destination->delete();
+        try {
+            $destination->delete();
+            $this->dispatch('notify', message: __('Destination deleted successfully.'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Destination delete error: ' . $e->getMessage());
+            $this->dispatch('notify', variant: 'error', message: __('Could not delete destination: ') . $e->getMessage());
+        }
     }
 
     public function with(): array

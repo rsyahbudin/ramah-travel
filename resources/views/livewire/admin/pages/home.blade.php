@@ -17,6 +17,7 @@ new class extends Component {
     public array $hero_subtitle = ['en' => '', 'id' => '', 'es' => ''];
     public array $hero_label = ['en' => '', 'id' => '', 'es' => ''];
     public array $hero_cta_text = ['en' => '', 'id' => '', 'es' => ''];
+    public array $hero_secondary_cta_text = ['en' => '', 'id' => '', 'es' => ''];
     public string $hero_cta_link = '';
     public $hero_bg_image;
     public $existing_hero_bg_image;
@@ -27,6 +28,7 @@ new class extends Component {
     public array $about_label = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_stat_number = ['en' => '', 'id' => '', 'es' => ''];
     public array $about_stat_text = ['en' => '', 'id' => '', 'es' => ''];
+    public array $about_cta_text = ['en' => '', 'id' => '', 'es' => ''];
     public $about_image;
     public $existing_about_image;
 
@@ -42,6 +44,8 @@ new class extends Component {
     // CTA Section
     public array $cta_title = ['en' => '', 'id' => '', 'es' => ''];
     public array $cta_subtitle = ['en' => '', 'id' => '', 'es' => ''];
+    public array $cta_primary_text = ['en' => '', 'id' => '', 'es' => ''];
+    public array $cta_secondary_text = ['en' => '', 'id' => '', 'es' => ''];
     public $cta_bg_image;
     public $existing_cta_bg_image;
 
@@ -63,25 +67,29 @@ new class extends Component {
         $this->existing_cta_bg_image = $cta?->meta['bg_image'] ?? null;
 
         foreach (['en', 'id', 'es'] as $locale) {
-            $this->hero_title[$locale] = $hero?->getTranslation('heading', $locale) ?? '';
-            $this->hero_subtitle[$locale] = $hero?->getTranslation('body', $locale) ?? '';
+            $this->hero_title[$locale] = $hero?->getTranslation('title', $locale) ?? '';
+            $this->hero_subtitle[$locale] = $hero?->getTranslation('content', $locale) ?? '';
             $this->hero_label[$locale] = $hero?->meta['label'][$locale] ?? '';
             $this->hero_cta_text[$locale] = $hero?->meta['cta_text'][$locale] ?? '';
+            $this->hero_secondary_cta_text[$locale] = $hero?->meta['cta_secondary_text'][$locale] ?? '';
 
-            $this->about_title[$locale] = $about?->getTranslation('heading', $locale) ?? '';
-            $this->about_content[$locale] = $about?->getTranslation('body', $locale) ?? '';
+            $this->about_title[$locale] = $about?->getTranslation('title', $locale) ?? '';
+            $this->about_content[$locale] = $about?->getTranslation('content', $locale) ?? '';
             $this->about_label[$locale] = $about?->meta['label'][$locale] ?? '';
             $this->about_stat_number[$locale] = $about?->meta['stat_number'][$locale] ?? '';
             $this->about_stat_text[$locale] = $about?->meta['stat_text'][$locale] ?? '';
+            $this->about_cta_text[$locale] = $about?->meta['cta_text'][$locale] ?? '';
 
-            $this->destination_title[$locale] = $destinations?->getTranslation('heading', $locale) ?? '';
+            $this->destination_title[$locale] = $destinations?->getTranslation('title', $locale) ?? '';
             $this->destination_label[$locale] = $destinations?->meta['label'][$locale] ?? '';
 
-            $this->experience_tiers_title[$locale] = $tiers?->getTranslation('heading', $locale) ?? '';
+            $this->experience_tiers_title[$locale] = $tiers?->getTranslation('title', $locale) ?? '';
             $this->experience_tiers_label[$locale] = $tiers?->meta['label'][$locale] ?? '';
 
-            $this->cta_title[$locale] = $cta?->getTranslation('heading', $locale) ?? '';
-            $this->cta_subtitle[$locale] = $cta?->getTranslation('body', $locale) ?? '';
+            $this->cta_title[$locale] = $cta?->getTranslation('title', $locale) ?? '';
+            $this->cta_subtitle[$locale] = $cta?->getTranslation('content', $locale) ?? '';
+            $this->cta_primary_text[$locale] = $cta?->meta['cta_primary_text'][$locale] ?? '';
+            $this->cta_secondary_text[$locale] = $cta?->meta['cta_secondary_text'][$locale] ?? '';
 
             $this->experience_tiers_points[$locale] = [];
         }
@@ -125,99 +133,132 @@ new class extends Component {
 
     public function save(): void
     {
-        // Handle images
-        if ($this->hero_bg_image) {
-            if ($this->page->image_path) Storage::disk('public')->delete($this->page->image_path);
-            $this->page->update(['image_path' => $this->hero_bg_image->store('settings', 'public')]);
-        }
-
-        $hero = $this->page->sections()->where('key', 'home_hero')->first();
-        if ($hero) {
-            $meta = $hero->meta ?? [];
-            $meta['cta_link'] = $this->hero_cta_link;
-            $meta['label'] = $this->hero_label;
-            $meta['cta_text'] = $this->hero_cta_text;
-            $hero->meta = $meta;
-            $hero->save();
-            $hero->syncTranslations(['en' => ['heading' => $this->hero_title['en'], 'body' => $this->hero_subtitle['en']], 'id' => ['heading' => $this->hero_title['id'], 'body' => $this->hero_subtitle['id']], 'es' => ['heading' => $this->hero_title['es'], 'body' => $this->hero_subtitle['es']]]);
-        }
-
-        $about = $this->page->sections()->where('key', 'home_about')->first();
-        if ($about) {
-            $meta = $about->meta ?? [];
-            if ($this->about_image) {
-                if ($this->existing_about_image) Storage::disk('public')->delete($this->existing_about_image);
-                $meta['about_image'] = $this->about_image->store('settings', 'public');
-            }
-            $meta['label'] = $this->about_label;
-            $meta['stat_number'] = $this->about_stat_number;
-            $meta['stat_text'] = $this->about_stat_text;
-            $about->meta = $meta;
-            $about->save();
-            $about->syncTranslations(['en' => ['heading' => $this->about_title['en'], 'body' => $this->about_content['en']], 'id' => ['heading' => $this->about_title['id'], 'body' => $this->about_content['id']], 'es' => ['heading' => $this->about_title['es'], 'body' => $this->about_content['es']]]);
-        }
-
-        $dest = $this->page->sections()->where('key', 'home_destination')->first();
-        if ($dest) {
-            $meta = $dest->meta ?? [];
-            $meta['label'] = $this->destination_label;
-            $dest->meta = $meta;
-            $dest->save();
-            $dest->syncTranslations(['en' => ['heading' => $this->destination_title['en'], 'body' => ''], 'id' => ['heading' => $this->destination_title['id'], 'body' => ''], 'es' => ['heading' => $this->destination_title['es'], 'body' => '']]);
-        }
-
-        $cta = $this->page->sections()->where('key', 'home_cta')->first();
-        if ($cta) {
-            $meta = $cta->meta ?? [];
-            if ($this->cta_bg_image) {
-                if ($this->existing_cta_bg_image) Storage::disk('public')->delete($this->existing_cta_bg_image);
-                $meta['bg_image'] = $this->cta_bg_image->store('settings', 'public');
-            }
-            $cta->meta = $meta;
-            $cta->save();
-            $cta->syncTranslations(['en' => ['heading' => $this->cta_title['en'], 'body' => $this->cta_subtitle['en']], 'id' => ['heading' => $this->cta_title['id'], 'body' => $this->cta_subtitle['id']], 'es' => ['heading' => $this->cta_title['es'], 'body' => $this->cta_subtitle['es']]]);
-        }
-
-        $tiers = $this->page->sections()->where('key', 'home_experience_tiers')->first();
-        if ($tiers) {
-            $meta = $tiers->meta ?? [];
-            $meta['label'] = $this->experience_tiers_label;
-            $tiers->meta = $meta;
-            $tiers->save();
-            $tiers->syncTranslations(['en' => ['heading' => $this->experience_tiers_title['en'], 'body' => ''], 'id' => ['heading' => $this->experience_tiers_title['id'], 'body' => ''], 'es' => ['heading' => $this->experience_tiers_title['es'], 'body' => '']]);
-
-            // Sync features
-            foreach ($this->experience_tiers_points['en'] as $index => $point) {
-                $feature = null;
-                if (!empty($point['id'])) {
-                    $feature = PageSectionFeature::find($point['id']);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                // Handle Hero Image (stored in Page model)
+                if ($this->hero_bg_image) {
+                    if ($this->page->image_path) {
+                        Storage::disk('public')->delete($this->page->image_path);
+                    }
+                    $this->page->image_path = $this->hero_bg_image->store('settings', 'public');
+                    $this->page->save();
                 }
-                if (!$feature) {
-                    $feature = new PageSectionFeature();
-                    $feature->page_section_id = $tiers->id;
-                }
-                
-                // Usually the icon is identical across locales, so grab from 'en'
-                $feature->icon = $point['icon'] ?? 'star';
-                $feature->sort_order = $index + 1;
-                $feature->save();
 
-                // Save translations
-                $feature->syncTranslations([
-                    'en' => ['title' => $this->experience_tiers_points['en'][$index]['title'], 'description' => $this->experience_tiers_points['en'][$index]['description']],
-                    'id' => ['title' => $this->experience_tiers_points['id'][$index]['title'], 'description' => $this->experience_tiers_points['id'][$index]['description']],
-                    'es' => ['title' => $this->experience_tiers_points['es'][$index]['title'], 'description' => $this->experience_tiers_points['es'][$index]['description']],
-                ]);
+                $locales = ['en', 'id', 'es'];
 
-                // update the ID so subsequent saves know it exists
-                foreach (['en', 'id', 'es'] as $l) {
-                    $this->experience_tiers_points[$l][$index]['id'] = $feature->id;
+                // 1. Home Hero
+                $hero = $this->page->sections()->where('key', 'home_hero')->first();
+                if ($hero) {
+                    $hero->updateTranslatedMeta([
+                        'cta_link' => $this->hero_cta_link,
+                        'label' => $this->hero_label,
+                        'cta_text' => $this->hero_cta_text,
+                        'cta_secondary_text' => $this->hero_secondary_cta_text,
+                    ]);
+                    
+                    $hero->title = $this->hero_title;
+                    $hero->content = $this->hero_subtitle;
+                    $hero->save();
                 }
-            }
+
+                // 2. Home About
+                $about = $this->page->sections()->where('key', 'home_about')->first();
+                if ($about) {
+                    $aboutMeta = [
+                        'label' => $this->about_label,
+                        'stat_number' => $this->about_stat_number,
+                        'stat_text' => $this->about_stat_text,
+                        'cta_text' => $this->about_cta_text,
+                    ];
+
+                    if ($this->about_image) {
+                        if ($this->existing_about_image) {
+                            Storage::disk('public')->delete($this->existing_about_image);
+                        }
+                        $aboutMeta['about_image'] = $this->about_image->store('settings', 'public');
+                    }
+
+                    $about->updateTranslatedMeta($aboutMeta);
+                    $about->title = $this->about_title;
+                    $about->content = $this->about_content;
+                    $about->save();
+                }
+
+                // 3. Home Destination
+                $dest = $this->page->sections()->where('key', 'home_destination')->first();
+                if ($dest) {
+                    $dest->updateTranslatedMeta(['label' => $this->destination_label]);
+                    $dest->title = $this->destination_title;
+                    $dest->save();
+                }
+
+                // 4. Home CTA
+                $cta = $this->page->sections()->where('key', 'home_cta')->first();
+                if ($cta) {
+                    $ctaMeta = [
+                        'cta_primary_text' => $this->cta_primary_text,
+                        'cta_secondary_text' => $this->cta_secondary_text,
+                    ];
+
+                    if ($this->cta_bg_image) {
+                        if ($this->existing_cta_bg_image) {
+                            Storage::disk('public')->delete($this->existing_cta_bg_image);
+                        }
+                        $ctaMeta['bg_image'] = $this->cta_bg_image->store('settings', 'public');
+                    }
+
+                    $cta->updateTranslatedMeta($ctaMeta);
+                    $cta->title = $this->cta_title;
+                    $cta->content = $this->cta_subtitle;
+                    $cta->save();
+                }
+
+                // 5. Experience Tiers
+                $tiers = $this->page->sections()->where('key', 'home_experience_tiers')->first();
+                if ($tiers) {
+                    $tiers->updateTranslatedMeta(['label' => $this->experience_tiers_label]);
+                    $tiers->title = $this->experience_tiers_title;
+                    $tiers->save();
+
+                    // Sync features/points
+                    foreach ($this->experience_tiers_points['en'] as $index => $point) {
+                        $feature = !empty($point['id']) ? PageSectionFeature::find($point['id']) : new PageSectionFeature();
+                        
+                        if (!$feature->exists) {
+                            $feature->page_section_id = $tiers->id;
+                        }
+
+                        $feature->icon = $point['icon'] ?? 'star';
+                        $feature->sort_order = $index + 1;
+                        $feature->save();
+
+                        // Collect translations for this feature across all locales
+                        $featureTranslations = [];
+                        foreach ($locales as $locale) {
+                            $featureTranslations[$locale] = [
+                                'title' => $this->experience_tiers_points[$locale][$index]['title'] ?? '',
+                                'description' => $this->experience_tiers_points[$locale][$index]['description'] ?? ''
+                            ];
+                        }
+                        $feature->syncTranslations($featureTranslations);
+
+                        // Update ID for UI
+                        foreach ($locales as $locale) {
+                            $this->experience_tiers_points[$locale][$index]['id'] = $feature->id;
+                        }
+                    }
+                }
+            });
+
+            $this->dispatch('notify', message: __('Changes saved successfully.'));
+            $this->dispatch('settings-saved');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('notify', variant: 'error', message: __('Validation failed. Please check the fields.'));
+            throw $e;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Home page save error: ' . $e->getMessage());
+            $this->dispatch('notify', variant: 'error', message: __('An error occurred while saving: ') . $e->getMessage());
         }
-
-        $this->dispatch('notify', message: __('Changes saved successfully.'));
-        $this->dispatch('settings-saved');
     }
 };
 ?>
@@ -247,9 +288,10 @@ new class extends Component {
             <flux:input label="{{ __('Label') }}" wire:key="hero_label_activeTab-{{ $activeTab }}" wire:model="hero_label.{{ $activeTab }}" description="Small text above the title, e.g. 'The Future of Exploration'" />
             <flux:textarea label="{{ __('Title') }}" wire:key="hero_title_activeTab-{{ $activeTab }}" wire:model="hero_title.{{ $activeTab }}" rows="2" description="Use new lines to add line breaks." />
             <flux:textarea label="{{ __('Subtitle') }}" wire:key="hero_subtitle_activeTab-{{ $activeTab }}" wire:model="hero_subtitle.{{ $activeTab }}" rows="2" />
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('CTA Button Text') }}" wire:key="hero_cta_text_activeTab-{{ $activeTab }}" wire:model="hero_cta_text.{{ $activeTab }}" />
-                <flux:input label="{{ __('CTA Button Link') }}" wire:model="hero_cta_link" />
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <flux:input label="{{ __('Primary CTA Text') }}" wire:key="hero_cta_text_activeTab-{{ $activeTab }}" wire:model="hero_cta_text.{{ $activeTab }}" />
+                <flux:input label="{{ __('Secondary CTA Text') }}" wire:key="hero_secondary_cta_text_activeTab-{{ $activeTab }}" wire:model="hero_secondary_cta_text.{{ $activeTab }}" />
+                <flux:input label="{{ __('Primary CTA Link') }}" wire:model="hero_cta_link" />
             </div>
             <flux:field>
                 <flux:label>{{ __('Background Image') }}</flux:label>
@@ -273,9 +315,10 @@ new class extends Component {
             <flux:input label="{{ __('Label') }}" wire:key="about_label_activeTab-{{ $activeTab }}" wire:model="about_label.{{ $activeTab }}" description="Small label, e.g. 'Since 2008'" />
             <flux:textarea label="{{ __('Title') }}" wire:key="about_title_activeTab-{{ $activeTab }}" wire:model="about_title.{{ $activeTab }}" rows="2" description="Use new lines for line breaks." />
             <flux:textarea label="{{ __('Content') }}" wire:key="about_content_activeTab-{{ $activeTab }}" wire:model="about_content.{{ $activeTab }}" rows="4" />
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <flux:input label="{{ __('Stat Number') }}" wire:key="about_stat_number_activeTab-{{ $activeTab }}" wire:model="about_stat_number.{{ $activeTab }}" description="e.g. '15+'" />
                 <flux:input label="{{ __('Stat Description') }}" wire:key="about_stat_text_activeTab-{{ $activeTab }}" wire:model="about_stat_text.{{ $activeTab }}" description="e.g. 'Years of Crafting Bespoke Experiences'" />
+                <flux:input label="{{ __('CTA Button Text') }}" wire:key="about_cta_text_activeTab-{{ $activeTab }}" wire:model="about_cta_text.{{ $activeTab }}" />
             </div>
             <flux:field>
                 <flux:label>{{ __('Image') }}</flux:label>
@@ -350,6 +393,10 @@ new class extends Component {
             <p class="text-sm text-zinc-500">The dark-background CTA block at the bottom for {{ strtoupper($activeTab) }}.</p>
             <flux:input label="{{ __('Title') }}" wire:key="cta_title_activeTab-{{ $activeTab }}" wire:model="cta_title.{{ $activeTab }}" />
             <flux:textarea label="{{ __('Subtitle') }}" wire:key="cta_subtitle_activeTab-{{ $activeTab }}" wire:model="cta_subtitle.{{ $activeTab }}" rows="2" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <flux:input label="{{ __('Primary CTA Text') }}" wire:key="cta_primary_text_activeTab-{{ $activeTab }}" wire:model="cta_primary_text.{{ $activeTab }}" />
+                <flux:input label="{{ __('Secondary CTA Text') }}" wire:key="cta_secondary_text_activeTab-{{ $activeTab }}" wire:model="cta_secondary_text.{{ $activeTab }}" />
+            </div>
             <flux:field>
                 <flux:label>{{ __('Background Image (Optional)') }}</flux:label>
                 <input type="file" wire:model="cta_bg_image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />

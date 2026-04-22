@@ -36,24 +36,26 @@ new #[Layout('components.layouts.public')] class extends Component {
             'page' => $page,
             'hero' => [
                 'label' => $heroSection?->meta['label'][$locale] ?? ($heroSection?->meta['label']['en'] ?? 'Our Story'),
-                'title' => $heroSection?->getTranslation('heading') ?? $page?->getTranslation('title'),
-                'subtitle' => $heroSection?->getTranslation('body') ?? 'The journey behind our legacy and the passion that drives us.',
+                'title' => $heroSection?->getTranslation('title') ?? $page?->getTranslation('title'),
+                'subtitle' => $heroSection?->getTranslation('content') ?? 'The journey behind our legacy and the passion that drives us.',
             ],
             'who_we_are' => [
                 'label' => $whoWeAreSection?->meta['label'][$locale] ?? ($whoWeAreSection?->meta['label']['en'] ?? 'Who We Are'),
-                'title' => $whoWeAreSection?->getTranslation('heading') ?? $page?->getTranslation('title'),
-                'content' => $whoWeAreSection?->getTranslation('body') ?? '',
+                'title' => $whoWeAreSection?->getTranslation('title') ?? $page?->getTranslation('title'),
+                'content' => $whoWeAreSection?->getTranslation('content') ?? '',
             ],
             'stat_number' => $homeAbout?->meta['stat_number'][$locale] ?? ($homeAbout?->meta['stat_number']['en'] ?? '15+'),
             'stat_text' => $homeAbout?->meta['stat_text'][$locale] ?? ($homeAbout?->meta['stat_text']['en'] ?? 'Years of Crafting Bespoke Experiences'),
             'experienceSection' => [
-                'title' => $tiers?->getTranslation('heading') ?? 'How We Travel',
+                'title' => $tiers?->getTranslation('title') ?? 'How We Travel',
                 'label' => $tiers?->meta['label'][$locale] ?? ($tiers?->meta['label']['en'] ?? 'Tailored For You'),
                 'points' => $experiencePoints,
             ],
             'cta' => [
-                'title' => $ctaSection?->getTranslation('heading') ?? 'Stay Inspired.',
-                'subtitle' => $ctaSection?->getTranslation('body') ?? 'Join our inner circle for exclusive updates and private travel insights.',
+                'title' => $ctaSection?->getTranslation('title') ?? 'Stay Inspired.',
+                'subtitle' => $ctaSection?->getTranslation('content') ?? 'Join our inner circle for exclusive updates and private travel insights.',
+                'cta_primary_text' => $ctaSection?->meta['cta_primary_text'][$locale] ?? ($ctaSection?->meta['cta_primary_text']['en'] ?? null),
+                'cta_secondary_text' => $ctaSection?->meta['cta_secondary_text'][$locale] ?? ($ctaSection?->meta['cta_secondary_text']['en'] ?? null),
                 'bg_image' => $ctaSection?->meta['bg_image'] ?? null,
             ],
             'gallery_1' => Setting::where('key', 'about_gallery_1')->value('value'),
@@ -175,9 +177,16 @@ new #[Layout('components.layouts.public')] class extends Component {
             <h2 class="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white mb-6 sm:mb-8 tracking-tight leading-tight">{{ $cta['title'] }}</h2>
             <p class="text-white/70 text-base sm:text-lg mb-8 sm:mb-12 font-light leading-relaxed">{{ $cta['subtitle'] }}</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('destinations.index') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform shadow-xl shadow-primary/20">
-                    {{ __('Explore Destinations') }}
-                </a>
+                @if($cta['cta_primary_text'])
+                    <a href="{{ route('destinations.index') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform shadow-xl shadow-primary/20">
+                        {{ $cta['cta_primary_text'] }}
+                    </a>
+                @endif
+                @if($cta['cta_secondary_text'])
+                    <a href="{{ route('about') }}" wire:navigate class="border border-white/20 text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:bg-white/10 transition-colors">
+                        {{ $cta['cta_secondary_text'] }}
+                    </a>
+                @endif
             </div>
         </div>
     </section>

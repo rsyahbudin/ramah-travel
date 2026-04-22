@@ -11,16 +11,16 @@ class PageSeeder extends Seeder
 {
     public function run(): void
     {
-        $languages = Language::all()->keyBy('code');
+        Language::all(); // Ensure languages are present
 
         $pages = [
             [
                 'slug' => 'home',
                 'image_path' => null,
-                'translations' => [
-                    'en' => ['title' => 'Home'],
-                    'id' => ['title' => 'Beranda'],
-                    'es' => ['title' => 'Inicio'],
+                'title' => [
+                    'en' => 'Home',
+                    'id' => 'Beranda',
+                    'es' => 'Inicio',
                 ],
                 'sections' => [
                     [
@@ -28,11 +28,21 @@ class PageSeeder extends Seeder
                         'key' => 'home_hero',
                         'sort_order' => 1,
                         'is_visible' => true,
-                        'meta' => ['label' => ['en' => 'The Future of Exploration', 'id' => 'Masa Depan Eksplorasi', 'es' => 'El Futuro de la Exploración'], 'cta_text' => ['en' => 'Discover More', 'id' => 'Jelajahi Lebih Lanjut', 'es' => 'Descubrir más']],
-                        'translations' => [
-                            'en' => ['heading' => "Redefining the\nArt of Travel.", 'body' => "Experience the world's most secluded corners through a lens of absolute luxury and curated exclusivity."],
-                            'id' => ['heading' => "Mendefinisikan Ulang\nSeni Perjalanan.", 'body' => 'Nikmati sudut-sudut paling terpencil di dunia melalui lensa kemewahan mutlak dan eksklusivitas yang terkurasi.'],
-                            'es' => ['heading' => "Redefiniendo el\nArte de Viajar.", 'body' => 'Experimente los rincones más recónditos del mundo a través de una lente de lujo absoluto y exclusividad curada.'],
+                        'meta' => [
+                            'label' => ['en' => 'The Future of Exploration', 'id' => 'Masa Depan Eksplorasi', 'es' => 'El Futuro de la Exploración'],
+                            'cta_text' => ['en' => 'Discover More', 'id' => 'Jelajahi Lebih Lanjut', 'es' => 'Descubrir más'],
+                            'cta_secondary_text' => ['en' => 'Our Story', 'id' => 'Cerita Kami', 'es' => 'Nuestra historia'],
+                            'cta_link' => '/destinations',
+                        ],
+                        'title' => [
+                            'en' => "Redefining the\nArt of Travel.",
+                            'id' => "Mendefinisikan Ulang\nSeni Perjalanan.",
+                            'es' => "Redefiniendo el\nArte de Viajar.",
+                        ],
+                        'content' => [
+                            'en' => "Experience the world's most secluded corners through a lens of absolute luxury and curated exclusivity.",
+                            'id' => 'Nikmati sudut-sudut paling terpencil di dunia melalui lensa kemewahan mutlak dan eksklusivitas yang terkurasi.',
+                            'es' => 'Experimente los rincones más recónditos del mundo a través de una lente de lujo absoluto y exclusividad curada.',
                         ],
                     ],
                     [
@@ -44,11 +54,17 @@ class PageSeeder extends Seeder
                             'label' => ['en' => 'Since 2008', 'id' => 'Sejak 2008', 'es' => 'Desde 2008'],
                             'stat_number' => ['en' => '15+', 'id' => '15+', 'es' => '15+'],
                             'stat_text' => ['en' => 'Years of Crafting Bespoke Experiences', 'id' => 'Tahun Menciptakan Pengalaman Kustom', 'es' => 'Años creando experiencias a medida'],
+                            'cta_text' => ['en' => 'Read Our Story', 'id' => 'Baca Cerita Kami', 'es' => 'Leer nuestra historia'],
                         ],
-                        'translations' => [
-                            'en' => ['heading' => "The Journey Behind\nOur Legacy.", 'body' => 'Founded on the principle that travel should be as unique as the traveler. We curate experiences that transcend the ordinary.'],
-                            'id' => ['heading' => "Perjalanan di Balik\nWarisan Kami.", 'body' => 'Didirikan berdasarkan prinsip bahwa perjalanan harus seunik pelancongnya. Kami mengkurasi pengalaman yang melampaui kebiasaan.'],
-                            'es' => ['heading' => "El viaje detrás de\nnuestro legado.", 'body' => 'Fundado en el principio de que los viajes deben ser tan únicos como el viajero. Curamos experiencias que trascienden lo ordinario.'],
+                        'title' => [
+                            'en' => "The Journey Behind\nOur Legacy.",
+                            'id' => "Perjalanan di Balik\nWarisan Kami.",
+                            'es' => "El viaje detrás de\nnuestro legado.",
+                        ],
+                        'content' => [
+                            'en' => 'Founded on the principle that travel should be as unique as the traveler. We curate experiences that transcend the ordinary.',
+                            'id' => 'Didirikan berdasarkan prinsip bahwa perjalanan harus seunik pelancongnya. Kami mengkurasi pengalaman yang melampaui kebiasaan.',
+                            'es' => 'Fundado en el principio de que los viajes deben ser tan únicos como el viajero. Curamos experiencias que trascienden lo ordinario.',
                         ],
                     ],
                     [
@@ -57,37 +73,57 @@ class PageSeeder extends Seeder
                         'sort_order' => 3,
                         'is_visible' => true,
                         'meta' => ['label' => ['en' => 'Tailored For You', 'id' => 'Disesuaikan Untuk Anda', 'es' => 'A tu medida']],
-                        'translations' => [
-                            'en' => ['heading' => 'How We Travel', 'body' => ''],
-                            'id' => ['heading' => 'Cara Kami Bepergian', 'body' => ''],
-                            'es' => ['heading' => 'Cómo viajamos', 'body' => ''],
+                        'title' => [
+                            'en' => 'How We Travel',
+                            'id' => 'Cara Kami Bepergian',
+                            'es' => 'Cómo viajamos',
+                        ],
+                        'content' => [
+                            'en' => '',
+                            'id' => '',
+                            'es' => '',
                         ],
                         'features' => [
                             [
                                 'icon' => 'diamond',
                                 'sort_order' => 1,
-                                'translations' => [
-                                    'en' => ['title' => 'Elite Concierge', 'description' => '24/7 dedicated support for every whim.'],
-                                    'id' => ['title' => 'Pramutamu Elit', 'description' => 'Dukungan khusus 24/7 untuk setiap keinginan.'],
-                                    'es' => ['title' => 'Conserje Élite', 'description' => 'Soporte dedicado 24/7 para cada capricho.'],
+                                'title' => [
+                                    'en' => 'Elite Concierge',
+                                    'id' => 'Pramutamu Elit',
+                                    'es' => 'Conserje Élite',
+                                ],
+                                'description' => [
+                                    'en' => '24/7 dedicated support for every whim.',
+                                    'id' => 'Dukungan khusus 24/7 untuk setiap keinginan.',
+                                    'es' => 'Soporte dedicado 24/7 para cada capricho.',
                                 ],
                             ],
                             [
                                 'icon' => 'map',
                                 'sort_order' => 2,
-                                'translations' => [
-                                    'en' => ['title' => 'Bespoke Itineraries', 'description' => 'Every journey is custom-built from the ground up.'],
-                                    'id' => ['title' => 'Itinerary Bertujuan Khusus', 'description' => 'Setiap perjalanan dibangun khusus dari awal.'],
-                                    'es' => ['title' => 'Itinerarios a Medida', 'description' => 'Cada viaje se construye a medida desde cero.'],
+                                'title' => [
+                                    'en' => 'Bespoke Itineraries',
+                                    'id' => 'Itinerary Bertujuan Khusus',
+                                    'es' => 'Itinerarios a Medida',
+                                ],
+                                'description' => [
+                                    'en' => 'Every journey is custom-built from the ground up.',
+                                    'id' => 'Setiap perjalanan dibangun khusus dari awal.',
+                                    'es' => 'Cada viaje se construye a medida desde cero.',
                                 ],
                             ],
                             [
                                 'icon' => 'verified_user',
                                 'sort_order' => 3,
-                                'translations' => [
-                                    'en' => ['title' => 'Insider Access', 'description' => 'Gain entry to private estates and hidden gems.'],
-                                    'id' => ['title' => 'Akses Orang Dalam', 'description' => 'Dapatkan akses ke perkebunan pribadi dan permata tersembunyi.'],
-                                    'es' => ['title' => 'Acceso Privilegiado', 'description' => 'Obtenga acceso a fincas privadas y gemas ocultas.'],
+                                'title' => [
+                                    'en' => 'Insider Access',
+                                    'id' => 'Akses Orang Dalam',
+                                    'es' => 'Acceso Privilegiado',
+                                ],
+                                'description' => [
+                                    'en' => 'Gain entry to private estates and hidden gems.',
+                                    'id' => 'Dapatkan akses ke perkebunan pribadi dan permata tersembunyi.',
+                                    'es' => 'Obtenga acceso a fincas privadas y gemas ocultas.',
                                 ],
                             ],
                         ],
@@ -98,10 +134,15 @@ class PageSeeder extends Seeder
                         'sort_order' => 4,
                         'is_visible' => true,
                         'meta' => ['label' => ['en' => 'Curated Selection', 'id' => 'Pilihan Terkurasi', 'es' => 'Selección Curada']],
-                        'translations' => [
-                            'en' => ['heading' => 'Destinations Spotlight', 'body' => ''],
-                            'id' => ['heading' => 'Sorotan Destinasi', 'body' => ''],
-                            'es' => ['heading' => 'Destinos en Foco', 'body' => ''],
+                        'title' => [
+                            'en' => 'Destinations Spotlight',
+                            'id' => 'Sorotan Destinasi',
+                            'es' => 'Destinos en Foco',
+                        ],
+                        'content' => [
+                            'en' => '',
+                            'id' => '',
+                            'es' => '',
                         ],
                     ],
                     [
@@ -109,11 +150,19 @@ class PageSeeder extends Seeder
                         'key' => 'home_cta',
                         'sort_order' => 5,
                         'is_visible' => true,
-                        'meta' => [],
-                        'translations' => [
-                            'en' => ['heading' => 'Stay Inspired.', 'body' => 'Join our inner circle for exclusive updates and private travel insights.'],
-                            'id' => ['heading' => 'Tetap Terinspirasi.', 'body' => 'Bergabunglah dengan lingkaran dalam kami untuk pembaruan eksklusif dan wawasan perjalanan pribadi.'],
-                            'es' => ['heading' => 'Mantente inspirado.', 'body' => 'Únase a nuestro círculo íntimo para recibir actualizaciones exclusivas y conocimientos de viajes privados.'],
+                        'meta' => [
+                            'cta_primary_text' => ['en' => 'Explore Destinations', 'id' => 'Jelajahi Destinasi', 'es' => 'Explorar Destinos'],
+                            'cta_secondary_text' => ['en' => 'Learn More', 'id' => 'Pelajari Lebih Lanjut', 'es' => 'Aprende Más'],
+                        ],
+                        'title' => [
+                            'en' => 'Stay Inspired.',
+                            'id' => 'Tetap Terinspirasi.',
+                            'es' => 'Mantente inspirado.',
+                        ],
+                        'content' => [
+                            'en' => 'Join our inner circle for exclusive updates and private travel insights.',
+                            'id' => 'Bergabunglah dengan lingkaran dalam kami untuk pembaruan eksklusif dan wawasan perjalanan pribadi.',
+                            'es' => 'Únase a nuestro círculo íntimo para recibir actualizaciones exclusivas y conocimientos de viajes privados.',
                         ],
                     ],
                 ],
@@ -121,10 +170,10 @@ class PageSeeder extends Seeder
             [
                 'slug' => 'about',
                 'image_path' => null,
-                'translations' => [
-                    'en' => ['title' => 'The Journey Behind Our Legacy.'],
-                    'id' => ['title' => 'Perjalanan di Balik Warisan Kami.'],
-                    'es' => ['title' => 'El viaje detrás de nuestro legado.'],
+                'title' => [
+                    'en' => 'The Journey Behind Our Legacy.',
+                    'id' => 'Perjalanan di Balik Warisan Kami.',
+                    'es' => 'El viaje detrás de nuestro legado.',
                 ],
                 'sections' => [
                     [
@@ -133,10 +182,15 @@ class PageSeeder extends Seeder
                         'sort_order' => 1,
                         'is_visible' => true,
                         'meta' => ['label' => ['en' => 'Our Story', 'id' => 'Cerita Kami', 'es' => 'Nuestra historia']],
-                        'translations' => [
-                            'en' => ['heading' => 'The Journey Behind Our Legacy.', 'body' => 'The journey behind our legacy and the passion that drives us.'],
-                            'id' => ['heading' => 'Perjalanan di Balik Warisan Kami.', 'body' => 'Perjalanan di balik warisan kami dan semangat yang menggerakkan kami.'],
-                            'es' => ['heading' => 'El viaje detrás de nuestro legado.', 'body' => 'El viaje tras nuestro legado y la pasión que nos impulsa.'],
+                        'title' => [
+                            'en' => 'The Journey Behind Our Legacy.',
+                            'id' => 'Perjalanan di Balik Warisan Kami.',
+                            'es' => 'El viaje detrás de nuestro legado.',
+                        ],
+                        'content' => [
+                            'en' => 'The journey behind our legacy and the passion that drives us.',
+                            'id' => 'Perjalanan di balik warisan kami dan semangat yang menggerakkan kami.',
+                            'es' => 'El viaje tras nuestro legado y la pasión que nos impulsa.',
                         ],
                     ],
                     [
@@ -145,19 +199,15 @@ class PageSeeder extends Seeder
                         'sort_order' => 2,
                         'is_visible' => true,
                         'meta' => ['label' => ['en' => 'Who We Are', 'id' => 'Siapa Kami', 'es' => 'Quiénes somos']],
-                        'translations' => [
-                            'en' => [
-                                'heading' => 'Who We Are',
-                                'body' => "Founded on the principle that travel should be as unique as the traveler, Ramah Indonesia has been curating extraordinary journeys since 2008. We believe in the power of exploration to transform lives, and we dedicate ourselves to uncovering the world's most secluded corners through a lens of absolute luxury and curated exclusivity.",
-                            ],
-                            'id' => [
-                                'heading' => 'Siapa Kami',
-                                'body' => 'Didirikan berdasarkan prinsip bahwa perjalanan harus seunik pelancongnya, Ramah Indonesia telah mengkurasi perjalanan luar biasa sejak 2008. Kami percaya pada kekuatan eksplorasi untuk mengubah hidup, dan kami mendedikasikan diri untuk mengungkap sudut-sudut paling terpencil di dunia melalui lensa kemewahan mutlak dan eksklusivitas yang terkurasi.',
-                            ],
-                            'es' => [
-                                'heading' => 'Quiénes somos',
-                                'body' => 'Fundada según el principio de que viajar debe ser tan único como el viajero, Ramah Indonesia ha sido curando viajes extraordinarios desde 2008. Creemos en el poder de la exploración para transformar vidas y nos dedicamos a descubrir los rincones más recónditos del mundo a través de una lente de lujo absoluto y exclusividad curada.',
-                            ],
+                        'title' => [
+                            'en' => 'Who We Are',
+                            'id' => 'Siapa Kami',
+                            'es' => 'Quiénes somos',
+                        ],
+                        'content' => [
+                            'en' => "Founded on the principle that travel should be as unique as the traveler, Ramah Indonesia has been curating extraordinary journeys since 2008. We believe in the power of exploration to transform lives, and we dedicate ourselves to uncovering the world's most secluded corners through a lens of absolute luxury and curated exclusivity.",
+                            'id' => 'Didirikan berdasarkan prinsip bahwa perjalanan harus seunik pelancongnya, Ramah Indonesia telah mengkurasi perjalanan luar biasa sejak 2008. Kami percaya pada kekuatan eksplorasi untuk mengubah hidup, dan kami mendedikasikan diri untuk mengungkap sudut-sudut paling terpencil di dunia melalui lensa kemewahan mutlak dan eksklusivitas yang terkurasi.',
+                            'es' => 'Fundada según el principio de que viajar debe ser tan único como el viajero, Ramah Indonesia ha sido curando viajes extraordinarios desde 2008. Creemos en el poder de la exploración para transformar vidas y nos dedicamos a descubrir los rincones más recónditos del mundo a través de una lente de lujo absoluto y exclusividad curada.',
                         ],
                     ],
                 ],
@@ -165,10 +215,10 @@ class PageSeeder extends Seeder
             [
                 'slug' => 'destinations',
                 'image_path' => null,
-                'translations' => [
-                    'en' => ['title' => 'Our Destinations'],
-                    'id' => ['title' => 'Destinasi Kami'],
-                    'es' => ['title' => 'Nuestros Destinos'],
+                'title' => [
+                    'en' => 'Our Destinations',
+                    'id' => 'Destinasi Kami',
+                    'es' => 'Nuestros Destinos',
                 ],
                 'sections' => [
                     [
@@ -177,10 +227,15 @@ class PageSeeder extends Seeder
                         'sort_order' => 1,
                         'is_visible' => true,
                         'meta' => ['label' => ['en' => 'Curated Selection', 'id' => 'Pilihan Terkurasi', 'es' => 'Selección curada']],
-                        'translations' => [
-                            'en' => ['heading' => 'Our Destinations', 'body' => 'Discover handpicked journeys crafted for the world\'s most discerning travelers.'],
-                            'id' => ['heading' => 'Destinasi Kami', 'body' => 'Temukan perjalanan pilihan yang dirancang untuk para pelancong paling istimewa di dunia.'],
-                            'es' => ['heading' => 'Nuestros Destinos', 'body' => 'Descubra viajes seleccionados diseñados para los viajeros más exigentes del mundo.'],
+                        'title' => [
+                            'en' => 'Our Destinations',
+                            'id' => 'Destinasi Kami',
+                            'es' => 'Nuestros Destinos',
+                        ],
+                        'content' => [
+                            'en' => 'Discover handpicked journeys crafted for the world\'s most discerning travelers.',
+                            'id' => 'Temukan perjalanan pilihan yang dirancang untuk para pelancong paling istimewa di dunia.',
+                            'es' => 'Descubra viajes seleccionados diseñados para los viajeros más exigentes del mundo.',
                         ],
                     ],
                 ],
@@ -190,20 +245,11 @@ class PageSeeder extends Seeder
         foreach ($pages as $data) {
             $page = Page::updateOrCreate(
                 ['slug' => $data['slug']],
-                ['image_path' => $data['image_path']]
+                [
+                    'image_path' => $data['image_path'],
+                    'title' => $data['title'],
+                ]
             );
-
-            // Sync page translations
-            foreach ($data['translations'] as $code => $fields) {
-                if (! isset($languages[$code])) {
-                    continue;
-                }
-
-                $page->translations()->updateOrCreate(
-                    ['language_id' => $languages[$code]->id],
-                    $fields
-                );
-            }
 
             // Sync sections
             foreach ($data['sections'] as $sectionData) {
@@ -214,37 +260,15 @@ class PageSeeder extends Seeder
                         'sort_order' => $sectionData['sort_order'],
                         'is_visible' => $sectionData['is_visible'],
                         'meta' => $sectionData['meta'],
+                        'title' => $sectionData['title'],
+                        'content' => $sectionData['content'] ?? null,
                     ]
                 );
 
-                foreach ($sectionData['translations'] as $code => $fields) {
-                    if (! isset($languages[$code])) {
-                        continue;
-                    }
-
-                    $section->translations()->updateOrCreate(
-                        ['language_id' => $languages[$code]->id],
-                        $fields
-                    );
-                }
-
                 if (isset($sectionData['features'])) {
+                    $section->features()->delete();
                     foreach ($sectionData['features'] as $featureData) {
-                        $feature = $section->features()->updateOrCreate(
-                            ['icon' => $featureData['icon']],
-                            ['sort_order' => $featureData['sort_order']]
-                        );
-
-                        foreach ($featureData['translations'] as $code => $fields) {
-                            if (! isset($languages[$code])) {
-                                continue;
-                            }
-
-                            $feature->translations()->updateOrCreate(
-                                ['language_id' => $languages[$code]->id],
-                                $fields
-                            );
-                        }
+                        $section->features()->create($featureData);
                     }
                 }
             }

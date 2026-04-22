@@ -13,6 +13,8 @@ class DestinationItineraryItem extends Model
 
     protected $guarded = ['id'];
 
+    protected array $translatable = ['title', 'description'];
+
     /** @return BelongsTo<Destination, $this> */
     public function destination(): BelongsTo
     {

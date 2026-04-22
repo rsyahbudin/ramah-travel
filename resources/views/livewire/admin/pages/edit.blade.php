@@ -49,13 +49,13 @@ new class extends Component {
                 'translations' => [],
             ];
             
-            $headings = $section->getTranslations('heading');
-            $bodies = $section->getTranslations('body');
+            $titles = $section->getTranslations('title');
+            $contents = $section->getTranslations('content');
             
             foreach (['en', 'id', 'es'] as $locale) {
                  $data['translations'][$locale] = [
-                      'heading' => $headings[$locale] ?? '',
-                      'body'    => $bodies[$locale] ?? '',
+                      'title'   => $titles[$locale] ?? '',
+                      'content' => $contents[$locale] ?? '',
                  ];
             }
             $this->sections[] = $data;
@@ -72,82 +72,84 @@ new class extends Component {
 
     public function save(): void
     {
-        $validated = $this->validate([
-            'title.en' => 'required|string|max:255',
-            'title.id' => 'nullable|string|max:255',
-            'title.es' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:4096',
-            'about_gallery_1' => 'nullable|image|max:4096',
-            'about_gallery_2' => 'nullable|image|max:4096',
-            'about_gallery_3' => 'nullable|image|max:4096',
-            'about_gallery_4' => 'nullable|image|max:4096',
-        ]);
+        try {
+            $this->validate([
+                'title.en' => 'required|string|max:255',
+                'title.id' => 'nullable|string|max:255',
+                'title.es' => 'nullable|string|max:255',
+                'image' => 'nullable|image|max:4096',
+                'about_gallery_1' => 'nullable|image|max:4096',
+                'about_gallery_2' => 'nullable|image|max:4096',
+                'about_gallery_3' => 'nullable|image|max:4096',
+                'about_gallery_4' => 'nullable|image|max:4096',
+            ]);
 
-        $locales = ['en', 'id', 'es'];
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                // Handle Top level image
+                if ($this->image) {
+                    if ($this->existing_image) {
+                        Storage::disk('public')->delete($this->existing_image);
+                    }
+                    $this->page->image_path = $this->image->store('pages', 'public');
+                    $this->existing_image = $this->page->image_path;
+                    $this->image = null;
+                }
 
-        // Sync Base Page Data
-        if ($this->image) {
-            if ($this->existing_image) {
-                Storage::disk('public')->delete($this->existing_image);
-            }
-            $imagePath = $this->image->store('pages', 'public');
-            $this->page->update(['image_path' => $imagePath]);
-            $this->existing_image = $imagePath;
-            $this->image = null;
-        }
+                // Save Page with translations (handled automatically by trait)
+                $this->page->title = $this->title;
+                $this->page->save();
 
-        $titleTranslations = [];
-        foreach ($locales as $locale) {
-            if (!empty($this->title[$locale])) {
-                $titleTranslations[$locale] = ['title' => $this->title[$locale]];
-            }
-        }
-        $this->page->syncTranslations($titleTranslations);
-
-        // Sync Sections
-        foreach ($this->sections as $sectionData) {
-            $section = \App\Models\PageSection::find($sectionData['id']);
-            if ($section) {
-                $section->update([
-                    'is_visible' => $sectionData['is_visible'],
-                ]);
-                
-                $sectionTranslations = [];
-                foreach ($locales as $locale) {
-                    // Always try to update both heading and body if the language has anything
-                    if (!empty($sectionData['translations'][$locale]['heading']) || !empty($sectionData['translations'][$locale]['body'])) {
-                        $sectionTranslations[$locale] = [
-                            'heading' => $sectionData['translations'][$locale]['heading'] ?? '',
-                            'body' => $sectionData['translations'][$locale]['body'] ?? '',
-                        ];
+                // Sync Sections
+                foreach ($this->sections as $sectionData) {
+                    $section = \App\Models\PageSection::find($sectionData['id']);
+                    if ($section) {
+                        $section->is_visible = $sectionData['is_visible'];
+                        
+                        // Format translations for the trait
+                        $sectionTranslations = [];
+                        foreach (['en', 'id', 'es'] as $locale) {
+                            $sectionTranslations[$locale] = [
+                                'title' => $sectionData['translations'][$locale]['title'] ?? '',
+                                'content' => $sectionData['translations'][$locale]['content'] ?? '',
+                            ];
+                        }
+                        
+                        // We can either set fields individually as arrays or use syncTranslations
+                        $section->syncTranslations($sectionTranslations);
+                        $section->save();
                     }
                 }
-                $section->syncTranslations($sectionTranslations);
-            }
-        }
 
-        // Sync Gallery Images (About Page)
-        if ($this->page->slug === 'about') {
-            foreach (['1', '2', '3', '4'] as $i) {
-                $field = "about_gallery_$i";
-                $existingField = "existing_about_gallery_$i";
-                if ($this->$field) {
-                    if ($this->$existingField) {
-                        Storage::disk('public')->delete($this->$existingField);
+                // Sync Gallery Images (About Page)
+                if ($this->page->slug === 'about') {
+                    foreach (['1', '2', '3', '4'] as $i) {
+                        $field = "about_gallery_$i";
+                        $existingField = "existing_about_gallery_$i";
+                        if ($this->$field) {
+                            if ($this->$existingField) {
+                                Storage::disk('public')->delete($this->$existingField);
+                            }
+                            $path = $this->$field->store('settings', 'public');
+                            \App\Models\Setting::updateOrCreate(
+                                ['key' => $field], 
+                                ['type' => 'text', 'value' => $path]
+                            );
+                            $this->$existingField = $path;
+                            $this->$field = null;
+                        }
                     }
-                    $path = $this->$field->store('settings', 'public');
-                    \App\Models\Setting::updateOrCreate(
-                        ['key' => $field], 
-                        ['type' => 'text', 'value' => $path]
-                    );
-                    $this->$existingField = $path;
-                    $this->$field = null;
                 }
-            }
-        }
+            });
 
-        $this->dispatch('notify', message: __('Changes saved successfully.'));
-        $this->dispatch('page-saved');
+            $this->dispatch('notify', message: __('Changes saved successfully.'));
+            $this->dispatch('page-saved');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('notify', variant: 'error', message: __('Validation failed. Please check the fields.'));
+            throw $e;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Page save error: ' . $e->getMessage());
+            $this->dispatch('notify', variant: 'error', message: __('An error occurred while saving: ') . $e->getMessage());
+        }
     }
 };
 ?>
@@ -193,10 +195,10 @@ new class extends Component {
                         <flux:separator />
                         
                         <div class="space-y-6">
-                            <flux:input label="{{ __('Section Heading') }} ({{ strtoupper($activeTab) }})" wire:model="sections.{{ $index }}.translations.{{ $activeTab }}.heading" />
+                            <flux:input label="{{ __('Section Title') }} ({{ strtoupper($activeTab) }})" wire:model="sections.{{ $index }}.translations.{{ $activeTab }}.title" />
                             
                             @if($section['type'] === 'text' || $section['type'] === 'hero')
-                                <flux:textarea label="{{ __('Section Content') }} ({{ strtoupper($activeTab) }})" wire:model="sections.{{ $index }}.translations.{{ $activeTab }}.body" rows="{{ $section['type'] === 'hero' ? 4 : 10 }}" />
+                                <flux:textarea label="{{ __('Section Content') }} ({{ strtoupper($activeTab) }})" wire:model="sections.{{ $index }}.translations.{{ $activeTab }}.content" rows="{{ $section['type'] === 'hero' ? 4 : 10 }}" />
                             @endif
                         </div>
                     </flux:card>

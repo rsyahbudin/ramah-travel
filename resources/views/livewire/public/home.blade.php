@@ -36,33 +36,37 @@ new #[Layout('components.layouts.public')] class extends Component {
 
         return [
             'heroSection' => [
-                'title' => $hero?->getTranslation('heading') ?? '',
-                'subtitle' => $hero?->getTranslation('body') ?? '',
-                'cta_text' => $hero?->meta['cta_text'][$locale] ?? ($hero?->meta['cta_text']['en'] ?? 'Discover More'),
+                'title' => $hero?->getTranslation('title') ?? '',
+                'subtitle' => $hero?->getTranslation('content') ?? '',
+                'cta_text' => $hero?->meta['cta_text'][$locale] ?? ($hero?->meta['cta_text']['en'] ?? null),
+                'cta_secondary_text' => $hero?->meta['cta_secondary_text'][$locale] ?? ($hero?->meta['cta_secondary_text']['en'] ?? null),
                 'cta_link' => $hero?->meta['cta_link'] ?? route('destinations.index'),
                 'label' => $hero?->meta['label'][$locale] ?? ($hero?->meta['label']['en'] ?? 'The Future of Exploration'),
                 'bg_image' => $page->image_path,
             ],
             'aboutSection' => [
-                'title' => $about?->getTranslation('heading') ?? '',
-                'content' => $about?->getTranslation('body') ?? '',
+                'title' => $about?->getTranslation('title') ?? '',
+                'content' => $about?->getTranslation('content') ?? '',
                 'label' => $about?->meta['label'][$locale] ?? ($about?->meta['label']['en'] ?? 'Since 2008'),
                 'stat_number' => $about?->meta['stat_number'][$locale] ?? ($about?->meta['stat_number']['en'] ?? '15+'),
-                'stat_text' => $about?->meta['stat_text'][$locale] ?? ($about?->meta['stat_text']['en'] ?? 'Years of Crafting Bespoke Experiences'),
+                'stat_text' => $about?->meta['stat_text'][$locale] ?? ($about?->meta['stat_text']['en'] ?? null),
+                'cta_text' => $about?->meta['cta_text'][$locale] ?? ($about?->meta['cta_text']['en'] ?? null),
                 'image' => $about?->meta['about_image'] ?? null,
             ],
             'experienceSection' => [
-                'title' => $tiers?->getTranslation('heading') ?? '',
+                'title' => $tiers?->getTranslation('title') ?? '',
                 'label' => $tiers?->meta['label'][$locale] ?? ($tiers?->meta['label']['en'] ?? 'Tailored For You'),
                 'points' => $experiencePoints,
             ],
             'ctaSection' => [
-                'title' => $cta?->getTranslation('heading') ?? '',
-                'subtitle' => $cta?->getTranslation('body') ?? '',
+                'title' => $cta?->getTranslation('title') ?? '',
+                'subtitle' => $cta?->getTranslation('content') ?? '',
+                'cta_primary_text' => $cta?->meta['cta_primary_text'][$locale] ?? ($cta?->meta['cta_primary_text']['en'] ?? null),
+                'cta_secondary_text' => $cta?->meta['cta_secondary_text'][$locale] ?? ($cta?->meta['cta_secondary_text']['en'] ?? null),
                 'bg_image' => $cta?->meta['bg_image'] ?? null,
             ],
             'destinationSection' => [
-                'title' => $destinations?->getTranslation('heading') ?? '',
+                'title' => $destinations?->getTranslation('title') ?? '',
                 'label' => $destinations?->meta['label'][$locale] ?? ($destinations?->meta['label']['en'] ?? 'Curated Selection'),
             ],
             'featuredDestinations' => Destination::where('is_visible', true)
@@ -96,15 +100,19 @@ new #[Layout('components.layouts.public')] class extends Component {
                 {{ $heroSection['subtitle'] }}
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-                <a href="{{ $heroSection['cta_link'] }}" wire:navigate class="bg-primary hover:scale-105 transform transition-transform text-white px-8 sm:px-10 py-4 sm:py-5 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm w-full sm:w-auto text-center">
-                    {{ $heroSection['cta_text'] }}
-                </a>
-                <a href="{{ route('about') }}" wire:navigate class="flex items-center gap-3 text-white font-bold uppercase tracking-widest text-xs sm:text-sm group">
-                    <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
-                        <i class="material-icons">arrow_forward</i>
-                    </span>
-                    {{ __('Our Story') }}
-                </a>
+                @if($heroSection['cta_text'])
+                    <a href="{{ $heroSection['cta_link'] }}" wire:navigate class="bg-primary hover:scale-105 transform transition-transform text-white px-8 sm:px-10 py-4 sm:py-5 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm w-full sm:w-auto text-center">
+                        {{ $heroSection['cta_text'] }}
+                    </a>
+                @endif
+                @if($heroSection['cta_secondary_text'])
+                    <a href="{{ route('about') }}" wire:navigate class="flex items-center gap-3 text-white font-bold uppercase tracking-widest text-xs sm:text-sm group">
+                        <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                            <i class="material-icons">arrow_forward</i>
+                        </span>
+                        {{ $heroSection['cta_secondary_text'] }}
+                    </a>
+                @endif
             </div>
         </div>
     </section>
@@ -141,14 +149,16 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <div class="text-secondary/70 text-base sm:text-lg leading-relaxed font-light space-y-6">
                     {!! nl2br(e($aboutSection['content'])) !!}
                 </div>
-                <div class="pt-4 sm:pt-6">
-                    <a href="{{ route('about') }}" wire:navigate class="inline-flex items-center gap-4 text-secondary font-bold uppercase tracking-[0.2em] text-sm group">
-                        {{ __('Read Our Story') }}
-                        <span class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                            <i class="material-icons text-sm">arrow_forward</i>
-                        </span>
-                    </a>
-                </div>
+                @if($aboutSection['cta_text'])
+                    <div class="pt-4 sm:pt-6">
+                        <a href="{{ route('about') }}" wire:navigate class="inline-flex items-center gap-4 text-secondary font-bold uppercase tracking-[0.2em] text-sm group">
+                            {{ $aboutSection['cta_text'] }}
+                            <span class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                <i class="material-icons text-sm">arrow_forward</i>
+                            </span>
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
     </section>
@@ -236,12 +246,16 @@ new #[Layout('components.layouts.public')] class extends Component {
             <h2 class="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white mb-6 sm:mb-8 tracking-tight">{{ $ctaSection['title'] }}</h2>
             <p class="text-white/60 text-base sm:text-lg mb-8 sm:mb-12 font-light">{{ $ctaSection['subtitle'] }}</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="{{ route('destinations.index') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform">
-                    {{ __('Explore Destinations') }}
-                </a>
-                <a href="{{ route('about') }}" wire:navigate class="border border-white/20 text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:bg-white/10 transition-colors">
-                    {{ __('Learn More') }}
-                </a>
+                @if($ctaSection['cta_primary_text'])
+                    <a href="{{ route('destinations.index') }}" wire:navigate class="bg-primary text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:scale-105 transition-transform">
+                        {{ $ctaSection['cta_primary_text'] }}
+                    </a>
+                @endif
+                @if($ctaSection['cta_secondary_text'])
+                    <a href="{{ route('about') }}" wire:navigate class="border border-white/20 text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm hover:bg-white/10 transition-colors">
+                        {{ $ctaSection['cta_secondary_text'] }}
+                    </a>
+                @endif
             </div>
         </div>
     </section>

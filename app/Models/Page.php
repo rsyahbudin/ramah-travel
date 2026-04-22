@@ -13,6 +13,8 @@ class Page extends Model
 
     protected $guarded = ['id'];
 
+    protected array $translatable = ['title', 'content'];
+
     /** @return HasMany<PageTranslation, $this> */
     public function translations(): HasMany
     {
