@@ -9,6 +9,13 @@ class Setting extends Model
 {
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return [
+            'value' => 'json',
+        ];
+    }
+
     protected static ?\Illuminate\Support\Collection $cache = null;
 
     /**

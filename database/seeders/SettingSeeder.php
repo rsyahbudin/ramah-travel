@@ -70,13 +70,19 @@ class SettingSeeder extends Seeder
         ];
 
         foreach ($settings as $key => $config) {
-            Setting::updateOrCreate(
+            $isTranslatable = ($config['type'] ?? '') === 'translatable';
+
+            $setting = Setting::updateOrCreate(
                 ['key' => $key],
                 [
                     'type' => $config['type'],
-                    'value' => $config['value'] ?? null,
+                    'value' => $isTranslatable ? null : ($config['value'] ?? null),
                 ]
             );
+
+            if ($isTranslatable && is_array($config['value'])) {
+                $setting->syncTranslations($config['value']);
+            }
         }
     }
 }
