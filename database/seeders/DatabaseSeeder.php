@@ -23,8 +23,8 @@ class DatabaseSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@ramahindonesia.com'],
             [
-                'name' => 'Admin User',
-                'password' => bcrypt('password'),
+                'name' => 'Super Admin',
+                'password' => bcrypt('password'), // Or whatever default is preferred
                 'is_admin' => true,
             ]
         );

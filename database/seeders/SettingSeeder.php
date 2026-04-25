@@ -19,18 +19,25 @@ class SettingSeeder extends Seeder
          *   'key' => [['icon'=>..., 'title'=>...], ...]  → type: json (structured, non-translatable)
          */
         $settings = [
-            // Plain settings (non-translatable)
+            // Identity
             'site_name' => ['type' => 'text', 'value' => 'Ramah Indonesia'],
+            'logo_image' => ['type' => 'text', 'value' => 'settings/TJ8tF2SEDgcdOnXa1Jiwh0OahaMucgKK95AQoLy3.png'],
+            'logo_white' => ['type' => 'text', 'value' => 'settings/eZxuAH2ywebZSHS4E1faWUOL0QfGiljlkWOtmN9Q.png'],
+
+            // Contact & Social
             'whatsapp_number' => ['type' => 'text', 'value' => '628123456789'],
-            'admin_email' => ['type' => 'text', 'value' => 'admin@ramah-travel.com'],
-            'social_instagram' => ['type' => 'text', 'value' => 'https://instagram.com/ramahtravel'],
-            'social_facebook' => ['type' => 'text', 'value' => 'https://facebook.com/ramahtravel'],
+            'admin_email' => ['type' => 'text', 'value' => 'admin@ramahindonesia.com'],
+            'social_instagram' => ['type' => 'text', 'value' => 'https://instagram.com/ramah__indonesia'],
+            'social_facebook' => ['type' => 'text', 'value' => ''],
+            'social_twitter' => ['type' => 'text', 'value' => ''],
+            'social_youtube' => ['type' => 'text', 'value' => ''],
+            'social_tiktok' => ['type' => 'text', 'value' => ''],
 
             // Translatable settings
             'footer_text' => [
                 'type' => 'translatable',
                 'value' => [
-                    'en' => 'Crafting extraordinary journeys for the world\'s most discerning travelers.',
+                    'en' => 'Indonesia-based. Community-driven. Built for curious travelers.',
                     'id' => 'Menciptakan perjalanan luar biasa bagi para pelancong paling cerdas di dunia.',
                     'es' => 'Creando viajes extraordinarios para los viajeros más exigentes del mundo.',
                 ],
@@ -62,9 +69,9 @@ class SettingSeeder extends Seeder
             'whatsapp_general_template' => [
                 'type' => 'translatable',
                 'value' => [
-                    'en' => 'Hello, I am interested in booking a trip. Could you provide more information?',
-                    'id' => 'Halo, saya tertarik untuk memesan perjalanan. Bisakah Anda memberikan informasi lebih lanjut?',
-                    'es' => 'Hola, estoy interesado en reservar un viaje. ¿Podría darme más información?',
+                    'en' => 'Hello, saya tertarik untuk melakukan trip. Apakah bisa diberikan detailnya?',
+                    'id' => 'Hello, saya tertarik untuk melakukan trip. Apakah bisa diberikan detailnya?',
+                    'es' => 'Hello, saya tertarik untuk melakukan trip. Apakah bisa diberikan detailnya?',
                 ],
             ],
         ];
