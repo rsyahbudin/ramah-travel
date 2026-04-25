@@ -19,14 +19,5 @@ class DatabaseSeeder extends Seeder
             PageSeeder::class,
             DestinationSeeder::class,
         ]);
-
-        User::firstOrCreate(
-            ['email' => 'admin@ramahindonesia.com'],
-            [
-                'name' => 'Super Admin',
-                'password' => bcrypt('password'), // Or whatever default is preferred
-                'is_admin' => true,
-            ]
-        );
     }
 }
