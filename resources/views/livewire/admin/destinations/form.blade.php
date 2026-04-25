@@ -455,16 +455,16 @@ new class extends Component {
             <flux:separator />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" wire:model.live="title.{{ $activeTab }}" />
-                <flux:input label="{{ __('Slug') }}" wire:model.live="slug" description="Slug is generated from English title" />
+                <flux:input label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" wire:model.{{ $activeTab === 'en' ? 'live' : 'blur' }}="title.{{ $activeTab }}" />
+                <flux:input label="{{ __('Slug') }}" wire:model.blur="slug" description="Slug is generated from English title" />
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:key="location_activeTab-{{ $activeTab }}" wire:model.live="location.{{ $activeTab }}" icon="map-pin" />
-                <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:key="duration_activeTab-{{ $activeTab }}" wire:model.live="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
+                <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:key="location_activeTab-{{ $activeTab }}" wire:model.blur="location.{{ $activeTab }}" icon="map-pin" />
+                <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:key="duration_activeTab-{{ $activeTab }}" wire:model.blur="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
             </div>
 
-            <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:key="theme_activeTab-{{ $activeTab }}" wire:model.live="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
+            <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:key="theme_activeTab-{{ $activeTab }}" wire:model.blur="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
 
             <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:key="description_activeTab-{{ $activeTab }}" wire:model.blur="description.{{ $activeTab }}" rows="5" />
         </flux:card>
@@ -475,8 +475,8 @@ new class extends Component {
             <flux:separator />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Min Price (USD)') }}" wire:model.live="price" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
-                <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.live="price_max" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                <flux:input label="{{ __('Min Price (USD)') }}" wire:model.blur="price" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.blur="price_max" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
             </div>
 
             <div class="flex gap-6">
@@ -498,7 +498,7 @@ new class extends Component {
              </div>
              @foreach($highlights['en'] as $index => $_)
                 <div class="flex gap-2">
-                    <flux:input wire:key="highlights_activeTab_index-{{ $activeTab }}-{{ $index }}" wire:model.live="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
+                    <flux:input wire:key="highlights_activeTab_index-{{ $activeTab }}-{{ $index }}" wire:model.blur="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
                     <flux:button icon="trash" wire:click="removeHighlight({{ $index }})" variant="danger" />
                 </div>
              @endforeach
@@ -516,7 +516,7 @@ new class extends Component {
                         <div class="w-full sm:w-32 shrink-0">
                             <flux:input 
                                 wire:key="itinerary_activeTab_index_day-{{ $activeTab }}-{{ $index }}" 
-                                wire:model.live="itinerary.{{ $activeTab }}.{{ $index }}.day" 
+                                wire:model.blur="itinerary.{{ $activeTab }}.{{ $index }}.day" 
                                 placeholder="{{ __('e.g. Day 1') }}" 
                                 size="sm" 
                             />
@@ -555,7 +555,7 @@ new class extends Component {
                     <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group">
                         <flux:input 
                             wire:key="includes_activeTab_index-{{ $activeTab }}-{{ $index }}" 
-                            wire:model.live="includes.{{ $activeTab }}.{{ $index }}" 
+                            wire:model.blur="includes.{{ $activeTab }}.{{ $index }}" 
                             placeholder="{{ __('e.g. Airport pickup') }}" 
                             size="sm" 
                             class="flex-1"
@@ -583,7 +583,7 @@ new class extends Component {
                     <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group">
                         <flux:input 
                             wire:key="excludes_activeTab_index-{{ $activeTab }}-{{ $index }}" 
-                            wire:model.live="excludes.{{ $activeTab }}.{{ $index }}" 
+                            wire:model.blur="excludes.{{ $activeTab }}.{{ $index }}" 
                             placeholder="{{ __('e.g. International flights') }}" 
                             size="sm" 
                             class="flex-1"
@@ -611,7 +611,7 @@ new class extends Component {
                     <div class="absolute top-2 right-2">
                         <flux:button size="sm" icon="trash" wire:click="removeFaq({{ $index }})" variant="danger" />
                     </div>
-                    <flux:input wire:key="faq_activeTab_index_question-{{ $activeTab }}-{{ $index }}" wire:model.live="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
+                    <flux:input wire:key="faq_activeTab_index_question-{{ $activeTab }}-{{ $index }}" wire:model.blur="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
                     <flux:textarea wire:key="faq_activeTab_index_answer-{{ $activeTab }}-{{ $index }}" wire:model.blur="faq.{{ $activeTab }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
                 </div>
             @endforeach
@@ -630,13 +630,13 @@ new class extends Component {
                         <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <flux:input 
                                 wire:key="trip_info_activeTab_index_key-{{ $activeTab }}-{{ $index }}" 
-                                wire:model.live="trip_info.{{ $activeTab }}.{{ $index }}.key" 
+                                wire:model.blur="trip_info.{{ $activeTab }}.{{ $index }}.key" 
                                 placeholder="{{ __('Label (e.g. Wifi)') }}" 
                                 size="sm" 
                             />
                             <flux:input 
                                 wire:key="trip_info_activeTab_index_value-{{ $activeTab }}-{{ $index }}" 
-                                wire:model.live="trip_info.{{ $activeTab }}.{{ $index }}.value" 
+                                wire:model.blur="trip_info.{{ $activeTab }}.{{ $index }}.value" 
                                 placeholder="{{ __('Value (e.g. Yes)') }}" 
                                 size="sm" 
                             />
