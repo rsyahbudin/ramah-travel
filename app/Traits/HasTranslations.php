@@ -188,10 +188,15 @@ trait HasTranslations
     {
         $this->loadMissing('translations.language');
 
-        return $this->translations->mapWithKeys(function ($t) {
-            $code = $t->language?->code ?? Language::where('id', $t->language_id)->value('code') ?? $t->language_id;
-            return [$code => $t->$field];
-        })->toArray();
+        $results = [];
+        foreach ($this->translations as $t) {
+            $code = $t->language?->code ?? $t->language_id;
+            if ($code) {
+                $results[(string)$code] = $t->$field;
+            }
+        }
+
+        return $results;
     }
 
     /**
