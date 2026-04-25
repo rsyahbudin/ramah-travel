@@ -420,6 +420,19 @@ new class extends Component {
 ?>
 
 <div>
+    <style>
+        /* Prevent number input from changing on scroll */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+    </style>
+
     <div class="sticky top-0 z-50 bg-white dark:bg-zinc-800 py-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-700 mb-6">
         <flux:heading size="xl">{{ $destination?->exists ? __('Edit Destination') : __('New Destination') }}</flux:heading>
         
@@ -462,8 +475,8 @@ new class extends Component {
             <flux:separator />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Min Price (USD)') }}" wire:model.live="price" type="number" step="1" icon="currency-dollar" />
-                <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.live="price_max" type="number" step="1" icon="currency-dollar" />
+                <flux:input label="{{ __('Min Price (USD)') }}" wire:model.live="price" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.live="price_max" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
             </div>
 
             <div class="flex gap-6">
