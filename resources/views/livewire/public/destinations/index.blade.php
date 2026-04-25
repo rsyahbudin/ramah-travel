@@ -35,7 +35,7 @@ new #[Layout('components.layouts.public')] class extends Component {
 
 <div class="bg-bg-light">
     {{-- Hero Header --}}
-    <section class="relative h-[50vh] min-h-[350px] overflow-hidden flex items-center justify-center">
+    <section class="relative h-[65vh] sm:h-[55vh] md:h-[50vh] min-h-[450px] sm:min-h-[400px] overflow-hidden flex items-center justify-center">
         @if($page && $page->image_path)
             <img src="{{ Storage::url($page->image_path) }}" alt="{{ $hero['title'] }}" class="absolute inset-0 w-full h-full object-cover" />
         @else

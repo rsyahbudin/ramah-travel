@@ -88,10 +88,10 @@ new class extends Component {
 
                 // Save translatable settings
                 $footerTextSetting = Setting::firstOrCreate(['key' => 'footer_text'], ['type' => 'translatable']);
-                
+
                 $footerTranslations = [];
                 foreach (['en', 'id', 'es'] as $locale) {
-                    $footerTranslations[$locale] = ['value' => $this->footer_text[$locale] ?? ''];
+                    $footerTranslations[$locale] = $this->footer_text[$locale] ?? '';
                 }
                 $footerTextSetting->syncTranslations($footerTranslations);
 

@@ -17,9 +17,9 @@ Volt::route('/destinations', 'public.destinations.index')->name('destinations.in
 Volt::route('/destinations/{destination:slug}', 'public.destinations.show')->name('destinations.show');
 Volt::route('/about', 'public.about')->name('about');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+Route::get('dashboard', function () {
+    return redirect()->route('admin.dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Volt::route('/', 'admin.dashboard')->name('dashboard');

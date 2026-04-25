@@ -18,34 +18,29 @@ new class extends Component {
 
     public function mount()
     {
-        $settings = Setting::pluck('value', 'key')->toArray();
+        $this->whatsapp_number = Setting::get('whatsapp_number', '');
+        $this->admin_email = Setting::get('admin_email', '');
 
-        $this->whatsapp_number = $settings['whatsapp_number'] ?? '';
-        $this->admin_email = $settings['admin_email'] ?? '';
-
-        $this->whatsapp_general_template = $this->decodeSetting($settings, 'whatsapp_general_template', ['en' => "Hello, I am interested in booking a trip. Could you provide more information?"]);
-        
-        $this->whatsapp_template = $this->decodeSetting($settings, 'whatsapp_template', ['en' => "Hello, my name is {name}. I would like to book {destination} for {person} pax. I am from {city}, {country}. Email: {email}, Phone: {phone}."]);
-        $this->email_subject_template = $this->decodeSetting($settings, 'email_subject_template', ['en' => "New Booking Inquiry: {destination} - {name}"]);
-        $this->email_template = $this->decodeSetting($settings, 'email_template', ['en' => "New Inquiry from {name} ({email}).\n\nDestination: {destination}\nPax: {person}\nPhone: {phone}\nCity/Country: {city}, {country}\n\nURL: {url}"]);
+        $this->loadTranslatableSetting('whatsapp_general_template');
+        $this->loadTranslatableSetting('whatsapp_template');
+        $this->loadTranslatableSetting('email_subject_template');
+        $this->loadTranslatableSetting('email_template');
     }
 
-    protected function decodeSetting(array $settings, string $key, array $defaults = []): array
+    protected function loadTranslatableSetting(string $key): void
     {
-        $value = $settings[$key] ?? null;
-        if (!$value) return $defaults;
-
-        $decoded = json_decode($value, true);
-        if (!is_array($decoded)) {
-            return array_merge($defaults, ['en' => $value]);
+        $setting = Setting::where('key', $key)->first();
+        if ($setting) {
+            $this->$key = array_merge(
+                ['en' => '', 'id' => '', 'es' => ''],
+                $setting->getAllTranslations()
+            );
         }
-
-        return array_merge($defaults, $decoded);
     }
 
     public function save()
     {
-        $validated = $this->validate([
+        $this->validate([
             'whatsapp_number' => 'nullable|string',
             'admin_email' => 'nullable|email',
             'whatsapp_general_template.en' => 'nullable|string',
@@ -62,18 +57,23 @@ new class extends Component {
             'email_template.es' => 'nullable|string',
         ]);
 
-        $translatable = ['whatsapp_general_template', 'whatsapp_template', 'email_subject_template', 'email_template'];
+        \Illuminate\Support\Facades\DB::transaction(function () {
+            // Save simple text settings
+            Setting::updateOrCreate(['key' => 'whatsapp_number'], ['type' => 'text', 'value' => $this->whatsapp_number]);
+            Setting::updateOrCreate(['key' => 'admin_email'], ['type' => 'text', 'value' => $this->admin_email]);
 
-        foreach ($translatable as $key) {
-            Setting::updateOrCreate(['key' => $key], ['value' => json_encode($this->$key)]);
-        }
+            // Save translatable settings
+            $translatableKeys = ['whatsapp_general_template', 'whatsapp_template', 'email_subject_template', 'email_template'];
 
-        if (array_key_exists('whatsapp_number', $validated)) {
-            Setting::updateOrCreate(['key' => 'whatsapp_number'], ['value' => $this->whatsapp_number]);
-        }
-        if (array_key_exists('admin_email', $validated)) {
-            Setting::updateOrCreate(['key' => 'admin_email'], ['value' => $this->admin_email]);
-        }
+            foreach ($translatableKeys as $key) {
+                $setting = Setting::updateOrCreate(
+                    ['key' => $key],
+                    ['type' => 'translatable', 'value' => null]
+                );
+
+                $setting->syncTranslations($this->$key);
+            }
+        });
 
         $this->dispatch('notify', message: __('Communication templates saved successfully!'));
     }

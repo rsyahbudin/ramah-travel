@@ -48,10 +48,10 @@
         <div class="flex-1 flex justify-start">
             <a href="{{ route('home') }}" @click="mobileMenuOpen = false" class="flex items-center gap-2 group relative shrink-0" wire:navigate title="{{ $siteName }}">
                 @if($logoImage && $logoWhite)
-                    <img src="{{ Storage::url($logoWhite) }}" alt="{{ $siteName }}" class="h-20 w-auto sm:h-24 md:h-32 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="!scrolled && !mobileMenuOpen" />
-                    <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-16 w-auto sm:h-18 md:h-20 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="scrolled || mobileMenuOpen" x-cloak />
+                    <img src="{{ Storage::url($logoWhite) }}" alt="{{ $siteName }}" class="h-14 w-auto sm:h-16 md:h-20 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="!scrolled && !mobileMenuOpen" />
+                    <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" class="h-12 w-auto sm:h-14 md:h-16 object-contain transition-all duration-500 transform group-hover:scale-105" x-show="scrolled || mobileMenuOpen" x-cloak />
                 @elseif($logoImage)
-                    <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" :class="(scrolled || mobileMenuOpen) ? 'h-16 sm:h-18 md:h-20' : 'h-24 sm:h-32 md:h-40'" class="w-auto object-contain transition-all duration-500 transform group-hover:scale-105" />
+                    <img src="{{ Storage::url($logoImage) }}" alt="{{ $siteName }}" :class="(scrolled || mobileMenuOpen) ? 'h-12 sm:h-14 md:h-16' : 'h-16 sm:h-20 md:h-24'" class="w-auto object-contain transition-all duration-500 transform group-hover:scale-105" />
                 @else
                     <span :class="(scrolled || mobileMenuOpen) ? 'text-secondary' : 'text-white'" class="text-2xl sm:text-3xl font-extrabold tracking-tighter uppercase transition-colors duration-500 truncate max-w-[50vw] sm:max-w-xs">{{ $siteName }}</span>
                 @endif
@@ -229,7 +229,7 @@
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="text-[10px] uppercase tracking-wider text-secondary/40 font-bold leading-none mb-1">{{ __('Email') }}</span>
-                                        <span class="text-secondary group-hover:text-primary transition-colors truncate max-w-[150px] sm:max-w-none">{{ $adminEmail }}</span>
+                                        <span class="text-secondary group-hover:text-primary transition-colors break-all">{{ $adminEmail }}</span>
                                     </div>
                                 </a>
                             </li>

@@ -186,7 +186,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
 <div class="bg-bg-light">
     {{-- Hero Section --}}
-    <div class="relative h-[60vh] min-h-[400px] overflow-hidden">
+    <div class="relative h-[75vh] sm:h-[65vh] md:h-[60vh] min-h-[500px] sm:min-h-[450px] md:min-h-[400px] overflow-hidden">
         @if($destination->image_path)
             <img src="{{ Storage::url($destination->image_path) }}" alt="{{ $destination->getTranslation('title') }}" class="absolute inset-0 w-full h-full object-cover">
         @else
@@ -485,14 +485,14 @@ new #[Layout('components.layouts.public')] class extends Component
                         
                         <div class="space-y-4">
                             @if($whatsappUrl)
-                                <button wire:click="initiateBooking('whatsapp')" class="w-full bg-green-600 text-white font-bold uppercase tracking-widest py-4 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 group transform hover:-translate-y-1">
-                                    <i class="material-icons">chat</i> {{ __('Inquire via WhatsApp') }}
+                                <button wire:click="initiateBooking('whatsapp')" class="w-full bg-green-600 text-white font-bold uppercase tracking-wider py-4 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 group transform hover:-translate-y-1 text-xs sm:text-sm">
+                                    <i class="material-icons text-lg">chat</i> {{ __('Inquire via WhatsApp') }}
                                 </button>
                             @endif
 
                             @if($emailUrl)
-                                <button wire:click="initiateBooking('email')" class="w-full bg-secondary text-white font-bold uppercase tracking-widest py-4 rounded-xl hover:bg-primary transition-all shadow-lg flex items-center justify-center gap-2 group transform hover:-translate-y-1">
-                                    <i class="material-icons">email</i> {{ __('Inquire via Email') }}
+                                <button wire:click="initiateBooking('email')" class="w-full bg-secondary text-white font-bold uppercase tracking-wider py-4 rounded-xl hover:bg-primary transition-all shadow-lg flex items-center justify-center gap-2 group transform hover:-translate-y-1 text-xs sm:text-sm">
+                                    <i class="material-icons text-lg">email</i> {{ __('Inquire via Email') }}
                                 </button>
                             @endif
 
