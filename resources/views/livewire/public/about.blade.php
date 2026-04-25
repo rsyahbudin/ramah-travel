@@ -44,8 +44,8 @@ new #[Layout('components.layouts.public')] class extends Component {
                 'title' => $whoWeAreSection?->getTranslation('title') ?? $page?->getTranslation('title'),
                 'content' => $whoWeAreSection?->getTranslation('content') ?? '',
             ],
-            'stat_number' => $homeAbout?->meta['stat_number'][$locale] ?? ($homeAbout?->meta['stat_number']['en'] ?? '15+'),
-            'stat_text' => $homeAbout?->meta['stat_text'][$locale] ?? ($homeAbout?->meta['stat_text']['en'] ?? 'Years of Crafting Bespoke Experiences'),
+            'stat_number' => $homeAbout?->meta['stat_number'][$locale] ?? ($homeAbout?->meta['stat_number']['en'] ?? null),
+            'stat_text' => $homeAbout?->meta['stat_text'][$locale] ?? ($homeAbout?->meta['stat_text']['en'] ?? null),
             'experienceSection' => [
                 'title' => $tiers?->getTranslation('title') ?? 'How We Travel',
                 'label' => $tiers?->meta['label'][$locale] ?? ($tiers?->meta['label']['en'] ?? 'Tailored For You'),
@@ -116,9 +116,9 @@ new #[Layout('components.layouts.public')] class extends Component {
                 <div class="lg:col-span-2 space-y-8 lg:space-y-12">
                     {{-- Non-overlapping Stats Card --}}
                     @if($stat_number || $stat_text)
-                        <div class="bg-secondary p-8 sm:p-10 rounded-xl text-white shadow-2xl">
+                        <div class="bg-secondary p-6 sm:p-10 rounded-xl text-white shadow-2xl text-center lg:text-left transition-transform hover:scale-[1.02] duration-300">
                             <span class="text-4xl sm:text-5xl font-extrabold text-primary block mb-2">{{ $stat_number }}</span>
-                            <p class="text-sm font-medium text-white/80 uppercase tracking-widest leading-relaxed">{{ $stat_text }}</p>
+                            <p class="text-xs sm:text-sm font-medium text-white/80 uppercase tracking-[0.2em] leading-relaxed">{{ $stat_text }}</p>
                         </div>
                     @endif
 

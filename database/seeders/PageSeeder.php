@@ -64,8 +64,8 @@ class PageSeeder extends Seeder
                         'is_visible' => true,
                         'meta' => [
                             'label' => ['en' => 'Our Story', 'id' => 'Kisah Kami', 'es' => 'Desde 2008'],
-                            'stat_number' => ['en' => '', 'id' => '', 'es' => '15+'],
-                            'stat_text' => ['en' => '', 'id' => '', 'es' => 'Años creando experiencias a medida'],
+                            'stat_number' => ['en' => '', 'id' => '', 'es' => ''],
+                            'stat_text' => ['en' => '', 'id' => '', 'es' => ''],
                             'cta_text' => ['en' => 'Read Our Story', 'id' => 'Baca Cerita Kami', 'es' => 'Leer nuestra historia'],
                         ],
                         'title' => [
