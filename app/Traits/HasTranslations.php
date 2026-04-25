@@ -145,23 +145,40 @@ trait HasTranslations
     }
 
     /**
+     * Cache for translations within the current request to avoid redundant processing.
+     */
+    protected array $relationTranslationCache = [];
+
+    /**
      * Get translation for a specific field.
      */
     public function getTranslation(string $field, ?string $locale = null, bool $useFallback = true)
     {
-        $this->loadMissing('translations.language');
         $locale ??= App::getLocale();
+        $cacheKey = "{$locale}_{$field}";
+
+        if (array_key_exists($cacheKey, $this->relationTranslationCache)) {
+            return $this->relationTranslationCache[$cacheKey];
+        }
+
+        // Only load if not already loaded to avoid redundant calls
+        if (!$this->relationLoaded('translations')) {
+            $this->load('translations.language');
+        }
 
         // 1. Try specified locale
         $translation = $this->translations->first(function ($t) use ($locale) {
             return $t->language && $t->language->code === $locale;
         });
 
+        $value = null;
         if ($translation && isset($translation->$field) && $translation->$field !== '') {
-            return $translation->$field;
+            $value = $translation->$field;
         }
 
-        return null;
+        $this->relationTranslationCache[$cacheKey] = $value;
+
+        return $value;
     }
 
     /**
