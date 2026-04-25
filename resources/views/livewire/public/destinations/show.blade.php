@@ -228,23 +228,24 @@ new #[Layout('components.layouts.public')] class extends Component
         </div>
     </div>
 
-    <div class="container mx-auto px-4 md:px-6 py-12 md:py-20">
+    <div class="container mx-auto px-4 md:px-6 py-12 md:py-20 pb-24 lg:pb-20">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-20">
             {{-- Main Content --}}
             <div class="lg:col-span-2 space-y-12 md:space-y-16">
                 
                 <!-- Trip Info (Visual Guide) -->
                 @if($destination->tripInfos->count() > 0)
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                    @php $infoCount = $destination->tripInfos->count(); @endphp
+                    <div class="flex flex-wrap {{ $infoCount > 3 ? 'justify-center' : 'justify-start' }} gap-3 sm:gap-4">
                         @foreach($destination->tripInfos as $info)
                             @php
                                 $label = $info->getTranslation('label', useFallback: false);
                                 $value = $info->getTranslation('value', useFallback: false);
                             @endphp
                             @if($label && $value)
-                                <div class="p-4 rounded-2xl bg-secondary/5 border border-secondary/5 flex flex-col items-center text-center hover:bg-white hover:shadow-xl hover:border-primary/20 transition-all duration-300 group">
+                                <div class="w-[calc(50%-6px)] sm:w-[calc(33.33%-11px)] md:w-[calc(25%-12px)] p-4 rounded-2xl bg-secondary/5 border border-secondary/5 flex flex-col items-center justify-center text-center hover:bg-white hover:shadow-xl hover:border-primary/20 transition-all duration-300 group min-h-[100px]">
                                      <p class="text-[10px] uppercase tracking-widest text-secondary/40 group-hover:text-secondary/60 mb-1 transition-colors">{{ $label }}</p>
-                                     <p class="font-extrabold text-secondary text-sm sm:text-base leading-tight">{{ $value }}</p>
+                                     <p class="font-extrabold text-secondary text-sm sm:text-base leading-tight break-words hyphens-auto">{{ $value }}</p>
                                 </div>
                             @endif
                         @endforeach
@@ -296,7 +297,7 @@ new #[Layout('components.layouts.public')] class extends Component
                                     $description = $day->getTranslation('description', useFallback: false);
                                 @endphp
                                 @if($title || $description)
-                                    <div class="relative pl-8 md:pl-10 py-5 group first:pt-0 last:pb-0">
+                                    <div class="relative pl-8 md:pl-10 py-6 sm:py-5 group first:pt-0 last:pb-0">
                                         <span class="absolute -left-[9px] top-7 first:top-1 w-4 h-4 rounded-full bg-white border-2 border-primary/30 group-hover:border-primary group-hover:scale-110 transition-all duration-300 shadow-sm"></span>
                                         
                                         <div class="mb-2">
@@ -479,7 +480,7 @@ new #[Layout('components.layouts.public')] class extends Component
             {{-- Sidebar --}}
             <div class="lg:col-span-1">
                 <div class="sticky top-24 space-y-6">
-                    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-secondary/5 relative overflow-hidden">
+                    <div id="booking-section" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-secondary/5 relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-primary via-secondary to-primary"></div>
                         <h3 class="text-xl sm:text-2xl font-extrabold mb-6 text-secondary">{{ __('Book Your Trip') }}</h3>
                         
@@ -518,6 +519,43 @@ new #[Layout('components.layouts.public')] class extends Component
                 </div>
             </div>
         </div>
+    </div>
+
+    {{-- Fixed Mobile Inquiry Bar --}}
+    <div x-data="{ 
+            scrolled: false,
+            atBottom: false,
+            init() {
+                window.addEventListener('scroll', () => {
+                    const scrollPos = window.pageYOffset;
+                    const winHeight = window.innerHeight;
+                    const bookingSection = document.getElementById('booking-section');
+                    
+                    this.scrolled = scrollPos > 500;
+                    
+                    if (bookingSection) {
+                        const rect = bookingSection.getBoundingClientRect();
+                        // Hide as soon as the top of the booking section enters the viewport
+                        this.atBottom = rect.top < winHeight;
+                    }
+                })
+            }
+         }" 
+         x-show="scrolled && !atBottom"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="translate-y-full"
+         x-transition:enter-end="translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="translate-y-0"
+         x-transition:leave-end="translate-y-full"
+         class="fixed bottom-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-xl border-t border-secondary/5 p-4 flex gap-3 lg:hidden shadow-[0_-10px_30px_-5px_rgba(0,0,0,0.1)]"
+         x-cloak>
+        <button @click="$wire.initiateBooking('whatsapp')" class="flex-1 bg-green-600 text-white font-bold uppercase tracking-wider py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-green-600/20">
+            <i class="material-icons text-base">chat</i> {{ __('WA') }}
+        </button>
+        <button @click="$wire.initiateBooking('email')" class="flex-1 bg-secondary text-white font-bold uppercase tracking-wider py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg">
+            <i class="material-icons text-base">email</i> {{ __('Email') }}
+        </button>
     </div>
 
     {{-- Booking Form Modal --}}
