@@ -639,7 +639,7 @@ new class extends Component {
             
             @if(empty($trip_info['en']))
                 <div class="text-center py-4 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-xl">
-                    <flux:text color="zinc" size="sm">{{ __('No trip info added yet.') }}</flux:text>
+                    <flux:text size="sm">{{ __('No trip info added yet.') }}</flux:text>
                 </div>
             @endif
         </div>
