@@ -434,301 +434,343 @@ new class extends Component {
         }
     </style>
 
-    <div class="sticky top-0 z-50 bg-white dark:bg-zinc-800 py-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-700 mb-6">
-        <flux:heading size="xl">{{ $destination?->exists ? __('Edit Destination') : __('New Destination') }}</flux:heading>
-        
-        <div class="flex gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
-            @foreach(['en' => 'English', 'id' => 'Indonesia', 'es' => 'Español'] as $locale => $label)
-                <button type="button" 
-                    wire:click="$set('activeTab', '{{ $locale }}')"
-                    class="px-3 py-1.5 text-sm font-medium rounded-md transition {{ $activeTab === $locale ? 'bg-white dark:bg-zinc-700 shadow-sm' : 'text-zinc-500 hover:text-zinc-700' }}"
-                >
-                    {{ $label }}
-                </button>
-            @endforeach
-        </div>
-    </div>
-
-    <form wire:submit="save" class="space-y-8 max-w-5xl">
-        <!-- General Information -->
-        <flux:card class="space-y-6">
-            <flux:heading size="lg">{{ __('General Information') }}</flux:heading>
-            <flux:separator />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input 
-                    label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" 
-                    wire:model.blur="title.{{ $activeTab }}" 
-                    wire:key="title_activeTab-{{ $activeTab }}"
-                />
-                <flux:input label="{{ __('Slug') }}" wire:model.blur="slug" description="Slug is generated from English title" />
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Location') }} ({{ strtoupper($activeTab) }})" wire:key="location_activeTab-{{ $activeTab }}" wire:model.blur="location.{{ $activeTab }}" icon="map-pin" />
-                <flux:input label="{{ __('Duration') }} ({{ strtoupper($activeTab) }})" wire:key="duration_activeTab-{{ $activeTab }}" wire:model.blur="duration.{{ $activeTab }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
-            </div>
-
-            <flux:input label="{{ __('Theme') }} ({{ strtoupper($activeTab) }})" wire:key="theme_activeTab-{{ $activeTab }}" wire:model.blur="theme.{{ $activeTab }}" icon="tag" placeholder="e.g. Adventure, Romance" />
-
-            <flux:textarea label="{{ __('Description') }} ({{ strtoupper($activeTab) }})" wire:key="description_activeTab-{{ $activeTab }}" wire:model.blur="description.{{ $activeTab }}" rows="5" />
-        </flux:card>
-
-        <!-- Pricing & Availability -->
-        <flux:card class="space-y-6">
-            <flux:heading size="lg">{{ __('Pricing & Visibility') }}</flux:heading>
-            <flux:separator />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Min Price (USD)') }}" wire:model.blur="price" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
-                <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.blur="price_max" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
-            </div>
-
-            <div class="flex gap-6">
-                <flux:switch label="{{ __('Featured Destination') }}" description="{{ __('Show on home page') }}" wire:model.live="is_featured" />
-                <flux:switch label="{{ __('Visible on Site') }}" description="{{ __('Publish to public list') }}" wire:model.live="is_visible" />
-            </div>
-        </flux:card>
-
-        <!-- Content & Details -->
-        <flux:card class="space-y-8">
-            <flux:heading size="lg">{{ __('Detailed Content') }}</flux:heading>
-            <flux:separator />
-
-        <!-- Highlights Section -->
-        <div class="space-y-3">
-             <div class="flex justify-between items-center">
-                <flux:label>{{ __('Highlights') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addHighlight">{{ __('Add Highlight') }}</flux:button>
-             </div>
-             @foreach($highlights['en'] as $index => $_)
-                <div class="flex gap-2">
-                    <flux:input wire:key="highlights_activeTab_index-{{ $activeTab }}-{{ $index }}" wire:model.blur="highlights.{{ $activeTab }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
-                    <flux:button icon="trash" wire:click="removeHighlight({{ $index }})" variant="danger" />
-                </div>
-             @endforeach
-        </div>
-
-        <!-- Itinerary Section -->
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
-                <flux:label>{{ __('Itinerary') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" variant="ghost" icon="plus" wire:click="addItineraryDay">{{ __('Add Day') }}</flux:button>
-            </div>
-            <div class="space-y-3">
-                @foreach($itinerary['en'] as $index => $_)
-                    <div class="flex flex-col sm:flex-row gap-3 p-3 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700/50 group">
-                        <div class="w-full sm:w-32 shrink-0">
-                            <flux:input 
-                                wire:key="itinerary_activeTab_index_day-{{ $activeTab }}-{{ $index }}" 
-                                wire:model.blur="itinerary.{{ $activeTab }}.{{ $index }}.day" 
-                                placeholder="{{ __('e.g. Day 1') }}" 
-                                size="sm" 
-                            />
-                        </div>
-                        <div class="flex-1">
-                            <flux:textarea 
-                                wire:key="itinerary_activeTab_index_activity-{{ $activeTab }}-{{ $index }}" 
-                                wire:model.blur="itinerary.{{ $activeTab }}.{{ $index }}.activity" 
-                                placeholder="{{ __('e.g. Arrival & Hotel Check-in') }}" 
-                                rows="2" 
-                                size="sm" 
-                            />
-                        </div>
-                        <div class="flex justify-end">
-                            <flux:button 
-                                icon="trash" 
-                                wire:click="removeItineraryDay({{ $index }})" 
-                                variant="danger" 
-                                size="sm" 
-                                class="opacity-50 group-hover:opacity-100 transition-opacity" 
-                            />
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- Includes Section -->
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
-                <flux:label>{{ __('Includes') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" variant="ghost" icon="plus" wire:click="addInclude">{{ __('Add Include') }}</flux:button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                @foreach($includes['en'] as $index => $_)
-                    <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group">
-                        <flux:input 
-                            wire:key="includes_activeTab_index-{{ $activeTab }}-{{ $index }}" 
-                            wire:model.blur="includes.{{ $activeTab }}.{{ $index }}" 
-                            placeholder="{{ __('e.g. Airport pickup') }}" 
-                            size="sm" 
-                            class="flex-1"
-                        />
-                        <flux:button 
-                            icon="trash" 
-                            wire:click="removeInclude({{ $index }})" 
-                            variant="danger" 
-                            size="sm" 
-                            class="opacity-50 group-hover:opacity-100 transition-opacity" 
-                        />
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- Excludes Section -->
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
-                <flux:label>{{ __('Excludes') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" variant="ghost" icon="plus" wire:click="addExclude">{{ __('Add Exclude') }}</flux:button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                @foreach($excludes['en'] as $index => $_)
-                    <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group">
-                        <flux:input 
-                            wire:key="excludes_activeTab_index-{{ $activeTab }}-{{ $index }}" 
-                            wire:model.blur="excludes.{{ $activeTab }}.{{ $index }}" 
-                            placeholder="{{ __('e.g. International flights') }}" 
-                            size="sm" 
-                            class="flex-1"
-                        />
-                        <flux:button 
-                            icon="trash" 
-                            wire:click="removeExclude({{ $index }})" 
-                            variant="danger" 
-                            size="sm" 
-                            class="opacity-50 group-hover:opacity-100 transition-opacity" 
-                        />
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <!-- FAQ Section -->
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
-                <flux:label>{{ __('FAQ') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" icon="plus" wire:click="addFaq">{{ __('Add FAQ') }}</flux:button>
-            </div>
-            @foreach($faq['en'] as $index => $_)
-                <div class="space-y-2 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg relative">
-                    <div class="absolute top-2 right-2">
-                        <flux:button size="sm" icon="trash" wire:click="removeFaq({{ $index }})" variant="danger" />
-                    </div>
-                    <flux:input wire:key="faq_activeTab_index_question-{{ $activeTab }}-{{ $index }}" wire:model.blur="faq.{{ $activeTab }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
-                    <flux:textarea wire:key="faq_activeTab_index_answer-{{ $activeTab }}-{{ $index }}" wire:model.blur="faq.{{ $activeTab }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Trip Info Section -->
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
-                <flux:label>{{ __('Trip Info') }} ({{ strtoupper($activeTab) }})</flux:label>
-                <flux:button size="sm" variant="ghost" icon="plus" wire:click="addTripInfo">{{ __('Add Info') }}</flux:button>
-            </div>
+    <div x-data="{ localTab: @entangle('activeTab') }">
+        <div class="sticky top-0 z-50 bg-white dark:bg-zinc-800 py-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-700 mb-6">
+            <flux:heading size="xl">{{ $destination?->exists ? __('Edit Destination') : __('New Destination') }}</flux:heading>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                @foreach($trip_info['en'] as $index => $_)
-                    <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group">
-                        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <flux:input 
-                                wire:key="trip_info_activeTab_index_key-{{ $activeTab }}-{{ $index }}" 
-                                wire:model.blur="trip_info.{{ $activeTab }}.{{ $index }}.key" 
-                                placeholder="{{ __('Label (e.g. Wifi)') }}" 
-                                size="sm" 
-                            />
-                            <flux:input 
-                                wire:key="trip_info_activeTab_index_value-{{ $activeTab }}-{{ $index }}" 
-                                wire:model.blur="trip_info.{{ $activeTab }}.{{ $index }}.value" 
-                                placeholder="{{ __('Value (e.g. Yes)') }}" 
-                                size="sm" 
-                            />
-                        </div>
-                        <flux:button 
-                            icon="trash" 
-                            wire:click="removeTripInfo({{ $index }})" 
-                            variant="danger" 
-                            size="sm" 
-                            class="opacity-50 group-hover:opacity-100 transition-opacity"
-                        />
-                    </div>
+            <div class="flex gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+                @foreach(['en' => 'English', 'id' => 'Indonesia', 'es' => 'Español'] as $locale => $label)
+                    <button type="button" 
+                        x-on:click="localTab = '{{ $locale }}'; $wire.set('activeTab', '{{ $locale }}')"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md transition"
+                        x-bind:class="localTab === '{{ $locale }}' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700'"
+                    >
+                        {{ $label }}
+                    </button>
                 @endforeach
             </div>
-            
-            @if(empty($trip_info['en']))
-                <div class="text-center py-4 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-xl">
-                    <flux:text size="sm">{{ __('No trip info added yet.') }}</flux:text>
-                </div>
-            @endif
         </div>
 
-        </flux:card>
+        <form wire:submit="save" class="space-y-8 max-w-5xl">
+            <!-- General Information -->
+            <flux:card class="space-y-6">
+                <flux:heading size="lg">{{ __('General Information') }}</flux:heading>
+                <flux:separator />
 
-        <!-- Media Management -->
-        <flux:card class="space-y-6">
-            <flux:heading size="lg">{{ __('Media Management') }}</flux:heading>
-            <flux:separator />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        @foreach(['en', 'id', 'es'] as $locale)
+                            <div x-show="localTab === '{{ $locale }}'">
+                                <flux:input label="{{ __('Title') }} ({{ strtoupper($locale) }})" wire:model.blur="title.{{ $locale }}" />
+                            </div>
+                        @endforeach
+                    </div>
+                    <div>
+                        <flux:input label="{{ __('Slug') }}" wire:model.blur="slug" description="Slug is generated from English title" />
+                    </div>
+                </div>
 
-            <!-- Main Image -->
-            <flux:field>
-                <flux:label>{{ __('Main Cover Image') }}</flux:label>
-                <div class="mt-2 flex items-center gap-4">
-                    @if ($image)
-                        <img src="{{ $image->temporaryUrl() }}" class="h-32 w-48 object-cover rounded-lg border border-zinc-200" />
-                    @elseif ($existingImage)
-                        <img src="{{ Storage::url($existingImage) }}" class="h-32 w-48 object-cover rounded-lg border border-zinc-200" />
-                    @else
-                        <div class="h-32 w-48 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200">
-                            <flux:icon.photo class="size-8 text-zinc-400" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        @foreach(['en', 'id', 'es'] as $locale)
+                            <div x-show="localTab === '{{ $locale }}'">
+                                <flux:input label="{{ __('Location') }} ({{ strtoupper($locale) }})" wire:model.blur="location.{{ $locale }}" icon="map-pin" />
+                            </div>
+                        @endforeach
+                    </div>
+                    <div>
+                        @foreach(['en', 'id', 'es'] as $locale)
+                            <div x-show="localTab === '{{ $locale }}'">
+                                <flux:input label="{{ __('Duration') }} ({{ strtoupper($locale) }})" wire:model.blur="duration.{{ $locale }}" icon="clock" placeholder="e.g. 5 Days 4 Nights" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div>
+                    @foreach(['en', 'id', 'es'] as $locale)
+                        <div x-show="localTab === '{{ $locale }}'">
+                            <flux:input label="{{ __('Theme') }} ({{ strtoupper($locale) }})" wire:model.blur="theme.{{ $locale }}" icon="tag" placeholder="e.g. Adventure, Romance" />
+                        </div>
+                    @endforeach
+                </div>
+
+                <div>
+                    @foreach(['en', 'id', 'es'] as $locale)
+                        <div x-show="localTab === '{{ $locale }}'">
+                            <flux:textarea label="{{ __('Description') }} ({{ strtoupper($locale) }})" wire:model.blur="description.{{ $locale }}" rows="5" />
+                        </div>
+                    @endforeach
+                </div>
+            </flux:card>
+
+            <!-- Pricing & Availability -->
+            <flux:card class="space-y-6">
+                <flux:heading size="lg">{{ __('Pricing & Visibility') }}</flux:heading>
+                <flux:separator />
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <flux:input label="{{ __('Min Price (USD)') }}" wire:model.blur="price" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                    <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.blur="price_max" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                </div>
+
+                <div class="flex gap-6">
+                    <flux:switch label="{{ __('Featured Destination') }}" description="{{ __('Show on home page') }}" wire:model.live="is_featured" />
+                    <flux:switch label="{{ __('Visible on Site') }}" description="{{ __('Publish to public list') }}" wire:model.live="is_visible" />
+                </div>
+            </flux:card>
+
+            <!-- Content & Details -->
+            <flux:card class="space-y-8">
+                <flux:heading size="lg">{{ __('Detailed Content') }}</flux:heading>
+                <flux:separator />
+
+                <!-- Highlights Section -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <flux:label>{{ __('Highlights') }}</flux:label>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300" x-text="localTab.toUpperCase()"></span>
+                        </div>
+                        <flux:button size="sm" icon="plus" wire:click="addHighlight">{{ __('Add Highlight') }}</flux:button>
+                    </div>
+                    @foreach($highlights['en'] as $index => $_)
+                        <div class="flex gap-2 w-full">
+                            <div class="flex-1">
+                                @foreach(['en', 'id', 'es'] as $locale)
+                                    <div x-show="localTab === '{{ $locale }}'">
+                                        <flux:input wire:model.blur="highlights.{{ $locale }}.{{ $index }}" placeholder="e.g. Sunset Dinner" />
+                                    </div>
+                                @endforeach
+                            </div>
+                            <flux:button icon="trash" wire:click="removeHighlight({{ $index }})" variant="danger" />
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Itinerary Section -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <flux:label>{{ __('Itinerary') }}</flux:label>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300" x-text="localTab.toUpperCase()"></span>
+                        </div>
+                        <flux:button size="sm" variant="ghost" icon="plus" wire:click="addItineraryDay">{{ __('Add Day') }}</flux:button>
+                    </div>
+                    <div class="space-y-3">
+                        @foreach($itinerary['en'] as $index => $_)
+                            <div class="flex flex-col sm:flex-row gap-3 p-3 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700/50 group w-full">
+                                <div class="w-full sm:w-40 shrink-0">
+                                    @foreach(['en', 'id', 'es'] as $locale)
+                                        <div x-show="localTab === '{{ $locale }}'">
+                                            <flux:input wire:model.blur="itinerary.{{ $locale }}.{{ $index }}.day" placeholder="{{ __('e.g. Day 1') }}" size="sm" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="flex-1">
+                                    @foreach(['en', 'id', 'es'] as $locale)
+                                        <div x-show="localTab === '{{ $locale }}'">
+                                            <flux:textarea wire:model.blur="itinerary.{{ $locale }}.{{ $index }}.activity" placeholder="{{ __('e.g. Arrival & Hotel Check-in') }}" rows="2" size="sm" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="flex justify-end mt-1">
+                                    <flux:button icon="trash" wire:click="removeItineraryDay({{ $index }})" variant="danger" size="sm" class="opacity-50 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Includes Section -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <flux:label>{{ __('Includes') }}</flux:label>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300" x-text="localTab.toUpperCase()"></span>
+                        </div>
+                        <flux:button size="sm" variant="ghost" icon="plus" wire:click="addInclude">{{ __('Add Include') }}</flux:button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                        @foreach($includes['en'] as $index => $_)
+                            <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group w-full">
+                                <div class="flex-1">
+                                    @foreach(['en', 'id', 'es'] as $locale)
+                                        <div x-show="localTab === '{{ $locale }}'">
+                                            <flux:input wire:model.blur="includes.{{ $locale }}.{{ $index }}" placeholder="{{ __('e.g. Airport pickup') }}" size="sm" class="w-full" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <flux:button icon="trash" wire:click="removeInclude({{ $index }})" variant="danger" size="sm" class="opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Excludes Section -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <flux:label>{{ __('Excludes') }}</flux:label>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300" x-text="localTab.toUpperCase()"></span>
+                        </div>
+                        <flux:button size="sm" variant="ghost" icon="plus" wire:click="addExclude">{{ __('Add Exclude') }}</flux:button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                        @foreach($excludes['en'] as $index => $_)
+                            <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group w-full">
+                                <div class="flex-1">
+                                    @foreach(['en', 'id', 'es'] as $locale)
+                                        <div x-show="localTab === '{{ $locale }}'">
+                                            <flux:input wire:model.blur="excludes.{{ $locale }}.{{ $index }}" placeholder="{{ __('e.g. International flights') }}" size="sm" class="w-full" />
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <flux:button icon="trash" wire:click="removeExclude({{ $index }})" variant="danger" size="sm" class="opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <flux:label>{{ __('FAQ') }}</flux:label>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300" x-text="localTab.toUpperCase()"></span>
+                        </div>
+                        <flux:button size="sm" icon="plus" wire:click="addFaq">{{ __('Add FAQ') }}</flux:button>
+                    </div>
+                    @foreach($faq['en'] as $index => $_)
+                        <div class="space-y-2 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg relative w-full">
+                            <div class="absolute top-2 right-2 z-10">
+                                <flux:button size="sm" icon="trash" wire:click="removeFaq({{ $index }})" variant="danger" />
+                            </div>
+                            <div class="w-full">
+                                @foreach(['en', 'id', 'es'] as $locale)
+                                    <div x-show="localTab === '{{ $locale }}'">
+                                        <flux:input wire:model.blur="faq.{{ $locale }}.{{ $index }}.question" placeholder="Question" label="{{ __('Question') }}" />
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="w-full mt-2">
+                                @foreach(['en', 'id', 'es'] as $locale)
+                                    <div x-show="localTab === '{{ $locale }}'">
+                                        <flux:textarea wire:model.blur="faq.{{ $locale }}.{{ $index }}.answer" placeholder="Answer" label="{{ __('Answer') }}" rows="2" />
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Trip Info Section -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <flux:label>{{ __('Trip Info') }}</flux:label>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300" x-text="localTab.toUpperCase()"></span>
+                        </div>
+                        <flux:button size="sm" variant="ghost" icon="plus" wire:click="addTripInfo">{{ __('Add Info') }}</flux:button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                        @foreach($trip_info['en'] as $index => $_)
+                            <div class="flex items-center gap-2 p-2 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-700/50 group w-full">
+                                <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div>
+                                        @foreach(['en', 'id', 'es'] as $locale)
+                                            <div x-show="localTab === '{{ $locale }}'">
+                                                <flux:input wire:model.blur="trip_info.{{ $locale }}.{{ $index }}.key" placeholder="{{ __('Label (e.g. Wifi)') }}" size="sm" />
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <div>
+                                        @foreach(['en', 'id', 'es'] as $locale)
+                                            <div x-show="localTab === '{{ $locale }}'">
+                                                <flux:input wire:model.blur="trip_info.{{ $locale }}.{{ $index }}.value" placeholder="{{ __('Value (e.g. Yes)') }}" size="sm" />
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <flux:button icon="trash" wire:click="removeTripInfo({{ $index }})" variant="danger" size="sm" class="opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        @endforeach
+                    </div>
+                    
+                    @if(empty($trip_info['en']))
+                        <div class="text-center py-4 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-xl">
+                            <flux:text size="sm">{{ __('No trip info added yet.') }}</flux:text>
                         </div>
                     @endif
-                    
-                    <div class="flex-1 space-y-2">
-                        <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
-                        <flux:description>Recommended: 1200×800px (3:2 ratio). Max 3MB.</flux:description>
-                        <flux:error name="image" />
-                    </div>
                 </div>
-            </flux:field>
 
-            <flux:separator />
+            </flux:card>
 
-            <!-- Gallery Images -->
-             <flux:field>
-                <flux:label>{{ __('Gallery Images') }}</flux:label>
-                <div class="mt-2 space-y-4">
-                    <input type="file" wire:model="gallery" multiple class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        @foreach($gallery as $photo)
-                             <div class="relative group aspect-square">
-                                <img src="{{ $photo->temporaryUrl() }}" class="h-full w-full object-cover rounded-lg ring-2 ring-primary-500" />
-                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs rounded-lg font-bold">NEW</div>
-                             </div>
-                        @endforeach
+            <!-- Media Management -->
+            <flux:card class="space-y-6">
+                <flux:heading size="lg">{{ __('Media Management') }}</flux:heading>
+                <flux:separator />
 
-                        @if($destination?->exists)
-                            @foreach($existingGallery as $photo)
-                                <div class="relative group aspect-square">
-                                    <img src="{{ Storage::url($photo->image_path) }}" class="h-full w-full object-cover rounded-lg border border-zinc-200" />
-                                    <button type="button" wire:click="deleteGalleryImage({{ $photo->id }})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition shadow-lg hover:scale-110">
-                                        <flux:icon.trash class="size-3" />
-                                    </button>
-                                </div>
-                            @endforeach
+                <!-- Main Image -->
+                <flux:field>
+                    <flux:label>{{ __('Main Cover Image') }}</flux:label>
+                    <div class="mt-2 flex items-center gap-4">
+                        @if ($image)
+                            <img src="{{ $image->temporaryUrl() }}" class="h-32 w-48 object-cover rounded-lg border border-zinc-200" />
+                        @elseif ($existingImage)
+                            <img src="{{ Storage::url($existingImage) }}" class="h-32 w-48 object-cover rounded-lg border border-zinc-200" />
+                        @else
+                            <div class="h-32 w-48 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200">
+                                <flux:icon.photo class="size-8 text-zinc-400" />
+                            </div>
                         @endif
+                        
+                        <div class="flex-1 space-y-2">
+                            <input type="file" wire:model="image" class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                            <flux:description>Recommended: 1200×800px (3:2 ratio). Max 3MB.</flux:description>
+                            <flux:error name="image" />
+                        </div>
                     </div>
-                </div>
-                <flux:description>Recommended: 1:1 ratio. Max 3MB per image.</flux:description>
-                <flux:error name="gallery.*" />
-            </flux:field>
-        </flux:card>
+                </flux:field>
 
-        <div class="flex justify-end gap-3 pt-6">
-            <flux:button href="{{ route('admin.destinations.index') }}" wire:navigate variant="ghost">{{ __('Cancel') }}</flux:button>
-            <flux:button type="submit" variant="primary" class="px-8">{{ __('Save Destination') }}</flux:button>
-        </div>
-    </form>
+                <flux:separator />
+
+                <!-- Gallery Images -->
+                <flux:field>
+                    <flux:label>{{ __('Gallery Images') }}</flux:label>
+                    <div class="mt-2 space-y-4">
+                        <input type="file" wire:model="gallery" multiple class="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer" />
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            @foreach($gallery as $photo)
+                                 <div class="relative group aspect-square">
+                                    <img src="{{ $photo->temporaryUrl() }}" class="h-full w-full object-cover rounded-lg ring-2 ring-primary-500" />
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs rounded-lg font-bold">NEW</div>
+                                 </div>
+                            @endforeach
+
+                            @if($destination?->exists)
+                                @foreach($existingGallery as $photo)
+                                    <div class="relative group aspect-square">
+                                        <img src="{{ Storage::url($photo->image_path) }}" class="h-full w-full object-cover rounded-lg border border-zinc-200" />
+                                        <button type="button" wire:click="deleteGalleryImage({{ $photo->id }})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition shadow-lg hover:scale-110">
+                                            <flux:icon.trash class="size-3" />
+                                        </button>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                    <flux:description>Recommended: 1:1 ratio. Max 3MB per image.</flux:description>
+                    <flux:error name="gallery.*" />
+                </flux:field>
+            </flux:card>
+
+            <div class="flex justify-end gap-3 pt-6">
+                <flux:button href="{{ route('admin.destinations.index') }}" wire:navigate variant="ghost">{{ __('Cancel') }}</flux:button>
+                <flux:button type="submit" variant="primary" class="px-8">{{ __('Save Destination') }}</flux:button>
+            </div>
+        </form>
+    </div>
 </div>
