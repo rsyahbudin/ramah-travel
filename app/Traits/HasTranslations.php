@@ -161,10 +161,8 @@ trait HasTranslations
             return $this->relationTranslationCache[$cacheKey];
         }
 
-        // Only load if not already loaded to avoid redundant calls
-        if (!$this->relationLoaded('translations')) {
-            $this->load('translations.language');
-        }
+        // Use loadMissing instead of load to ensure nested language is always checked
+        $this->loadMissing('translations.language');
 
         // 1. Try specified locale
         $translation = $this->translations->first(function ($t) use ($locale) {
@@ -190,9 +188,10 @@ trait HasTranslations
     {
         $this->loadMissing('translations.language');
 
-        return $this->translations->mapWithKeys(
-            fn ($t) => [$t->language?->code ?? $t->language_id => $t->$field]
-        )->toArray();
+        return $this->translations->mapWithKeys(function ($t) {
+            $code = $t->language?->code ?? Language::where('id', $t->language_id)->value('code') ?? $t->language_id;
+            return [$code => $t->$field];
+        })->toArray();
     }
 
     /**

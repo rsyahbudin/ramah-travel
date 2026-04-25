@@ -45,12 +45,13 @@ new class extends Component {
         if ($destination && $destination->exists) {
             $this->destination = $destination;
             
-            // Standard translatable fields
-            $this->title = $destination->getTranslations('title');
-            $this->location = $destination->getTranslations('location');
-            $this->duration = $destination->getTranslations('duration');
-            $this->theme = $destination->getTranslations('theme');
-            $this->description = $destination->getTranslations('description');
+            // Standard translatable fields - ensure all locales exist in the array
+            foreach (['title', 'location', 'duration', 'theme', 'description'] as $field) {
+                $translations = $destination->getTranslations($field);
+                foreach ($locales as $locale) {
+                    $this->{$field}[$locale] = $translations[$locale] ?? '';
+                }
+            }
             
             // Highlights (stored as text with newlines in DB, split to array for UI)
             $dbHighlights = $destination->getTranslations('highlights');
@@ -455,7 +456,11 @@ new class extends Component {
             <flux:separator />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" wire:model.{{ $activeTab === 'en' ? 'live' : 'blur' }}="title.{{ $activeTab }}" />
+                <flux:input 
+                    label="{{ __('Title') }} ({{ strtoupper($activeTab) }})" 
+                    wire:model.blur="title.{{ $activeTab }}" 
+                    wire:key="title_activeTab-{{ $activeTab }}"
+                />
                 <flux:input label="{{ __('Slug') }}" wire:model.blur="slug" description="Slug is generated from English title" />
             </div>
 
