@@ -186,11 +186,22 @@ trait HasTranslations
      */
     public function getTranslations(string $field): array
     {
+        // Force load language to ensure keys are codes, not IDs
         $this->loadMissing('translations.language');
 
         $results = [];
         foreach ($this->translations as $t) {
             $code = $t->language?->code ?? $t->language_id;
+            
+            // If we still have a numeric ID, try a quick lookup from a static cache
+            if (is_numeric($code)) {
+                static $langMap = null;
+                if ($langMap === null) {
+                    $langMap = \App\Models\Language::pluck('code', 'id')->toArray();
+                }
+                $code = $langMap[$code] ?? $code;
+            }
+
             if ($code) {
                 $results[(string)$code] = $t->$field;
             }
@@ -227,6 +238,9 @@ trait HasTranslations
                 }
             }
         });
+
+        // Clear cache and refresh relations to ensure next read is fresh
+        $this->refreshTranslations();
     }
 
     /**
@@ -234,6 +248,7 @@ trait HasTranslations
      */
     public function refreshTranslations(): self
     {
+        $this->relationTranslationCache = []; // Clear the internal cache
         $this->unsetRelation('translations');
         $this->unsetRelation('translation');
         return $this;
