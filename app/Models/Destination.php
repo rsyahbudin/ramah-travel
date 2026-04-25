@@ -18,8 +18,8 @@ class Destination extends Model
     protected function casts(): array
     {
         return [
-            'price' => 'decimal:2',
-            'price_max' => 'decimal:2',
+            'price' => 'integer',
+            'price_max' => 'integer',
             'is_featured' => 'boolean',
             'is_visible' => 'boolean',
         ];

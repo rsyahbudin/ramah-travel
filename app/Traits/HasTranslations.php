@@ -161,23 +161,7 @@ trait HasTranslations
             return $translation->$field;
         }
 
-        if (!$useFallback) {
-            return null;
-        }
-
-        // 2. Fallback to English
-        if ($locale !== 'en') {
-            $fallback = $this->translations->first(function ($t) {
-                return $t->language && $t->language->code === 'en';
-            });
-
-            if ($fallback && isset($fallback->$field) && $fallback->$field !== '') {
-                return $fallback->$field;
-            }
-        }
-
-        // 3. Last resort: return the first available translation
-        return $this->translations->first()->$field ?? null;
+        return null;
     }
 
     /**
