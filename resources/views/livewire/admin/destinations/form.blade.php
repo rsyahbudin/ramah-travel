@@ -139,11 +139,18 @@ new class extends Component {
         }
     }
 
+    public bool $isSlugCustomized = false;
+
     public function updatedTitle($value, $key): void
     {
-        if ($key === 'en') {
+        if ($key === 'en' && !$this->isSlugCustomized) {
             $this->slug = Str::slug($value);
         }
+    }
+
+    public function updatedSlug(): void
+    {
+        $this->isSlugCustomized = true;
     }
 
     // Dynamic List Methods (Synchronized across locales)
@@ -239,28 +246,69 @@ new class extends Component {
     {
         try {
             $this->validate([
-                'title.en' => 'required|string|max:255',
-                'title.id' => 'nullable|string|max:255',
-                'title.es' => 'nullable|string|max:255',
-                'slug' => 'required|string|max:255|unique:destinations,slug,' . ($this->destination?->id ?? 'NULL'),
-                'location.en' => 'required|string|max:255',
-                'location.id' => 'nullable|string|max:255',
-                'location.es' => 'nullable|string|max:255',
-                'duration.en' => 'nullable|string|max:255',
-                'duration.id' => 'nullable|string|max:255',
-                'duration.es' => 'nullable|string|max:255',
-                'theme.en' => 'nullable|string|max:255',
-                'theme.id' => 'nullable|string|max:255',
-                'theme.es' => 'nullable|string|max:255',
-                'price' => 'required|integer|min:0',
-                'price_max' => 'nullable|integer|gt:price',
-                'description.en' => 'required|string',
-                'description.id' => 'nullable|string',
-                'description.es' => 'nullable|string',
+                // Base Translations
+                'title.en' => 'required|string|max:100',
+                'title.*' => 'nullable|string|max:100',
+                'slug' => 'required|string|max:100|unique:destinations,slug,' . ($this->destination?->id ?? 'NULL'),
+                'location.en' => 'required|string|max:150',
+                'location.*' => 'nullable|string|max:150',
+                'duration.en' => 'nullable|string|max:50',
+                'duration.*' => 'nullable|string|max:50',
+                'theme.en' => 'nullable|string|max:50',
+                'theme.*' => 'nullable|string|max:50',
+                'description.en' => 'required|string|max:5000',
+                'description.*' => 'nullable|string|max:5000',
+
+                // Price & Settings
+                'price' => 'required|integer|min:0|max:1000000000',
+                'price_max' => 'nullable|integer|gt:price|max:1000000000',
                 'is_featured' => 'boolean',
                 'is_visible' => 'boolean',
-                'image' => 'nullable|image|max:3072',
-                'gallery.*' => 'image|max:3072',
+
+                // Media
+                'image' => 'nullable|image|max:5120',
+                'gallery.*' => 'image|max:5120',
+
+                // Relational Data (Iterate through active locales for thorough checking)
+                'highlights.en.*' => 'nullable|string|max:255',
+                'highlights.id.*' => 'nullable|string|max:255',
+                'highlights.es.*' => 'nullable|string|max:255',
+
+                'itinerary.en.*.day' => 'nullable|string|max:255',
+                'itinerary.en.*.activity' => 'nullable|string|max:3000',
+                'itinerary.id.*.day' => 'nullable|string|max:255',
+                'itinerary.id.*.activity' => 'nullable|string|max:3000',
+                'itinerary.es.*.day' => 'nullable|string|max:255',
+                'itinerary.es.*.activity' => 'nullable|string|max:3000',
+
+                'includes.en.*' => 'nullable|string|max:255',
+                'includes.id.*' => 'nullable|string|max:255',
+                'includes.es.*' => 'nullable|string|max:255',
+
+                'excludes.en.*' => 'nullable|string|max:255',
+                'excludes.id.*' => 'nullable|string|max:255',
+                'excludes.es.*' => 'nullable|string|max:255',
+
+                'faq.en.*.question' => 'nullable|string|max:255',
+                'faq.en.*.answer' => 'nullable|string|max:2000',
+                'faq.id.*.question' => 'nullable|string|max:255',
+                'faq.id.*.answer' => 'nullable|string|max:2000',
+                'faq.es.*.question' => 'nullable|string|max:255',
+                'faq.es.*.answer' => 'nullable|string|max:2000',
+
+                'trip_info.en.*.key' => 'nullable|string|max:100',
+                'trip_info.en.*.value' => 'nullable|string|max:255',
+                'trip_info.id.*.key' => 'nullable|string|max:100',
+                'trip_info.id.*.value' => 'nullable|string|max:255',
+                'trip_info.es.*.key' => 'nullable|string|max:100',
+                'trip_info.es.*.value' => 'nullable|string|max:255',
+            ], [
+                '*.required' => __('This field is required.'),
+                '*.max' => __('Too long (max :max characters).'),
+                '*.image' => __('The file must be an image.'),
+                'price.min' => __('Price must be at least 0.'),
+                'price_max.gt' => __('Maximum price must be greater than minimum price.'),
+                'slug.unique' => __('This slug is already taken.'),
             ]);
 
             \Illuminate\Support\Facades\DB::transaction(function () {
@@ -414,7 +462,7 @@ new class extends Component {
             throw $e;
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Destination save error: ' . $e->getMessage());
-            $this->dispatch('notify', variant: 'error', message: __('An error occurred while saving: ') . $e->getMessage());
+            $this->dispatch('notify', variant: 'error', message: __('Unable to save destination. Please check your inputs or try again later.'));
         }
     }
 };
@@ -442,10 +490,24 @@ new class extends Component {
                 @foreach(['en' => 'English', 'id' => 'Indonesia', 'es' => 'Español'] as $locale => $label)
                     <button type="button" 
                         x-on:click="localTab = '{{ $locale }}'; $wire.set('activeTab', '{{ $locale }}')"
-                        class="px-3 py-1.5 text-sm font-medium rounded-md transition"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md transition flex items-center gap-2"
                         x-bind:class="localTab === '{{ $locale }}' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700'"
                     >
-                        {{ $label }}
+                        <span>{{ $label }}</span>
+                        
+                        @php
+                            $hasError = false;
+                            foreach(['title', 'location', 'duration', 'theme', 'description', 'highlights', 'itinerary', 'includes', 'excludes', 'faq', 'trip_info'] as $field) {
+                                if ($errors->has($field . '.' . $locale . '*') || $errors->has($field . '.' . $locale)) {
+                                    $hasError = true;
+                                    break;
+                                }
+                            }
+                        @endphp
+                        
+                        @if($hasError)
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        @endif
                     </button>
                 @endforeach
             </div>
@@ -461,7 +523,11 @@ new class extends Component {
                     <div>
                         @foreach(['en', 'id', 'es'] as $locale)
                             <div x-show="localTab === '{{ $locale }}'">
-                                <flux:input label="{{ __('Title') }} ({{ strtoupper($locale) }})" wire:model.blur="title.{{ $locale }}" />
+                                @if($locale === 'en')
+                                    <flux:input label="{{ __('Title') }} ({{ strtoupper($locale) }})" wire:model.live.debounce.300ms="title.{{ $locale }}" />
+                                @else
+                                    <flux:input label="{{ __('Title') }} ({{ strtoupper($locale) }})" wire:model.blur="title.{{ $locale }}" />
+                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -510,8 +576,12 @@ new class extends Component {
                 <flux:separator />
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <flux:input label="{{ __('Min Price (USD)') }}" wire:model.blur="price" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
-                    <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.blur="price_max" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                    <div class="space-y-1">
+                        <flux:input label="{{ __('Min Price (USD)') }}" wire:model.blur="price" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                    </div>
+                    <div class="space-y-1">
+                        <flux:input label="{{ __('Max Price (USD) - Optional') }}" wire:model.blur="price_max" type="number" step="1" icon="currency-dollar" onwheel="this.blur()" />
+                    </div>
                 </div>
 
                 <div class="flex gap-6">
