@@ -141,7 +141,7 @@ new class extends Component {
 
     public function updatedTitle($value, $key): void
     {
-        if ($key === 'en' && !$this->destination?->exists) {
+        if ($key === 'en') {
             $this->slug = Str::slug($value);
         }
     }
