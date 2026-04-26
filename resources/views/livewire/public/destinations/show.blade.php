@@ -289,25 +289,26 @@ new #[Layout('components.layouts.public')] class extends Component
                 <!-- Itinerary -->
                 @if($destination->itineraryItems->count() > 0)
                     <div>
-                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-8">{{ __('Itinerary') }}</h2>
-                         <div class="relative border-l-2 border-primary/10 ml-3 md:ml-4 my-8 md:my-10 space-y-0">
+                         <h2 class="text-2xl sm:text-3xl font-extrabold text-secondary mb-10">{{ __('Journey Itinerary') }}</h2>
+                         <div class="relative border-l-2 border-primary/20 ml-2 md:ml-4 my-8 md:my-10 space-y-0">
                             @foreach($destination->itineraryItems as $index => $day)
                                 @php
-                                    $title = $day->getTranslation('title', useFallback: false);
-                                    $description = $day->getTranslation('description', useFallback: false);
+                                    $title = $day->getTranslation('title');
+                                    $description = $day->getTranslation('description');
                                 @endphp
                                 @if($title || $description)
-                                    <div class="relative pl-8 md:pl-10 py-6 sm:py-5 group first:pt-0 last:pb-0">
-                                        <span class="absolute -left-[9px] top-7 first:top-1 w-4 h-4 rounded-full bg-white border-2 border-primary/30 group-hover:border-primary group-hover:scale-110 transition-all duration-300 shadow-sm"></span>
+                                    <div class="relative pl-10 md:pl-12 py-8 group first:pt-0 last:pb-0">
+                                        <span class="absolute -left-[11px] top-10 first:top-2 w-5 h-5 rounded-full bg-white border-4 border-primary/20 group-hover:border-primary group-hover:scale-110 transition-all duration-500 shadow-sm z-10"></span>
                                         
-                                        <div class="mb-2">
-                                            <span class="inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/5 rounded-full">
-                                                {{ $title ?? __('Day') . " " . $day->day_number }}
-                                            </span>
+                                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
+                                            <span class="text-primary font-black text-sm uppercase tracking-tighter shrink-0">{{ __('Day') }} {{ $day->day_number }}</span>
+                                            @if($title)
+                                                <h3 class="text-secondary font-extrabold text-xl sm:text-2xl leading-tight">{{ $title }}</h3>
+                                            @endif
                                         </div>
                                         
                                         @if($description)
-                                            <div class="text-secondary/70 text-base leading-relaxed group-hover:text-secondary transition-colors font-light">
+                                            <div class="text-secondary/60 text-base sm:text-lg leading-relaxed group-hover:text-secondary transition-colors font-light">
                                                 {{ $description }}
                                             </div>
                                         @endif

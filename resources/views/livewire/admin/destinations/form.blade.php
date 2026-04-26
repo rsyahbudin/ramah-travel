@@ -559,23 +559,27 @@ new class extends Component {
                     </div>
                     <div class="space-y-3">
                         @foreach($itinerary['en'] as $index => $_)
-                            <div class="flex flex-col sm:flex-row gap-3 p-3 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700/50 group w-full">
-                                <div class="w-full sm:w-40 shrink-0">
+                            <div class="space-y-3 p-4 bg-zinc-50/50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700/50 group w-full">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div class="flex items-center gap-3 flex-1">
+                                        <span class="shrink-0 bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Day {{ $index + 1 }}</span>
+                                        <div class="flex-1">
+                                            @foreach(['en', 'id', 'es'] as $locale)
+                                                <div x-show="localTab === '{{ $locale }}'">
+                                                    <flux:input wire:model.blur="itinerary.{{ $locale }}.{{ $index }}.day" placeholder="{{ __('Day Title (e.g. Arrival & Check-in)') }}" size="sm" class="!bg-transparent !border-none !shadow-none !font-semibold !text-base focus:!ring-0" />
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <flux:button icon="trash" wire:click="removeItineraryDay({{ $index }})" variant="danger" size="sm" class="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+
+                                <div class="w-full">
                                     @foreach(['en', 'id', 'es'] as $locale)
                                         <div x-show="localTab === '{{ $locale }}'">
-                                            <flux:input wire:model.blur="itinerary.{{ $locale }}.{{ $index }}.day" placeholder="{{ __('e.g. Day 1') }}" size="sm" />
+                                            <flux:textarea wire:model.blur="itinerary.{{ $locale }}.{{ $index }}.activity" placeholder="{{ __('Detailed description of the activities for this day...') }}" rows="6" size="sm" />
                                         </div>
                                     @endforeach
-                                </div>
-                                <div class="flex-1">
-                                    @foreach(['en', 'id', 'es'] as $locale)
-                                        <div x-show="localTab === '{{ $locale }}'">
-                                            <flux:textarea wire:model.blur="itinerary.{{ $locale }}.{{ $index }}.activity" placeholder="{{ __('e.g. Arrival & Hotel Check-in') }}" rows="2" size="sm" />
-                                        </div>
-                                    @endforeach
-                                </div>
-                                <div class="flex justify-end mt-1">
-                                    <flux:button icon="trash" wire:click="removeItineraryDay({{ $index }})" variant="danger" size="sm" class="opacity-50 group-hover:opacity-100 transition-opacity" />
                                 </div>
                             </div>
                         @endforeach
