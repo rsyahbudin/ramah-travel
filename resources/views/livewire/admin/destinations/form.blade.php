@@ -315,9 +315,9 @@ new class extends Component {
                 foreach ($this->itinerary['en'] as $i => $itemEn) {
                     $itemTranslations = [];
                     foreach ($locales as $l) {
-                        if (!empty($this->itinerary[$l][$i]['day'])) {
+                        if (!empty($this->itinerary[$l][$i]['day']) || !empty($this->itinerary[$l][$i]['activity'])) {
                             $itemTranslations[$l] = [
-                                'title' => $this->itinerary[$l][$i]['day'],
+                                'title' => $this->itinerary[$l][$i]['day'] ?? null,
                                 'description' => $this->itinerary[$l][$i]['activity'] ?? null,
                             ];
                         }
